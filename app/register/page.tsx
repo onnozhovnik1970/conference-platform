@@ -59,6 +59,8 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const countries = useMemo(
     () => [
@@ -132,17 +134,41 @@ export default function RegisterPage() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitted(false);
+    setSubmitError(null);
 
     if (!validate()) {
       return;
     }
 
-    setIsSubmitted(true);
-    setFormData(initialForm);
-    setErrors({});
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+      const result = (await response.json()) as { success: boolean; error?: string; code?: string };
+
+      if (!response.ok || !result.success) {
+        if (result.code === "EMAIL_EXISTS") {
+          setSubmitError(t("registerEmailExists"));
+        } else {
+          setSubmitError(result.error || t("registerError"));
+        }
+        return;
+      }
+
+      setIsSubmitted(true);
+      setFormData(initialForm);
+      setErrors({});
+    } catch {
+      setSubmitError(t("registerError"));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const updateField = (field: keyof FormData, value: string) => {
@@ -185,6 +211,11 @@ export default function RegisterPage() {
                 {isSubmitted && (
                   <div className="mb-6 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
                     {t("registerSuccess")}
+                  </div>
+                )}
+                {submitError && (
+                  <div className="mb-6 rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+                    {submitError}
                   </div>
                 )}
 
@@ -395,7 +426,7 @@ export default function RegisterPage() {
                     {errors.hasPresentation && <p className="mt-1 text-xs text-rose-300">{errors.hasPresentation}</p>}
                   </div>
 
-                  <Button type="submit" size="lg" className="w-full md:w-auto">
+                  <Button type="submit" size="lg" className="w-full md:w-auto" disabled={isSubmitting}>
                     {t("registerSubmit")}
                   </Button>
                 </form>

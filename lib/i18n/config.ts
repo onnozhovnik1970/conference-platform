@@ -22,7 +22,7 @@ const resources = {
       conferenceGoal:
         "Discussion of student research on modern science trends and improving foreign language skills.",
       conferenceOrganizer:
-        "Organized by State University of Trade and Economics (SUTE), Faculty of Trade and Marketing.",
+        "Organizer: Department of Modern European Languages, State University of Trade and Economics (SUTE)",
       conferenceLanguagesTitle: "Conference Languages",
       conferenceLanguagesSubtitle: "Abstracts are accepted in:",
       conferenceLanguagesList: "English, German, French, Polish, Czech",
@@ -83,6 +83,8 @@ const resources = {
       phoneError: "Enter a valid phone number.",
       registerSubmit: "Register",
       registerSuccess: "Registration submitted successfully! We will contact you soon.",
+      registerEmailExists: "This email is already registered.",
+      registerError: "Registration failed. Please try again.",
       countryUkraine: "Ukraine",
       countryPoland: "Poland",
       countryGermany: "Germany",
@@ -119,7 +121,7 @@ const resources = {
       conferenceGoal:
         "Обговорення студентських досліджень сучасних тенденцій науки та вдосконалення навичок володіння іноземними мовами.",
       conferenceOrganizer:
-        "Організатор: Державний торговельно-економічний університет (ДТЕУ), факультет торгівлі та маркетингу.",
+        "Організатор: Кафедра сучасних європейських мов, Державний торговельно-економічний університет (ДТЕУ)",
       conferenceLanguagesTitle: "Мови конференції",
       conferenceLanguagesSubtitle: "Тези приймаються мовами:",
       conferenceLanguagesList: "англійська, німецька, французька, польська, чеська",
@@ -180,6 +182,8 @@ const resources = {
       phoneError: "Введіть коректний номер телефону.",
       registerSubmit: "Зареєструватися",
       registerSuccess: "Реєстрацію успішно надіслано! Ми зв'яжемося з вами найближчим часом.",
+      registerEmailExists: "Цей email уже зареєстровано.",
+      registerError: "Не вдалося зареєструватися. Спробуйте ще раз.",
       countryUkraine: "Україна",
       countryPoland: "Польща",
       countryGermany: "Німеччина",

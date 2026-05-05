@@ -1,0 +1,23 @@
+CREATE TABLE participants (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  last_name TEXT NOT NULL,
+  first_name TEXT NOT NULL,
+  middle_name TEXT,
+  institution TEXT NOT NULL,
+  faculty TEXT NOT NULL,
+  specialty TEXT NOT NULL,
+  study_year TEXT NOT NULL,
+  study_group TEXT NOT NULL,
+  country TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  phone TEXT NOT NULL,
+  abstract_title TEXT NOT NULL,
+  abstract_language TEXT NOT NULL,
+  thematic_panel TEXT NOT NULL,
+  supervisor_name TEXT NOT NULL,
+  supervisor_title TEXT,
+  supervisor_position TEXT,
+  has_presentation BOOLEAN DEFAULT FALSE,
+  status TEXT DEFAULT 'pending'
+);
