@@ -8,15 +8,15 @@
     --foreground: 210 40% 98%;
     --card: 226 39% 14%;
     --card-foreground: 210 40% 98%;
-    --primary: 252 94% 67%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 221 30% 22%;
+    --primary: 42 100% 47%;
+    --primary-foreground: 219 59% 26%;
+    --secondary: 219 59% 26%;
     --secondary-foreground: 210 40% 98%;
     --muted: 221 30% 18%;
     --muted-foreground: 215 20% 72%;
     --border: 223 27% 28%;
     --input: 223 27% 28%;
-    --ring: 252 94% 67%;
+    --ring: 42 100% 47%;
     --radius: 0.8rem;
   }
 
@@ -30,7 +30,7 @@
 }
 
 .animated-academic-gradient {
-  background: linear-gradient(120deg, #1a2a6c, #3a1c71, #5f2c82, #1a2a6c);
+  background: linear-gradient(120deg, #0f2347, #1b3a6b, #0f2347);
   background-size: 300% 300%;
   animation: flow 12s ease infinite;
 }
