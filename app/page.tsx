@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Atom, BookOpen, CalendarDays, Sparkles, Video } from "lucide-react";
 import Image from "next/image";
@@ -36,12 +36,7 @@ export default function HomePage() {
               <Image src="/knteu_logo_200.png" alt="SUTE logo" width={160} height={50} className="h-[50px] w-auto" priority />
               <div className="text-lg font-semibold tracking-tight text-white">{t("navBrand")}</div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button asChild size="sm">
-                <Link href="/register">{t("navRegister")}</Link>
-              </Button>
-              <LanguageSwitcher />
-            </div>
+            <LanguageSwitcher />
           </header>
 
           <div className="mx-auto max-w-4xl py-20 text-center md:py-28">
@@ -55,14 +50,12 @@ export default function HomePage() {
 
             <div className="mx-auto mt-8 max-w-3xl rounded-xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm">
               <p className="text-sm font-semibold text-[#F0A500]">
-                Реєстрація: до 26 квітня 2026 / Registration: until April 26, 2026
+               Реєстрація: до 26 квітня 2026 / Registration: until April 26, 2026
               </p>
             </div>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg" className="min-w-44">
-                <Link href="/register">{t("navRegister")}</Link>
-              </Button>
+              <Button asChild size="lg" className="min-w-44"><Link href="/register">{t("navRegister")}</Link></Button><Button asChild size="lg" variant="outline" className="min-w-44 border-white text-white hover:bg-white/10"><Link href="/login">Увійти в кабінет</Link></Button>
             </div>
           </div>
         </div>
@@ -143,3 +136,4 @@ export default function HomePage() {
     </main>
   );
 }
+

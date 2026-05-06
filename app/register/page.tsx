@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -33,6 +33,33 @@ type FormData = {
   phone: string;
 };
 
+type ReviewState = {
+  fileName: string;
+  abstractText: string;
+  correctedText_uk: string;
+  correctedText_en: string;
+  scoreStructure: number;
+  scoreStructureMax: number;
+  scoreSources: number;
+  scoreSourcesMax: number;
+  scoreLanguage: number;
+  scoreLanguageMax: number;
+  scoreContent: number;
+  scoreContentMax: number;
+  overallVerdict_uk: string;
+  overallVerdict_en: string;
+  reviewStructure_uk: string;
+  reviewStructure_en: string;
+  reviewSources_uk: string;
+  reviewSources_en: string;
+  reviewLanguage_uk: string;
+  reviewLanguage_en: string;
+  reviewContent_uk: string;
+  reviewContent_en: string;
+  aiReview: string;
+  aiScore: "accepted" | "needs_revision" | "rejected";
+};
+
 const initialForm: FormData = {
   lastName: "",
   firstName: "",
@@ -55,12 +82,23 @@ const initialForm: FormData = {
 };
 
 export default function RegisterPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [formData, setFormData] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [consentGiven, setConsentGiven] = useState(false);
+  const [consentError, setConsentError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [registeredParticipantId, setRegisteredParticipantId] = useState("");
+  const [submittedAbstractTitle, setSubmittedAbstractTitle] = useState("");
+  const [abstractFile, setAbstractFile] = useState<File | null>(null);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewResult, setReviewResult] = useState<ReviewState | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [isSubmittingAbstract, setIsSubmittingAbstract] = useState(false);
 
   const countries = useMemo(
     () => [
@@ -130,8 +168,14 @@ export default function RegisterPage() {
       nextErrors.phone = t("phoneError");
     }
 
+    if (!consentGiven) {
+      setConsentError(t("consentRequiredError"));
+    } else {
+      setConsentError(null);
+    }
+
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    return Object.keys(nextErrors).length === 0 && consentGiven;
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -148,9 +192,9 @@ export default function RegisterPage() {
       const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ ...formData, consentToDataProcessing: consentGiven })
       });
-      const result = (await response.json()) as { success: boolean; error?: string; code?: string };
+      const result = (await response.json()) as { success: boolean; error?: string; code?: string; participantId?: string };
 
       if (!response.ok || !result.success) {
         if (result.code === "EMAIL_EXISTS") {
@@ -162,8 +206,17 @@ export default function RegisterPage() {
       }
 
       setIsSubmitted(true);
+      setRegisteredParticipantId(result.participantId ?? "");
+      setSubmittedAbstractTitle(formData.abstractTitle);
+      setReviewTitle(formData.abstractTitle);
+      setAbstractFile(null);
+      setReviewResult(null);
+      setReviewError(null);
+      setReviewSuccess(null);
       setFormData(initialForm);
       setErrors({});
+      setConsentGiven(false);
+      setConsentError(null);
     } catch {
       setSubmitError(t("registerError"));
     } finally {
@@ -176,10 +229,134 @@ export default function RegisterPage() {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
+  const handleReviewSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setReviewError(null);
+    setReviewSuccess(null);
+    setReviewResult(null);
+
+    if (!registeredParticipantId) {
+      setReviewError(t("registerError"));
+      return;
+    }
+    if (!reviewTitle.trim()) {
+      setReviewError(t("abstractTitleRequired"));
+      return;
+    }
+    if (!abstractFile) {
+      setReviewError(t("abstractFileRequired"));
+      return;
+    }
+    const fileName = abstractFile.name.toLowerCase();
+    if (!fileName.endsWith(".docx") && !fileName.endsWith(".pdf")) {
+      setReviewError(t("abstractFileRequired"));
+      return;
+    }
+
+    setIsReviewing(true);
+    try {
+      const payload = new globalThis.FormData();
+      payload.set("participantId", registeredParticipantId);
+      payload.set("abstractTitle", reviewTitle.trim());
+      payload.set("file", abstractFile);
+
+      const response = await fetch("/api/review-abstract", { method: "POST", body: payload });
+      const result = (await response.json()) as
+        | ({
+            success: true;
+            fileName: string;
+            abstractText: string;
+            correctedText_uk: string;
+            correctedText_en: string;
+            scoreStructure: number;
+            scoreStructureMax: number;
+            scoreSources: number;
+            scoreSourcesMax: number;
+            scoreLanguage: number;
+            scoreLanguageMax: number;
+            scoreContent: number;
+            scoreContentMax: number;
+            overallVerdict_uk: string;
+            overallVerdict_en: string;
+            reviewStructure_uk: string;
+            reviewStructure_en: string;
+            reviewSources_uk: string;
+            reviewSources_en: string;
+            reviewLanguage_uk: string;
+            reviewLanguage_en: string;
+            reviewContent_uk: string;
+            reviewContent_en: string;
+          })
+        | { success: false; error?: string };
+
+      if (!response.ok || !result.success) {
+        setReviewError("error" in result && result.error ? result.error : t("abstractReviewError"));
+        return;
+      }
+
+      const averageScore =
+        (result.scoreStructure / result.scoreStructureMax +
+          result.scoreSources / result.scoreSourcesMax +
+          result.scoreLanguage / result.scoreLanguageMax +
+          result.scoreContent / result.scoreContentMax) /
+        4;
+      const aiScore: ReviewState["aiScore"] = averageScore >= 0.8 ? "accepted" : averageScore >= 0.5 ? "needs_revision" : "rejected";
+
+      setReviewResult({
+        ...result,
+        aiReview: [result.reviewStructure_uk, result.reviewSources_uk, result.reviewLanguage_uk, result.reviewContent_uk]
+          .filter(Boolean)
+          .join("\n\n"),
+        aiScore
+      });
+      setReviewSuccess(t("abstractReviewSuccess"));
+    } catch {
+      setReviewError(t("abstractReviewError"));
+    } finally {
+      setIsReviewing(false);
+    }
+  };
+
+  const handleSubmitAsIs = async () => {
+    if (!reviewResult || !registeredParticipantId) return;
+    setIsSubmittingAbstract(true);
+    setReviewError(null);
+    try {
+      const response = await fetch("/api/abstract/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participantId: registeredParticipantId,
+          abstractTitle: reviewTitle.trim(),
+          fileName: reviewResult.fileName,
+          abstractText: reviewResult.abstractText,
+          aiReview: reviewResult.aiReview,
+          aiScore: reviewResult.aiScore
+        })
+      });
+      const result = (await response.json()) as { success: boolean; error?: string };
+      if (!response.ok || !result.success) {
+        setReviewError(result.error || t("abstractReviewError"));
+        return;
+      }
+      setReviewSuccess(
+        isUk
+          ? "Дякуємо! Ваші тези прийнято. Увійдіть в особистий кабінет щоб переглянути рецензію ШІ та подати виправлену версію."
+          : "Thank you! Your abstract has been submitted. Please log in to your personal dashboard to view the AI review and submit a revised version."
+      );
+    } catch {
+      setReviewError(t("abstractReviewError"));
+    } finally {
+      setIsSubmittingAbstract(false);
+    }
+  };
+
   const inputClass =
     "mt-2 h-11 w-full rounded-md border border-white/20 bg-white/5 px-3 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40";
 
   const labelClass = "block text-sm font-medium text-slate-100";
+  const renderBlocks = (value: number, max: number) => `${"█".repeat(Math.max(0, Math.min(value, max)))}${"░".repeat(Math.max(0, max - Math.max(0, Math.min(value, max))))}`;
+  const isUk = i18n.language === "uk" || i18n.language === "ua";
 
   return (
     <main className="min-h-screen">
@@ -426,10 +603,136 @@ export default function RegisterPage() {
                     {errors.hasPresentation && <p className="mt-1 text-xs text-rose-300">{errors.hasPresentation}</p>}
                   </div>
 
+                  <div>
+                    <label className="flex items-start gap-3 rounded-md border border-white/20 bg-white/5 p-4 text-sm text-slate-100">
+                      <input
+                        type="checkbox"
+                        className="mt-1"
+                        checked={consentGiven}
+                        onChange={(e) => {
+                          setConsentGiven(e.target.checked);
+                          if (e.target.checked) {
+                            setConsentError(null);
+                          }
+                        }}
+                      />
+                      <span>{t("consentDataProcessing")}</span>
+                    </label>
+                    {consentError && <p className="mt-1 text-xs text-rose-300">{consentError}</p>}
+                  </div>
+
                   <Button type="submit" size="lg" className="w-full md:w-auto" disabled={isSubmitting}>
                     {t("registerSubmit")}
                   </Button>
                 </form>
+
+                <div className="mt-10 rounded-md border border-white/15 bg-white/5 p-5">
+                  <h3 className="text-xl font-semibold text-white">{t("submitAbstractTitle")}</h3>
+                  <p className="mt-2 text-sm text-slate-300">{t("submitAbstractDescription")}</p>
+
+                  {!registeredParticipantId && (
+                    <div className="mt-4 rounded-md border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                      {isUk
+                        ? "Спочатку заповніть та надішліть реєстраційну форму, після цього стане доступна перевірка тез."
+                        : "Please submit the registration form first, then abstract AI review will be available."}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleReviewSubmit} className="mt-5 space-y-4">
+                      <div>
+                        <label className={labelClass}>{t("abstractFile")}</label>
+                        <input
+                          type="file"
+                          accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          className={`${inputClass} h-auto py-2`}
+                          onChange={(e) => setAbstractFile(e.target.files?.[0] ?? null)}
+                        />
+                        <p className="mt-1 text-xs text-slate-400">{t("abstractFileHint")}</p>
+                      </div>
+
+                      <div>
+                        <label className={labelClass}>{t("abstractTitleForSubmission")}</label>
+                        <textarea
+                          className="mt-2 min-h-24 w-full rounded-md border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                          value={reviewTitle}
+                          onChange={(e) => setReviewTitle(e.target.value)}
+                          placeholder={submittedAbstractTitle}
+                        />
+                      </div>
+
+                      <Button type="submit" size="lg" className="w-full md:w-auto" disabled={isReviewing || !registeredParticipantId}>
+                        {t("abstractReviewSubmit")}
+                      </Button>
+                  </form>
+
+                  {reviewSuccess && (
+                    <div className="mt-4 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                      {reviewSuccess}
+                    </div>
+                  )}
+
+                  {reviewError && (
+                    <div className="mt-4 rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+                      {reviewError}
+                    </div>
+                  )}
+
+                  {reviewResult && (
+                    <div className="mt-5 rounded-md border border-[#F0A500]/40 bg-[#F0A500]/10 p-4">
+                        <div className="space-y-2 text-sm text-slate-100">
+                          <p>
+                            <span className="font-semibold">{isUk ? "Структура" : "Structure"}:</span>{" "}
+                            {renderBlocks(reviewResult.scoreStructure, reviewResult.scoreStructureMax)}{" "}
+                            ({reviewResult.scoreStructure}/{reviewResult.scoreStructureMax})
+                          </p>
+                          <p>
+                            <span className="font-semibold">{isUk ? "Джерела" : "Sources"}:</span>{" "}
+                            {renderBlocks(reviewResult.scoreSources, reviewResult.scoreSourcesMax)} (
+                            {reviewResult.scoreSources}/{reviewResult.scoreSourcesMax})
+                          </p>
+                          <p>
+                            <span className="font-semibold">{isUk ? "Мова" : "Language"}:</span>{" "}
+                            {renderBlocks(reviewResult.scoreLanguage, reviewResult.scoreLanguageMax)} (
+                            {reviewResult.scoreLanguage}/{reviewResult.scoreLanguageMax})
+                          </p>
+                          <p>
+                            <span className="font-semibold">{isUk ? "Зміст" : "Content"}:</span>{" "}
+                            {renderBlocks(reviewResult.scoreContent, reviewResult.scoreContentMax)} (
+                            {reviewResult.scoreContent}/{reviewResult.scoreContentMax})
+                          </p>
+                        </div>
+
+                        <div className="mt-4 inline-flex rounded-full border border-white/30 bg-white/10 px-3 py-1 text-sm font-semibold text-white">
+                          {isUk ? reviewResult.overallVerdict_uk : reviewResult.overallVerdict_en}
+                        </div>
+
+                        <div className="mt-4 space-y-3 text-sm leading-6 text-slate-100">
+                          <p>
+                            <span className="font-semibold">{isUk ? "Структура" : "Structure"}: </span>
+                            {isUk ? reviewResult.reviewStructure_uk : reviewResult.reviewStructure_en}
+                          </p>
+                          <p>
+                            <span className="font-semibold">{isUk ? "Джерела" : "Sources"}: </span>
+                            {isUk ? reviewResult.reviewSources_uk : reviewResult.reviewSources_en}
+                          </p>
+                          <p>
+                            <span className="font-semibold">{isUk ? "Мова" : "Language"}: </span>
+                            {isUk ? reviewResult.reviewLanguage_uk : reviewResult.reviewLanguage_en}
+                          </p>
+                          <p>
+                            <span className="font-semibold">{isUk ? "Зміст" : "Content"}: </span>
+                            {isUk ? reviewResult.reviewContent_uk : reviewResult.reviewContent_en}
+                          </p>
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <Button type="button" variant="secondary" onClick={handleSubmitAsIs} disabled={isSubmittingAbstract}>
+                            {isUk ? "Подати тези" : "Submit Abstract"}
+                          </Button>
+                        </div>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -438,3 +741,4 @@ export default function RegisterPage() {
     </main>
   );
 }
+

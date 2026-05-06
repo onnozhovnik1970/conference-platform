@@ -20,6 +20,7 @@ type RegisterPayload = {
   supervisorTitleDegree?: string;
   supervisorPosition?: string;
   hasPresentation: "yes" | "no";
+  consentToDataProcessing: boolean;
 };
 
 const REQUIRED_FIELDS: Array<keyof RegisterPayload> = [
@@ -66,6 +67,10 @@ function validate(payload: RegisterPayload): string[] {
     errors.push("Invalid hasPresentation value");
   }
 
+  if (payload.consentToDataProcessing !== true) {
+    errors.push("Consent to data processing is required");
+  }
+
   return errors;
 }
 
@@ -99,7 +104,8 @@ export async function POST(request: Request) {
       supervisorName: body.supervisorName ?? "",
       supervisorTitleDegree: body.supervisorTitleDegree ?? "",
       supervisorPosition: body.supervisorPosition ?? "",
-      hasPresentation: (body.hasPresentation ?? "") as RegisterPayload["hasPresentation"]
+      hasPresentation: (body.hasPresentation ?? "") as RegisterPayload["hasPresentation"],
+      consentToDataProcessing: body.consentToDataProcessing === true
     };
 
     const validationErrors = validate(payload);
@@ -117,26 +123,30 @@ export async function POST(request: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-    const { error } = await supabase.from("participants").insert({
-      last_name: payload.lastName.trim(),
-      first_name: payload.firstName.trim(),
-      middle_name: payload.middleName?.trim() || null,
-      institution: payload.institution.trim(),
-      faculty: payload.faculty.trim(),
-      specialty: payload.specialty.trim(),
-      study_year: payload.yearOfStudy.trim(),
-      study_group: payload.group.trim(),
-      country: payload.country.trim(),
-      email: payload.email.trim().toLowerCase(),
-      phone: payload.phone.trim(),
-      abstract_title: payload.abstractTitle.trim(),
-      abstract_language: payload.abstractLanguage.trim(),
-      thematic_panel: payload.thematicPanel.trim(),
-      supervisor_name: payload.supervisorName.trim(),
-      supervisor_title: payload.supervisorTitleDegree?.trim() || null,
-      supervisor_position: payload.supervisorPosition?.trim() || null,
-      has_presentation: payload.hasPresentation === "yes"
-    });
+    const { data, error } = await supabase
+      .from("participants")
+      .insert({
+        last_name: payload.lastName.trim(),
+        first_name: payload.firstName.trim(),
+        middle_name: payload.middleName?.trim() || null,
+        institution: payload.institution.trim(),
+        faculty: payload.faculty.trim(),
+        specialty: payload.specialty.trim(),
+        study_year: payload.yearOfStudy.trim(),
+        study_group: payload.group.trim(),
+        country: payload.country.trim(),
+        email: payload.email.trim().toLowerCase(),
+        phone: payload.phone.trim(),
+        abstract_title: payload.abstractTitle.trim(),
+        abstract_language: payload.abstractLanguage.trim(),
+        thematic_panel: payload.thematicPanel.trim(),
+        supervisor_name: payload.supervisorName.trim(),
+        supervisor_title: payload.supervisorTitleDegree?.trim() || null,
+        supervisor_position: payload.supervisorPosition?.trim() || null,
+        has_presentation: payload.hasPresentation === "yes"
+      })
+      .select("id")
+      .single();
 
     if (error) {
       if (error.code === "23505") {
@@ -145,7 +155,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, participantId: data.id });
   } catch {
     return NextResponse.json({ success: false, error: "Invalid request body." }, { status: 400 });
   }
