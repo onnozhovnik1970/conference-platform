@@ -33,30 +33,27 @@ export async function POST(request: NextRequest) {
       max_tokens: 4096,
       messages: [{
         role: "user",
-        content: `You are a scientific secretary of SUTE Conference 2026 reviewing student conference abstracts.
+        content: `You are a scientific abstract reviewer.
 
-Evaluate strictly on these criteria:
-1. STRUCTURE: Essay format — relevance, thesis, argumentation with references, conclusion. Methods/results only if empirical.
-2. SOURCES: DSTU 8302:2015 style. Min 3 sources. Recent Ukrainian/English sources preferred. No Russian sources.
-3. LANGUAGE: Academic Ukrainian style, proper terminology, no colloquialisms.
-4. CONTENT: Relevance to conference panels (Economics, IT, Philology, International Trade, Management, Psychology).
+Analyze the submitted abstract and provide:
+1) Overall quality score out of 10
+2) List of issues and inconsistencies found
+3) Specific recommendations for improvement
+4) Formatting issues
+
+Do NOT provide a corrected version of the text.
+Respond in the same language as the submitted abstract (Ukrainian or English).
 
 Abstract title: ${abstractTitle}
 Abstract text: ${extractedText.substring(0, 2500)}
 
 IMPORTANT RULES:
-- Respond ONLY with valid JSON, no markdown, no text outside JSON
-- All text fields must be plain text only, no asterisks, no bold, no markdown
-- reviewStructure_uk must start with "Структура:", reviewStructure_en must start with "Structure:"
-- reviewSources_uk must start with "Джерела:", reviewSources_en must start with "Sources:"
-- reviewLanguage_uk must start with "Мова:", reviewLanguage_en must start with "Language:"
-- reviewContent_uk must start with "Зміст:", reviewContent_en must start with "Content:"
-- correctedText_uk and correctedText_en: provide FULL corrected version of the abstract, same length as original
-- Give specific actionable feedback, mention exact problems, avoid generic phrases
-- No line breaks inside JSON string values
+- Respond ONLY with valid JSON (no markdown, no extra text)
+- Keep all values plain text
+- Use the same language as the abstract for all textual fields
 
 Respond with this exact JSON structure:
-{"scoreStructure":4,"scoreStructureMax":5,"scoreSources":3,"scoreSourcesMax":5,"scoreLanguage":5,"scoreLanguageMax":5,"scoreContent":4,"scoreContentMax":5,"overallVerdict_uk":"Потребує незначного доопрацювання","overallVerdict_en":"Needs minor revision","reviewStructure_uk":"Структура: конкретний відгук","reviewStructure_en":"Structure: specific feedback","reviewSources_uk":"Джерела: конкретний відгук","reviewSources_en":"Sources: specific feedback","reviewLanguage_uk":"Мова: конкретний відгук","reviewLanguage_en":"Language: specific feedback","reviewContent_uk":"Зміст: конкретний відгук","reviewContent_en":"Content: specific feedback","correctedText_uk":"повний виправлений текст українською","correctedText_en":"full corrected text in English"}`
+{"score":7,"scoreMax":10,"issues":["Issue 1","Issue 2"],"recommendations":["Recommendation 1","Recommendation 2"],"formattingIssues":["Formatting issue 1","Formatting issue 2"],"summary":"Short overall summary"}`
       }]
     });
 
@@ -71,27 +68,13 @@ Respond with this exact JSON structure:
     const result = JSON.parse(jsonMatch[0]);
     return NextResponse.json({
       success: true,
-      scoreStructure: result.scoreStructure,
-      scoreStructureMax: result.scoreStructureMax,
-      scoreSources: result.scoreSources,
-      scoreSourcesMax: result.scoreSourcesMax,
-      scoreLanguage: result.scoreLanguage,
-      scoreLanguageMax: result.scoreLanguageMax,
-      scoreContent: result.scoreContent,
-      scoreContentMax: result.scoreContentMax,
-      overallVerdict_uk: result.overallVerdict_uk,
-      overallVerdict_en: result.overallVerdict_en,
-      reviewStructure_uk: result.reviewStructure_uk,
-      reviewStructure_en: result.reviewStructure_en,
-      reviewSources_uk: result.reviewSources_uk,
-      reviewSources_en: result.reviewSources_en,
-      reviewLanguage_uk: result.reviewLanguage_uk,
-      reviewLanguage_en: result.reviewLanguage_en,
-      reviewContent_uk: result.reviewContent_uk,
-      reviewContent_en: result.reviewContent_en,
+      score: result.score,
+      scoreMax: result.scoreMax,
+      issues: result.issues,
+      recommendations: result.recommendations,
+      formattingIssues: result.formattingIssues,
+      summary: result.summary,
       abstractText: extractedText,
-      correctedText_uk: result.correctedText_uk,
-      correctedText_en: result.correctedText_en,
       fileName: file.name
     });
 
