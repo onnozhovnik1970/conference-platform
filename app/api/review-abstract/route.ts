@@ -7,6 +7,13 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const abstractTitle = formData.get("abstractTitle") as string;
+    const languageRaw = (formData.get("language") as string | null)?.toLowerCase();
+    const language: "ua" | "en" = languageRaw === "en" ? "en" : "ua";
+    const shouldRespondEnglish = language === "en";
+    const responseLanguageLabel = shouldRespondEnglish ? "English" : "Ukrainian";
+    const motivationalMessage = shouldRespondEnglish
+      ? "Thank you for submitting your scientific materials. The recommendations provided are aimed at improving the quality of your work. We wish you success in preparing for the conference!"
+      : "Дякуємо за подання наукових матеріалів. Наведені рекомендації спрямовані на підвищення якості вашої роботи. Бажаємо успіху у підготовці до конференції!";
 
     if (!file) {
       return NextResponse.json({ success: false, error: "File not uploaded" }, { status: 400 });
@@ -42,7 +49,7 @@ Analyze the submitted abstract and provide:
 4) Formatting issues
 
 Do NOT provide a corrected version of the text.
-Respond in the same language as the submitted abstract (Ukrainian or English).
+Always respond entirely in ${responseLanguageLabel}.
 
 Abstract title: ${abstractTitle}
 Abstract text: ${extractedText.substring(0, 2500)}
@@ -50,7 +57,7 @@ Abstract text: ${extractedText.substring(0, 2500)}
 IMPORTANT RULES:
 - Respond ONLY with valid JSON (no markdown, no extra text)
 - Keep all values plain text
-- Use the same language as the abstract for all textual fields
+- Use ${responseLanguageLabel} for all textual fields
 
 Respond with this exact JSON structure:
 {"score":7,"scoreMax":10,"issues":["Issue 1","Issue 2"],"recommendations":["Recommendation 1","Recommendation 2"],"formattingIssues":["Formatting issue 1","Formatting issue 2"],"summary":"Short overall summary"}`
@@ -74,6 +81,7 @@ Respond with this exact JSON structure:
       recommendations: result.recommendations,
       formattingIssues: result.formattingIssues,
       summary: result.summary,
+      motivationalMessage,
       abstractText: extractedText,
       fileName: file.name
     });
