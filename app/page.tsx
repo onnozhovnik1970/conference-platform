@@ -55,7 +55,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg" className="min-w-44"><Link href="/register">{t("navRegister")}</Link></Button><Button asChild size="lg" variant="outline" className="min-w-44 border-white text-white hover:bg-white/10"><Link href="/login">Увійти в кабінет</Link></Button>
+              <Button asChild size="lg" className="min-w-44"><Link href="/register">{t("navRegister")}</Link></Button><Button asChild size="lg" variant="outline" className="min-w-44 border-white text-white hover:bg-white/10"><Link href="/login">{t("navLogin")}</Link></Button>
             </div>
           </div>
         </div>

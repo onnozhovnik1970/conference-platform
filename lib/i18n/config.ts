@@ -6,6 +6,7 @@ const resources = {
     translation: {
       navBrand: "SUTE Conference 2026",
       navRegister: "Register",
+      navLogin: "Log in",
       navHome: "Home",
       registrationBanner: "Registration until April 26, 2026",
       heroTitle:
@@ -121,6 +122,7 @@ const resources = {
     translation: {
       navBrand: "Конференція ДТЕУ 2026",
       navRegister: "Реєстрація",
+      navLogin: "Увійти в кабінет",
       navHome: "Головна",
       registrationBanner: "Реєстрація до 26 квітня 2026",
       heroTitle:
