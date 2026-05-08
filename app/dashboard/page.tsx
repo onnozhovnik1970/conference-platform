@@ -279,6 +279,10 @@ export default function DashboardPage() {
       setSubmitForReviewError(t("dashboardSubmissionAuthError"));
       return;
     }
+    if (!reviewFile) {
+      setSubmitForReviewError(t("dashboardReviewUploadRequired"));
+      return;
+    }
 
     const hasPresentationValue: boolean | null =
       formData.hasPresentation === "" ? null : formData.hasPresentation === "true" || formData.hasPresentation === "yes";
@@ -286,6 +290,22 @@ export default function DashboardPage() {
 
     setIsSubmittingForReview(true);
     try {
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+      console.log("dashboard storage upload session:", session);
+      console.log("dashboard storage upload user id:", userId);
+      const fileNameParts = reviewFile.name.split(".");
+      const fileExtension = fileNameParts.length > 1 ? fileNameParts[fileNameParts.length - 1].toLowerCase() : "bin";
+      const storagePath = `${userId}/${Date.now()}.${fileExtension}`;
+      const { error: uploadError } = await supabase.storage.from("abstracts").upload(storagePath, reviewFile, { upsert: true });
+
+      if (uploadError) {
+        console.log("dashboard storage upload error:", uploadError);
+        setSubmitForReviewError(t("dashboardReviewUploadError"));
+        return;
+      }
+
       const { error: insertError } = await supabase.from("submissions").insert({
         user_id: userId,
         abstract_title: formData.abstractTitle,
@@ -303,7 +323,8 @@ export default function DashboardPage() {
         has_presentation: hasPresentationValue,
         status: "pending_review",
         ai_score: reviewResult.score ?? null,
-        ai_summary: reviewResult.summary ?? null
+        ai_summary: reviewResult.summary ?? null,
+        file_path: storagePath
       });
 
       if (insertError) {
@@ -329,7 +350,7 @@ export default function DashboardPage() {
   const score = typeof reviewResult?.score === "number" ? reviewResult.score : null;
   const scoreMax = typeof reviewResult?.scoreMax === "number" ? reviewResult.scoreMax : 10;
   const scorePercent = score !== null ? Math.max(0, Math.min(100, (score / scoreMax) * 100)) : 0;
-  const canSubmitForReview = score !== null && score >= 8;
+  const canSubmitForReview = score !== null && score >= 3;
   const latestStatus = latestSubmission?.status ?? null;
   const latestAiScore = latestSubmission?.ai_score ?? null;
   const currentProgressStage =

@@ -18,6 +18,7 @@ type Submission = {
   ai_score: number | null;
   status: string | null;
   created_at: string | null;
+  file_path: string | null;
 };
 
 type Profile = {
@@ -44,6 +45,7 @@ export default function AdminPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [profilesById, setProfilesById] = useState<Record<string, Profile>>({});
   const [updatingSubmissionId, setUpdatingSubmissionId] = useState<number | null>(null);
+  const [downloadingSubmissionId, setDownloadingSubmissionId] = useState<number | null>(null);
 
   const adminEmailsSet = useMemo(() => {
     return new Set(ALLOWED_ADMIN_EMAILS.map((email) => email.trim().toLowerCase()).filter(Boolean));
@@ -54,7 +56,7 @@ export default function AdminPage() {
 
     const { data: submissionRows, error: submissionsError } = await supabase
       .from("submissions")
-      .select("id, user_id, abstract_title, ai_score, status, created_at")
+      .select("id, user_id, abstract_title, ai_score, status, created_at, file_path")
       .order("created_at", { ascending: false });
 
     if (submissionsError) {
@@ -167,6 +169,29 @@ export default function AdminPage() {
 
     setSubmissions((prev) => prev.map((item) => (item.id === submissionId ? { ...item, status } : item)));
     setUpdatingSubmissionId(null);
+  };
+
+  const handleDownloadSubmissionFile = async (submission: Submission) => {
+    if (!submission.file_path) {
+      setError(t("adminFileNotAvailable"));
+      return;
+    }
+
+    setError(null);
+    setDownloadingSubmissionId(submission.id);
+
+    const { data, error: signedUrlError } = await supabase.storage
+      .from("abstracts")
+      .createSignedUrl(submission.file_path, 60);
+
+    if (signedUrlError || !data?.signedUrl) {
+      setError(t("adminFileDownloadError"));
+      setDownloadingSubmissionId(null);
+      return;
+    }
+
+    globalThis.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    setDownloadingSubmissionId(null);
   };
 
   const formatStatus = (status: string | null) => {
@@ -306,6 +331,7 @@ export default function AdminPage() {
                           const profile = profilesById[submission.user_id];
                           const studentName = [profile?.last_name ?? "", profile?.first_name ?? ""].join(" ").trim() || t("adminUnknownStudent");
                           const isUpdating = updatingSubmissionId === submission.id;
+                          const isDownloading = downloadingSubmissionId === submission.id;
 
                           return (
                             <tr key={submission.id}>
@@ -333,6 +359,16 @@ export default function AdminPage() {
                                     disabled={isUpdating}
                                   >
                                     {t("adminReject")}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-white/30 text-white hover:bg-white/10"
+                                    onClick={() => handleDownloadSubmissionFile(submission)}
+                                    disabled={isDownloading || !submission.file_path}
+                                  >
+                                    {isDownloading ? t("adminDownloading") : t("adminDownload")}
                                   </Button>
                                 </div>
                               </td>
