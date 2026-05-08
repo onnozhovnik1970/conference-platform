@@ -35,29 +35,35 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     const client = new Anthropic({ apiKey });
 
+    const maxInputChars = 16000;
+
     const message = await client.messages.create({
       model: "claude-opus-4-5",
-      max_tokens: 4096,
+      max_tokens: 6000,
       messages: [{
         role: "user",
-        content: `You are a scientific abstract reviewer.
+        content: `You are an expert reviewer of Ukrainian conference abstracts.
 
-Analyze the submitted abstract and provide:
-1) Overall quality score out of 10
-2) List of issues and inconsistencies found
-3) Specific recommendations for improvement
-4) Formatting issues
+Evaluate the submitted abstract strictly by these criteria:
+1) Formatting compliance: Times New Roman, 14 pt, proper margins, total length 3-4 pages.
+2) Student and supervisor information: verify required details are present and correctly formatted.
+3) Relevance of topic: assess alignment with conference theme and whether key modern trends are clearly highlighted.
+4) Citation quality: references must be real, relevant, and formatted according to DSTU 8302:2015.
+5) CRITICAL VIOLATION: detect any Russian or Soviet sources. If present, explicitly flag as a serious violation.
 
-Do NOT provide a corrected version of the text.
-Always respond entirely in ${responseLanguageLabel}.
+Scoring rules:
+- Return overall score from 0 to 10 (scoreMax must be 10).
+- If Russian or Soviet sources are detected, reduce score significantly and clearly explain the reason.
+
+Response requirements:
+- Do NOT provide a corrected full text.
+- Always respond entirely in ${responseLanguageLabel}.
+- Respond ONLY with valid JSON (no markdown, no extra text).
+- Keep all values plain text.
+- Use ${responseLanguageLabel} for all textual fields.
 
 Abstract title: ${abstractTitle}
-Abstract text: ${extractedText.substring(0, 2500)}
-
-IMPORTANT RULES:
-- Respond ONLY with valid JSON (no markdown, no extra text)
-- Keep all values plain text
-- Use ${responseLanguageLabel} for all textual fields
+Abstract text: ${extractedText.substring(0, maxInputChars)}
 
 Respond with this exact JSON structure:
 {"score":7,"scoreMax":10,"issues":["Issue 1","Issue 2"],"recommendations":["Recommendation 1","Recommendation 2"],"formattingIssues":["Formatting issue 1","Formatting issue 2"],"summary":"Short overall summary"}`

@@ -48,8 +48,13 @@ type ReviewResult = {
 };
 
 type LatestSubmissionStatus = {
+  id: number;
   status: string | null;
   ai_score: number | null;
+  ai_summary: string | null;
+  ai_issues: string[] | null;
+  ai_recommendations: string[] | null;
+  ai_formatting_issues: string[] | null;
 };
 
 const initialSubmissionForm: SubmissionForm = {
@@ -96,7 +101,7 @@ export default function DashboardPage() {
   const loadLatestSubmission = async (currentUserId: string) => {
     const { data: latestRows, error: latestSubmissionError } = await supabase
       .from("submissions")
-      .select("status, ai_score, created_at")
+      .select("id, status, ai_score, ai_summary, ai_issues, ai_recommendations, ai_formatting_issues, created_at")
       .eq("user_id", currentUserId)
       .order("created_at", { ascending: false })
       .limit(1);
@@ -108,6 +113,64 @@ export default function DashboardPage() {
 
     const latest = (latestRows?.[0] as LatestSubmissionStatus | undefined) ?? null;
     setLatestSubmission(latest);
+    if (latest?.ai_score !== null) {
+      setReviewResult({
+        score: latest.ai_score,
+        scoreMax: 10,
+        issues: latest.ai_issues ?? [],
+        recommendations: latest.ai_recommendations ?? [],
+        formattingIssues: latest.ai_formatting_issues ?? [],
+        summary: latest.ai_summary ?? undefined
+      });
+    }
+  };
+
+  const saveAiReviewResult = async (result: ReviewResult) => {
+    if (!userId) {
+      return;
+    }
+
+    const payload = {
+      ai_score: result.score ?? null,
+      ai_summary: result.summary ?? null,
+      ai_issues: result.issues ?? [],
+      ai_recommendations: result.recommendations ?? [],
+      ai_formatting_issues: result.formattingIssues ?? []
+    };
+
+    if (latestSubmission?.id) {
+      const { error: updateError } = await supabase.from("submissions").update(payload).eq("id", latestSubmission.id);
+      if (updateError) {
+        console.log("dashboard save ai review update error:", updateError);
+      }
+      await loadLatestSubmission(userId);
+      return;
+    }
+
+    const { error: insertError } = await supabase.from("submissions").insert({
+      user_id: userId,
+      abstract_title: formData.abstractTitle,
+      faculty: formData.faculty,
+      specialty: formData.specialty,
+      group_name: formData.group,
+      year_of_study: formData.yearOfStudy === "" ? null : Number.parseInt(formData.yearOfStudy, 10),
+      country: formData.country,
+      phone: formData.phone,
+      abstract_language: formData.abstractLanguage,
+      thematic_panel: formData.thematicPanel,
+      supervisor_name: formData.supervisorName,
+      supervisor_title_degree: formData.supervisorTitleDegree,
+      supervisor_position: formData.supervisorPosition,
+      has_presentation: formData.hasPresentation === "" ? null : formData.hasPresentation === "yes",
+      ...payload
+    });
+
+    if (insertError) {
+      console.log("dashboard save ai review insert error:", insertError);
+      return;
+    }
+
+    await loadLatestSubmission(userId);
   };
 
   useEffect(() => {
@@ -264,6 +327,7 @@ export default function DashboardPage() {
       }
 
       setReviewResult(result);
+      await saveAiReviewResult(result);
     } catch {
       setReviewError(t("dashboardReviewError"));
     } finally {
@@ -350,7 +414,7 @@ export default function DashboardPage() {
   const score = typeof reviewResult?.score === "number" ? reviewResult.score : null;
   const scoreMax = typeof reviewResult?.scoreMax === "number" ? reviewResult.scoreMax : 10;
   const scorePercent = score !== null ? Math.max(0, Math.min(100, (score / scoreMax) * 100)) : 0;
-  const canSubmitForReview = score !== null && score >= 3;
+  const canSubmitForReview = score !== null && score >= 7;
   const latestStatus = latestSubmission?.status ?? null;
   const latestAiScore = latestSubmission?.ai_score ?? null;
   const currentProgressStage =
