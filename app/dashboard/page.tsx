@@ -47,6 +47,11 @@ type ReviewResult = {
   motivationalMessage?: string;
 };
 
+type LatestSubmissionStatus = {
+  status: string | null;
+  ai_score: number | null;
+};
+
 const initialSubmissionForm: SubmissionForm = {
   abstractTitle: "",
   faculty: "",
@@ -86,6 +91,24 @@ export default function DashboardPage() {
   const [isSubmittingForReview, setIsSubmittingForReview] = useState(false);
   const [submitForReviewError, setSubmitForReviewError] = useState<string | null>(null);
   const [submitForReviewSuccess, setSubmitForReviewSuccess] = useState<string | null>(null);
+  const [latestSubmission, setLatestSubmission] = useState<LatestSubmissionStatus | null>(null);
+
+  const loadLatestSubmission = async (currentUserId: string) => {
+    const { data: latestRows, error: latestSubmissionError } = await supabase
+      .from("submissions")
+      .select("status, ai_score, created_at")
+      .eq("user_id", currentUserId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (latestSubmissionError) {
+      console.log("dashboard latest submission load error:", latestSubmissionError);
+      return;
+    }
+
+    const latest = (latestRows?.[0] as LatestSubmissionStatus | undefined) ?? null;
+    setLatestSubmission(latest);
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -103,6 +126,7 @@ export default function DashboardPage() {
       }
 
       setUserId(user.id);
+      await loadLatestSubmission(user.id);
 
       const { data, error: profileError } = await supabase
         .from("profiles")
@@ -168,6 +192,7 @@ export default function DashboardPage() {
 
       setSubmitSuccess(t("dashboardSubmissionSuccess"));
       setFormData(initialSubmissionForm);
+      await loadLatestSubmission(userId);
     } catch {
       setSubmitError(t("dashboardSubmissionError"));
     } finally {
@@ -288,6 +313,7 @@ export default function DashboardPage() {
       }
 
       setSubmitForReviewSuccess(t("dashboardSubmitForReviewSuccess"));
+      await loadLatestSubmission(userId);
     } catch {
       setSubmitForReviewError(t("dashboardSubmitForReviewError"));
     } finally {
@@ -304,6 +330,26 @@ export default function DashboardPage() {
   const scoreMax = typeof reviewResult?.scoreMax === "number" ? reviewResult.scoreMax : 10;
   const scorePercent = score !== null ? Math.max(0, Math.min(100, (score / scoreMax) * 100)) : 0;
   const canSubmitForReview = score !== null && score >= 8;
+  const latestStatus = latestSubmission?.status ?? null;
+  const latestAiScore = latestSubmission?.ai_score ?? null;
+  const currentProgressStage =
+    latestStatus === "accepted" || latestStatus === "rejected"
+      ? 3
+      : latestStatus === "pending_review" && latestAiScore !== null && latestAiScore >= 8
+        ? 2
+        : latestStatus === "pending_review"
+          ? 1
+          : 0;
+  const progressPercent = (currentProgressStage / 3) * 100;
+  const isFinalAccepted = latestStatus === "accepted";
+  const isFinalRejected = latestStatus === "rejected";
+  const progressActiveColorClass = isFinalAccepted ? "bg-emerald-400" : isFinalRejected ? "bg-rose-400" : "bg-primary";
+  const progressStages = [
+    t("dashboardStatusDraft"),
+    t("dashboardStatusAiReview"),
+    t("dashboardStatusOrganizerReview"),
+    t("dashboardStatusFinalDecision")
+  ];
 
   return (
     <main className="min-h-screen">
@@ -337,6 +383,28 @@ export default function DashboardPage() {
                     <div className="rounded-md border border-white/15 bg-white/5 p-4"><p className="text-xs uppercase tracking-wide text-slate-400">{t("firstName")}</p><p className="mt-1 text-lg font-semibold text-white">{profile.first_name || "-"}</p></div>
                     <div className="rounded-md border border-white/15 bg-white/5 p-4"><p className="text-xs uppercase tracking-wide text-slate-400">{t("lastName")}</p><p className="mt-1 text-lg font-semibold text-white">{profile.last_name || "-"}</p></div>
                     <div className="rounded-md border border-white/15 bg-white/5 p-4"><p className="text-xs uppercase tracking-wide text-slate-400">{t("institution")}</p><p className="mt-1 text-lg font-semibold text-white">{profile.institution || "-"}</p></div>
+                  </div>
+                )}
+                {!isLoading && !error && (
+                  <div className="rounded-md border border-white/15 bg-white/5 p-4">
+                    <p className="text-sm font-semibold text-white">{t("dashboardStatusProgressTitle")}</p>
+                    <div className="mt-4">
+                      <div className="relative h-2 rounded-full bg-white/10">
+                        <div className={`absolute left-0 top-0 h-2 rounded-full transition-all ${progressActiveColorClass}`} style={{ width: `${progressPercent}%` }} />
+                      </div>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                        {progressStages.map((stageLabel, idx) => {
+                          const isActive = idx <= currentProgressStage;
+                          const stageDotColorClass = isActive ? progressActiveColorClass : "bg-slate-500";
+                          return (
+                            <div key={stageLabel} className="flex items-start gap-2">
+                              <span className={`mt-0.5 h-3 w-3 rounded-full ${stageDotColorClass}`} />
+                              <span className={`text-xs ${isActive ? "text-white" : "text-slate-400"}`}>{stageLabel}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 )}
                 {!isLoading && !error && !profile && <p className="text-slate-300">{t("dashboardNoProfile")}</p>}
