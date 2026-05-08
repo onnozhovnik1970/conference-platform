@@ -78,6 +78,7 @@ export default function DashboardPage() {
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
   const [reviewFile, setReviewFile] = useState<File | null>(null);
+  const [reviewInputKey, setReviewInputKey] = useState(0);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
   const [isCheckingWithAi, setIsCheckingWithAi] = useState(false);
@@ -202,6 +203,15 @@ export default function DashboardPage() {
     setReviewFile(file);
   };
 
+  const handleResetReviewFile = () => {
+    setReviewFile(null);
+    setReviewResult(null);
+    setReviewError(null);
+    setSubmitForReviewError(null);
+    setSubmitForReviewSuccess(null);
+    setReviewInputKey((prev) => prev + 1);
+  };
+
   const handleCheckWithAi = async () => {
     setReviewError(null);
     setReviewResult(null);
@@ -293,6 +303,7 @@ export default function DashboardPage() {
   const score = typeof reviewResult?.score === "number" ? reviewResult.score : null;
   const scoreMax = typeof reviewResult?.scoreMax === "number" ? reviewResult.scoreMax : 10;
   const scorePercent = score !== null ? Math.max(0, Math.min(100, (score / scoreMax) * 100)) : 0;
+  const canSubmitForReview = score !== null && score >= 8;
 
   return (
     <main className="min-h-screen">
@@ -373,7 +384,15 @@ export default function DashboardPage() {
                       <label className={labelClass}>{t("abstractLanguage")}</label>
                       <select className={inputClass} value={formData.abstractLanguage} onChange={(e) => updateField("abstractLanguage", e.target.value)}>
                         <option value="" className="bg-slate-900">--</option>
-                        <option value="ukrainian" className="bg-slate-900">{t("abstractLanguageUkrainian")}</option><option value="english" className="bg-slate-900">{t("abstractLanguageEnglish")}</option>
+                        <option value="ukrainian" className="bg-slate-900">{t("abstractLanguageUkrainian")}</option>
+                        <option value="english" className="bg-slate-900">{t("abstractLanguageEnglish")}</option>
+                        <option value="german" className="bg-slate-900">{t("abstractLanguageGerman")}</option>
+                        <option value="polish" className="bg-slate-900">{t("abstractLanguagePolish")}</option>
+                        <option value="czech" className="bg-slate-900">{t("abstractLanguageCzech")}</option>
+                        <option value="french" className="bg-slate-900">{t("abstractLanguageFrench")}</option>
+                        <option value="spanish" className="bg-slate-900">{t("abstractLanguageSpanish")}</option>
+                        <option value="italian" className="bg-slate-900">{t("abstractLanguageItalian")}</option>
+                        <option value="portuguese" className="bg-slate-900">{t("abstractLanguagePortuguese")}</option>
                       </select>
                     </div>
                   </div>
@@ -405,7 +424,7 @@ export default function DashboardPage() {
                   <div className="mt-4 space-y-3">
                     <div>
                       <label className={labelClass}>{t("dashboardReviewFileLabel")}</label>
-                      <input type="file" className={`${inputClass} h-auto py-2 file:mr-3 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary-foreground`} accept=".docx,.pdf" onChange={(e) => handleReviewFileChange(e.target.files?.[0] ?? null)} />
+                      <input key={reviewInputKey} type="file" className={`${inputClass} h-auto py-2 file:mr-3 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary-foreground`} accept=".docx,.pdf" onChange={(e) => handleReviewFileChange(e.target.files?.[0] ?? null)} />
                       <p className="mt-1 text-xs text-slate-400">{t("dashboardReviewFileHint")}</p>
                     </div>
                     <Button type="button" size="lg" className="w-full md:w-auto" onClick={handleCheckWithAi} disabled={isCheckingWithAi}>{isCheckingWithAi ? t("dashboardReviewChecking") : t("dashboardReviewCheckButton")}</Button>
@@ -422,6 +441,16 @@ export default function DashboardPage() {
                           <div className="h-3 w-full overflow-hidden rounded-full bg-white/10"><div className="h-full bg-emerald-400 transition-all" style={{ width: `${scorePercent}%` }} /></div>
                         </div>
                       )}
+                      {score !== null && !canSubmitForReview && (
+                        <div className="rounded-md border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                          {t("dashboardReviewNeedsImprovement")}
+                        </div>
+                      )}
+                      {score !== null && canSubmitForReview && (
+                        <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                          {t("dashboardReviewReadyForSubmit")}
+                        </div>
+                      )}
                       {reviewResult.summary && <p className="text-sm text-slate-300">{reviewResult.summary}</p>}
                       {!!reviewResult.issues?.length && <div><p className="text-sm font-medium text-slate-200">{t("dashboardReviewIssues")}:</p><ul className="list-disc pl-5 text-sm text-slate-300">{reviewResult.issues.map((item, idx) => <li key={`issue-${idx}`}>{item}</li>)}</ul></div>}
                       {!!reviewResult.recommendations?.length && <div><p className="text-sm font-medium text-slate-200">{t("dashboardReviewRecommendations")}:</p><ul className="list-disc pl-5 text-sm text-slate-300">{reviewResult.recommendations.map((item, idx) => <li key={`rec-${idx}`}>{item}</li>)}</ul></div>}
@@ -430,7 +459,15 @@ export default function DashboardPage() {
 
                       {submitForReviewError && <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{submitForReviewError}</div>}
                       {submitForReviewSuccess && <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{submitForReviewSuccess}</div>}
-                      <Button type="button" size="lg" className="w-full md:w-auto" onClick={handleSubmitForReview} disabled={isSubmittingForReview}>{t("dashboardSubmitForReview")}</Button>
+                      {!canSubmitForReview ? (
+                        <Button type="button" size="lg" variant="outline" className="w-full border-white text-white hover:bg-white/10 md:w-auto" onClick={handleResetReviewFile}>
+                          {t("dashboardReviewUploadNewVersion")}
+                        </Button>
+                      ) : (
+                        <Button type="button" size="lg" className="w-full md:w-auto" onClick={handleSubmitForReview} disabled={isSubmittingForReview}>
+                          {t("dashboardSubmitForReview")}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
