@@ -12,8 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import "@/lib/i18n/config";
 import { supabase } from "@/lib/supabase";
 
-const PASSWORD_RESET_REDIRECT = "https://conference-platform-smoky.vercel.app/reset-password";
-
 export default function LoginPage() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -63,7 +61,7 @@ export default function LoginPage() {
     setIsSendingReset(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
-        redirectTo: PASSWORD_RESET_REDIRECT
+        redirectTo: 'https://conference-platform-smoky.vercel.app/reset-password'
       });
       if (error) {
         console.log(error);
