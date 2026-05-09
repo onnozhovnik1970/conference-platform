@@ -70,6 +70,8 @@ EVALUATION CRITERIA (score out of 10):
 3. SOURCE QUALITY AND CITATION (20%): minimum 3-5 sources, real and verifiable, properly cited in text, formatted per DSTU 8302:2015
 4. TECHNICAL FORMATTING (10%): correct author/supervisor block, title formatting, reference formatting, margins, font
 
+PLAGIARISM AND AI-GENERATED CONTENT DETECTION: Analyze the text for signs of plagiarism or fully AI-generated content. Look for: 1) unusually formal or inconsistent writing style that switches between simple and overly complex language, 2) generic phrases without specific examples or data, 3) text that reads like a Wikipedia summary without original analysis, 4) inconsistent terminology or citation style suggesting copy-paste from multiple sources, 5) lack of author's own position or conclusions. Add plagiarismWarning field to JSON response: null if no concerns, or a specific warning string if suspicious patterns are found.
+
 AUTOMATIC SCORE REDUCTION:
 - Russian or Soviet sources (published in Russian in any country, OR any language published in russia/belarus): CRITICAL VIOLATION - reduce score by 3 points and flag explicitly
 - No in-text citations: reduce by 2 points
@@ -100,7 +102,8 @@ RESPONSE FORMAT (JSON only, no markdown):
   "recommendations": ["specific recommendation 1", ...],
   "formattingIssues": ["formatting issue 1", ...],
   "russianSourcesFound": boolean,
-  "russianSourcesList": ["source 1 if found", ...]
+  "russianSourcesList": ["source 1 if found", ...],
+  "plagiarismWarning": string | null
 }
 
 Respond entirely in ${responseLanguageLabel}.`;
@@ -132,6 +135,7 @@ Respond entirely in ${responseLanguageLabel}.`;
       recommendations: result.recommendations,
       formattingIssues: result.formattingIssues,
       summary: result.summary,
+      plagiarismWarning: result.plagiarismWarning ?? null,
       motivationalMessage,
       abstractText: extractedText,
       fileName: file.name
