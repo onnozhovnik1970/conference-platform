@@ -350,7 +350,7 @@ export default function DashboardPage() {
     }
 
     const hasPresentationValue: boolean | null =
-      formData.hasPresentation === "" ? null : formData.hasPresentation === "true" || formData.hasPresentation === "yes";
+      formData.hasPresentation === "" ? null : formData.hasPresentation === "yes";
     const yearOfStudyValue = formData.yearOfStudy === "" ? null : Number.parseInt(formData.yearOfStudy, 10);
 
     setIsSubmittingForReview(true);
