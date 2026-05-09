@@ -32,48 +32,64 @@ export default function ResetPasswordPage() {
       }
 
       const hash = window.location.hash?.replace(/^#/, "") ?? "";
-      if (!hash) {
-        setLinkError(t("resetPasswordInvalidLink"));
+
+      if (hash) {
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get("access_token");
+        const refreshToken = params.get("refresh_token");
+        const type = params.get("type");
+
+        if (!accessToken || !refreshToken) {
+          setLinkError(t("resetPasswordInvalidLink"));
+          setIsVerifyingLink(false);
+          return;
+        }
+
+        if (type != null && type !== "" && type !== "recovery") {
+          setLinkError(t("resetPasswordInvalidLink"));
+          setIsVerifyingLink(false);
+          return;
+        }
+
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        });
+
+        if (error) {
+          setLinkError(t("resetPasswordVerifyError"));
+          setIsVerifyingLink(false);
+          return;
+        }
+
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        setLinkReady(true);
         setIsVerifyingLink(false);
         return;
       }
 
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get("access_token");
-      const refreshToken = params.get("refresh_token");
-      const type = params.get("type");
-
-      if (!accessToken || !refreshToken) {
-        setLinkError(t("resetPasswordInvalidLink"));
+      const searchParams = new URLSearchParams(window.location.search);
+      const code = searchParams.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          setLinkError(t("resetPasswordVerifyError"));
+          setIsVerifyingLink(false);
+          return;
+        }
+        window.history.replaceState(null, "", window.location.pathname);
+        setLinkReady(true);
         setIsVerifyingLink(false);
         return;
       }
 
-      if (type != null && type !== "" && type !== "recovery") {
-        setLinkError(t("resetPasswordInvalidLink"));
-        setIsVerifyingLink(false);
-        return;
-      }
-
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken
-      });
-
-      if (error) {
-        setLinkError(t("resetPasswordVerifyError"));
-        setIsVerifyingLink(false);
-        return;
-      }
-
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-      setLinkReady(true);
+      setLinkError(t("resetPasswordInvalidLink"));
       setIsVerifyingLink(false);
     };
 
     void run();
-    // Recovery tokens are consumed once from the hash; run only on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- i18n `t` updates must not re-parse an already-cleared hash
+    // Recovery tokens / code are consumed once from the URL; run only on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- i18n `t` updates must not re-parse an already-cleared URL
   }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
