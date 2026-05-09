@@ -66,6 +66,7 @@ export default function LoginPage() {
         redirectTo: PASSWORD_RESET_REDIRECT
       });
       if (error) {
+        console.log(error);
         setResetError(t("loginResetLinkError"));
         return;
       }
