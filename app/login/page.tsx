@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import "@/lib/i18n/config";
 import { supabase } from "@/lib/supabase";
 
+const PASSWORD_RESET_REDIRECT = "https://conference-platform-smoky.vercel.app/reset-password";
+
 export default function LoginPage() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -19,6 +21,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [isSendingReset, setIsSendingReset] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -36,6 +43,37 @@ export default function LoginPage() {
       setAuthError(t("loginUnexpectedError"));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const openForgotPassword = useCallback(() => {
+    setShowForgotPassword(true);
+    setResetEmail(email);
+    setResetSuccess(false);
+    setResetError(null);
+  }, [email]);
+
+  const handleSendResetLink = async () => {
+    setResetError(null);
+    setResetSuccess(false);
+    const trimmed = resetEmail.trim();
+    if (!trimmed) {
+      return;
+    }
+    setIsSendingReset(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+        redirectTo: PASSWORD_RESET_REDIRECT
+      });
+      if (error) {
+        setResetError(t("loginResetLinkError"));
+        return;
+      }
+      setResetSuccess(true);
+    } catch {
+      setResetError(t("loginResetLinkError"));
+    } finally {
+      setIsSendingReset(false);
     }
   };
 
@@ -105,12 +143,58 @@ export default function LoginPage() {
                       placeholder={t("password")}
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={openForgotPassword}
+                      className="mt-2 text-sm text-primary hover:underline"
+                    >
+                      {t("loginForgotPassword")}
+                    </button>
                   </div>
 
                   <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
                     {t("loginSubmit")}
                   </Button>
                 </form>
+
+                {showForgotPassword && (
+                  <div className="mt-6 space-y-4 border-t border-white/10 pt-6">
+                    <p className="text-sm text-slate-300">{t("loginResetPasswordHint")}</p>
+                    <div>
+                      <label htmlFor="reset-email" className={labelClass}>
+                        {t("email")}
+                      </label>
+                      <input
+                        id="reset-email"
+                        type="email"
+                        autoComplete="email"
+                        value={resetEmail}
+                        onChange={(event) => setResetEmail(event.target.value)}
+                        className={inputClass}
+                        placeholder={t("email")}
+                      />
+                    </div>
+                    {resetError && (
+                      <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                        {resetError}
+                      </div>
+                    )}
+                    {resetSuccess && (
+                      <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                        {t("loginResetLinkSuccess")}
+                      </div>
+                    )}
+                    <Button
+                      type="button"
+                      size="lg"
+                      className="w-full"
+                      disabled={isSendingReset || !resetEmail.trim()}
+                      onClick={() => void handleSendResetLink()}
+                    >
+                      {isSendingReset ? t("loginResetLinkSending") : t("loginSendResetLink")}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
