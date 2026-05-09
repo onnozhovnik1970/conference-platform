@@ -113,16 +113,17 @@ export default function DashboardPage() {
 
     const latest = (latestRows?.[0] as LatestSubmissionStatus | undefined) ?? null;
     setLatestSubmission(latest);
-    if (latest != null && latest.ai_score !== null) {
-      setReviewResult({
-        score: latest.ai_score,
-        scoreMax: 10,
-        issues: latest.ai_issues ?? [],
-        recommendations: latest.ai_recommendations ?? [],
-        formattingIssues: latest.ai_formatting_issues ?? [],
-        summary: latest.ai_summary ?? undefined
-      });
+    if (latest === null || latest.ai_score === null) {
+      return;
     }
+    setReviewResult({
+      score: latest.ai_score,
+      scoreMax: 10,
+      issues: latest.ai_issues ?? [],
+      recommendations: latest.ai_recommendations ?? [],
+      formattingIssues: latest.ai_formatting_issues ?? [],
+      summary: latest.ai_summary ?? undefined
+    });
   };
 
   const saveAiReviewResult = async (result: ReviewResult) => {
