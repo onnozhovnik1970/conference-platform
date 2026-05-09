@@ -60,6 +60,7 @@ export default function LoginPage() {
     }
     setIsSendingReset(true);
     try {
+      console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
       const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
         redirectTo: 'https://conference-platform-smoky.vercel.app/reset-password'
       });
