@@ -113,7 +113,7 @@ export default function DashboardPage() {
 
     const latest = (latestRows?.[0] as LatestSubmissionStatus | undefined) ?? null;
     setLatestSubmission(latest);
-    if (latest?.ai_score !== null) {
+    if (latest != null && latest.ai_score !== null) {
       setReviewResult({
         score: latest.ai_score,
         scoreMax: 10,
