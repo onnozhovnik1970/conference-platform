@@ -45,6 +45,7 @@ type ReviewResult = {
   summary?: string;
   fileName?: string;
   motivationalMessage?: string;
+  plagiarismWarning?: string | null;
 };
 
 type LatestSubmissionStatus = {
@@ -603,6 +604,13 @@ export default function DashboardPage() {
                       {score !== null && canSubmitForReview && (
                         <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
                           {t("dashboardReviewReadyForSubmit")}
+                        </div>
+                      )}
+                      {!reviewResult.plagiarismWarning?.trim() ? (
+                        <p className="text-sm font-medium text-emerald-400">✓ Primary plagiarism check: no indicators detected</p>
+                      ) : (
+                        <div className="rounded-md border border-orange-400/50 bg-orange-500/15 px-4 py-3 text-sm text-orange-200">
+                          {reviewResult.plagiarismWarning.trim()}
                         </div>
                       )}
                       {reviewResult.summary && <p className="text-sm text-slate-300">{reviewResult.summary}</p>}
