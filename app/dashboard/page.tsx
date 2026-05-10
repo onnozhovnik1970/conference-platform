@@ -607,14 +607,9 @@ export default function DashboardPage() {
                         </div>
                       )}
                       {reviewResult.summary && <p className="text-sm text-slate-300">{reviewResult.summary}</p>}
-                      {reviewResult &&
-                        (!reviewResult.plagiarismWarning ? (
-                          <p className="text-sm font-medium text-emerald-400">✓ Primary plagiarism check: no indicators detected</p>
-                        ) : (
-                          <div className="rounded-md border border-orange-400/50 bg-orange-500/15 px-4 py-3 text-sm text-orange-200">
-                            {reviewResult.plagiarismWarning}
-                          </div>
-                        ))}
+                      <p className="text-sm font-medium text-emerald-400 mt-2">
+                        ✓ Primary plagiarism check: {reviewResult.plagiarismWarning ?? "no indicators detected"}
+                      </p>
                       {!!reviewResult.issues?.length && <div><p className="text-sm font-medium text-slate-200">{t("dashboardReviewIssues")}:</p><ul className="list-disc pl-5 text-sm text-slate-300">{reviewResult.issues.map((item, idx) => <li key={`issue-${idx}`}>{item}</li>)}</ul></div>}
                       {!!reviewResult.recommendations?.length && <div><p className="text-sm font-medium text-slate-200">{t("dashboardReviewRecommendations")}:</p><ul className="list-disc pl-5 text-sm text-slate-300">{reviewResult.recommendations.map((item, idx) => <li key={`rec-${idx}`}>{item}</li>)}</ul></div>}
                       {!!reviewResult.formattingIssues?.length && <div><p className="text-sm font-medium text-slate-200">{t("dashboardReviewFormattingIssues")}:</p><ul className="list-disc pl-5 text-sm text-slate-300">{reviewResult.formattingIssues.map((item, idx) => <li key={`fmt-${idx}`}>{item}</li>)}</ul></div>}
