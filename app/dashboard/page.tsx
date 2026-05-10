@@ -606,11 +606,11 @@ export default function DashboardPage() {
                           {t("dashboardReviewReadyForSubmit")}
                         </div>
                       )}
-                      {!reviewResult.plagiarismWarning?.trim() ? (
+                      {!reviewResult.plagiarismWarning ? (
                         <p className="text-sm font-medium text-emerald-400">✓ Primary plagiarism check: no indicators detected</p>
                       ) : (
                         <div className="rounded-md border border-orange-400/50 bg-orange-500/15 px-4 py-3 text-sm text-orange-200">
-                          {reviewResult.plagiarismWarning.trim()}
+                          {reviewResult.plagiarismWarning}
                         </div>
                       )}
                       {reviewResult.summary && <p className="text-sm text-slate-300">{reviewResult.summary}</p>}
