@@ -21,7 +21,7 @@ function safeAttachmentName(path: string, submissionId: number): string {
   return `abstract-${submissionId}`;
 }
 
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   const auth = await assertAdminFromRequest(request);
   if (!auth.ok) {
     return auth.response;
