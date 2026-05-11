@@ -27,10 +27,14 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
   const id = Number.parseInt(rawId, 10);
 
+  const rawBodyText = await request.text();
+  console.log("[admin/submissions PATCH] request body (exact raw)", rawBodyText);
+
   let body: unknown;
   try {
-    body = await request.json();
+    body = rawBodyText.trim() === "" ? null : JSON.parse(rawBodyText);
   } catch {
+    console.log("[admin/submissions PATCH] JSON.parse failed for body above");
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
@@ -68,6 +72,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     .select("id");
 
   if (updateError) {
+    console.log("[admin/submissions PATCH] Supabase error message:", updateError.message);
+    console.log("[admin/submissions PATCH] Supabase error code:", updateError.code);
+    console.log("[admin/submissions PATCH] Supabase error details:", updateError.details);
+    console.log("[admin/submissions PATCH] Supabase error hint:", updateError.hint);
     console.error("[admin/submissions PATCH] Supabase update failed", {
       submissionId: id,
       payload: { status, reviewer_comment: reviewer_comment ? "[set]" : null },
