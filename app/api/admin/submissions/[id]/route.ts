@@ -57,17 +57,39 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
 
-  const { error: updateError } = await supabase
+  const { data: updatedRows, error: updateError } = await supabase
     .from("submissions")
     .update({
       status,
       reviewer_comment,
       status_updated_at: new Date().toISOString()
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
 
   if (updateError) {
+    console.error("[admin/submissions PATCH] Supabase update failed", {
+      submissionId: id,
+      payload: { status, reviewer_comment: reviewer_comment ? "[set]" : null },
+      supabase: {
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint,
+        code: updateError.code
+      }
+    });
     return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  if (!updatedRows?.length) {
+    console.error("[admin/submissions PATCH] No row updated (id not found or RLS blocked)", {
+      submissionId: id,
+      payload: { status, reviewer_comment: reviewer_comment ? "[set]" : null }
+    });
+    return NextResponse.json(
+      { error: "No submission matched this id (not found or not permitted)." },
+      { status: 404 }
+    );
   }
 
   return NextResponse.json({ success: true });
