@@ -83,6 +83,8 @@ const resources = {
       adminLoadError: "Failed to load submissions. Please try again.",
       adminProfilesLoadError: "Failed to load student profiles.",
       adminUpdateStatusError: "Could not update submission status.",
+      adminEmailNotificationError:
+        "Status was saved, but the notification email could not be sent. Check Resend configuration and the participant account email.",
       adminNoSubmissions: "No submissions found.",
       adminAuthorName: "Author",
       adminStudentName: "Student Name",
@@ -312,6 +314,8 @@ const resources = {
       adminLoadError: "Не вдалося завантажити подання. Спробуйте ще раз.",
       adminProfilesLoadError: "Не вдалося завантажити профілі студентів.",
       adminUpdateStatusError: "Не вдалося оновити статус подання.",
+      adminEmailNotificationError:
+        "Статус збережено, але лист із повідомленням надіслати не вдалося. Перевірте налаштування Resend та email облікового запису учасника.",
       adminNoSubmissions: "Подання відсутні.",
       adminAuthorName: "Автор",
       adminStudentName: "Ім'я студента",

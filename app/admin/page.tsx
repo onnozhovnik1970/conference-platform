@@ -46,6 +46,7 @@ type ProfileRecord = {
 
 type AdminRow = {
   id: number;
+  userId: string;
   createdAt: string | null;
   title: string;
   section: string;
@@ -173,6 +174,7 @@ export default function AdminPage() {
         const profile = profilesById[submission.user_id];
         return {
           id: submission.id,
+          userId: submission.user_id,
           createdAt: submission.created_at,
           title: submission.abstract_title?.trim() || "—",
           section: submission.thematic_panel?.trim() || "—",
@@ -281,7 +283,22 @@ export default function AdminPage() {
       return;
     }
 
+    const notify = await fetchAsAdmin("/api/email/status-notification", {
+      method: "POST",
+      body: JSON.stringify({
+        userId: row.userId,
+        participantName: row.authorName,
+        abstractTitle: row.title,
+        newStatus: row.status,
+        reviewerComment: row.reviewerComment.trim() || null
+      })
+    });
+
     setSavingId(null);
+
+    if (notify.missingSession || !notify.response?.ok) {
+      setError(t("adminEmailNotificationError"));
+    }
   };
 
   const formatDate = (value: string | null) => {
