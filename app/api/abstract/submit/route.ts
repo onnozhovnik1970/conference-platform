@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       abstract_text: payload.abstractText.trim(),
       ai_review: payload.aiReview.trim(),
       ai_score: payload.aiScore,
-      status: "submitted"
+      status: "under_review"
     });
 
     if (error) {

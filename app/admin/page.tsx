@@ -2,34 +2,87 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ALLOWED_ADMIN_EMAILS } from "@/lib/admin";
 import "@/lib/i18n/config";
 import { supabase } from "@/lib/supabase";
 
-type Submission = {
+const STATUS_OPTIONS = ["pending", "pending_review", "under_review", "accepted", "rejected", "needs_revision"] as const;
+type SubmissionAdminStatus = (typeof STATUS_OPTIONS)[number];
+
+function isSubmissionAdminStatus(value: string): value is SubmissionAdminStatus {
+  return (STATUS_OPTIONS as readonly string[]).includes(value);
+}
+
+function normalizeStatus(value: string | null | undefined): SubmissionAdminStatus {
+  if (value && isSubmissionAdminStatus(value)) {
+    return value;
+  }
+  return "pending";
+}
+
+/** Row shape returned from GET /api/admin/submissions (Supabase `submissions` + joined `profiles`). */
+type SubmissionRecord = {
   id: number;
   user_id: string;
-  abstract_title: string | null;
-  ai_score: number | null;
-  status: string | null;
   created_at: string | null;
-  file_path: string | null;
+  abstract_title: string | null;
+  thematic_panel: string | null;
+  status: string | null;
+  reviewer_comment: string | null;
 };
 
-type Profile = {
+type ProfileRecord = {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  middle_name: string | null;
 };
 
-const ALLOWED_ADMIN_EMAILS = [
-  "o.n.nozhovnik@gmail.com"
-];
+type AdminRow = {
+  id: number;
+  createdAt: string | null;
+  title: string;
+  section: string;
+  authorName: string;
+  status: SubmissionAdminStatus;
+  reviewerComment: string;
+};
+
+function buildAuthorName(profile: ProfileRecord | undefined, unknownLabel: string): string {
+  if (!profile) {
+    return unknownLabel;
+  }
+  const parts = [profile.last_name, profile.first_name, profile.middle_name].filter(
+    (part): part is string => typeof part === "string" && Boolean(part.trim())
+  );
+  const name = parts.join(" ").trim();
+  return name || unknownLabel;
+}
+
+function statusBadgeClass(status: SubmissionAdminStatus): string {
+  const base = "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium";
+  switch (status) {
+    case "accepted":
+      return `${base} border-emerald-400/50 bg-emerald-500/15 text-emerald-200`;
+    case "rejected":
+      return `${base} border-rose-400/50 bg-rose-500/15 text-rose-200`;
+    case "pending":
+      return `${base} border-amber-400/50 bg-amber-400/15 text-amber-100`;
+    case "pending_review":
+    case "under_review":
+      return `${base} border-sky-400/50 bg-sky-500/15 text-sky-100`;
+    case "needs_revision":
+      return `${base} border-orange-400/50 bg-orange-500/15 text-orange-100`;
+    default:
+      return `${base} border-white/20 bg-white/10 text-slate-200`;
+  }
+}
 
 export default function AdminPage() {
   const { t, i18n } = useTranslation();
@@ -42,50 +95,94 @@ export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [profilesById, setProfilesById] = useState<Record<string, Profile>>({});
-  const [updatingSubmissionId, setUpdatingSubmissionId] = useState<number | null>(null);
-  const [downloadingSubmissionId, setDownloadingSubmissionId] = useState<number | null>(null);
+  const [rows, setRows] = useState<AdminRow[]>([]);
+  const [savingId, setSavingId] = useState<number | null>(null);
 
   const adminEmailsSet = useMemo(() => {
-    return new Set(ALLOWED_ADMIN_EMAILS.map((email) => email.trim().toLowerCase()).filter(Boolean));
+    return new Set(ALLOWED_ADMIN_EMAILS.map((value) => value.trim().toLowerCase()).filter(Boolean));
   }, []);
 
-  const loadSubmissions = async () => {
+  const fetchAsAdmin = useCallback(async (input: string, init?: RequestInit) => {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      return { response: null as Response | null, missingSession: true as const };
+    }
+    const headers = new Headers(init?.headers);
+    headers.set("Authorization", `Bearer ${session.access_token}`);
+    if (init?.body != null && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+    const response = await fetch(input, { ...init, headers });
+    return { response, missingSession: false as const };
+  }, []);
+
+  const formatStatusLabel = useCallback(
+    (status: SubmissionAdminStatus) => {
+      switch (status) {
+        case "pending":
+          return t("adminStatusPending");
+        case "pending_review":
+          return t("adminStatusPendingReview");
+        case "under_review":
+          return t("adminStatusUnderReview");
+        case "accepted":
+          return t("adminStatusAccepted");
+        case "rejected":
+          return t("adminStatusRejected");
+        case "needs_revision":
+          return t("adminStatusNeedsRevision");
+        default:
+          return t("adminStatusUnknown");
+      }
+    },
+    [t]
+  );
+
+  const loadSubmissions = useCallback(async () => {
     setError(null);
 
-    const { data: submissionRows, error: submissionsError } = await supabase
-      .from("submissions")
-      .select("id, user_id, abstract_title, ai_score, status, created_at, file_path")
-      .order("created_at", { ascending: false });
-
-    if (submissionsError) {
+    const { response, missingSession } = await fetchAsAdmin("/api/admin/submissions");
+    if (missingSession || !response) {
       setError(t("adminLoadError"));
       return;
     }
 
-    const safeSubmissions = (submissionRows ?? []) as Submission[];
-    setSubmissions(safeSubmissions);
-
-    const userIds = Array.from(new Set(safeSubmissions.map((item) => item.user_id).filter(Boolean)));
-    if (userIds.length === 0) {
-      setProfilesById({});
+    if (response.status === 401 || response.status === 403) {
+      setError(t("adminAccessDenied"));
       return;
     }
 
-    const { data: profileRows, error: profilesError } = await supabase
-      .from("profiles")
-      .select("id, first_name, last_name")
-      .in("id", userIds);
-
-    if (profilesError) {
-      setError(t("adminProfilesLoadError"));
+    if (!response.ok) {
+      setError(t("adminLoadError"));
       return;
     }
 
-    const profileMap = Object.fromEntries(((profileRows ?? []) as Profile[]).map((profile) => [profile.id, profile]));
-    setProfilesById(profileMap);
-  };
+    const payload = (await response.json()) as {
+      submissions: SubmissionRecord[];
+      profilesById: Record<string, ProfileRecord>;
+    };
+
+    const submissions = payload.submissions ?? [];
+    const profilesById = payload.profilesById ?? {};
+
+    const unknownAuthor = t("adminUnknownStudent");
+    setRows(
+      submissions.map((submission) => {
+        const profile = profilesById[submission.user_id];
+        return {
+          id: submission.id,
+          createdAt: submission.created_at,
+          title: submission.abstract_title?.trim() || "—",
+          section: submission.thematic_panel?.trim() || "—",
+          authorName: buildAuthorName(profile, unknownAuthor),
+          status: normalizeStatus(submission.status),
+          reviewerComment: submission.reviewer_comment ?? ""
+        };
+      })
+    );
+  }, [fetchAsAdmin, t]);
 
   useEffect(() => {
     const init = async () => {
@@ -104,11 +201,9 @@ export default function AdminPage() {
         return;
       }
 
-      const email = user.email?.toLowerCase() ?? "";
-      console.log("admin access check user:", user);
-      console.log("admin access check email:", email);
+      const userEmail = user.email?.toLowerCase() ?? "";
       setIsAuthenticated(true);
-      if (!adminEmailsSet.has(email)) {
+      if (!adminEmailsSet.has(userEmail)) {
         setIsAuthorized(false);
         setIsLoading(false);
         return;
@@ -120,7 +215,7 @@ export default function AdminPage() {
     };
 
     void init();
-  }, [adminEmailsSet, t]);
+  }, [adminEmailsSet, loadSubmissions]);
 
   const handleAdminLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -136,8 +231,6 @@ export default function AdminPage() {
       }
 
       const normalizedEmail = data.user.email?.toLowerCase() ?? "";
-      console.log("admin access check user:", data.user);
-      console.log("admin access check email:", normalizedEmail);
       setIsAuthenticated(true);
 
       if (!adminEmailsSet.has(normalizedEmail)) {
@@ -155,66 +248,45 @@ export default function AdminPage() {
     }
   };
 
-  const handleUpdateStatus = async (submissionId: number, status: "accepted" | "rejected") => {
+  const handleStatusChange = (id: number, value: string) => {
+    const next = normalizeStatus(value);
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, status: next } : row)));
+  };
+
+  const handleCommentChange = (id: number, value: string) => {
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, reviewerComment: value } : row)));
+  };
+
+  const handleSaveRow = async (row: AdminRow) => {
     setError(null);
-    setUpdatingSubmissionId(submissionId);
+    setSavingId(row.id);
 
-    const { error: updateError } = await supabase.from("submissions").update({ status }).eq("id", submissionId);
+    const { response, missingSession } = await fetchAsAdmin(`/api/admin/submissions/${encodeURIComponent(String(row.id))}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        status: row.status,
+        reviewer_comment: row.reviewerComment.trim() || null
+      })
+    });
 
-    if (updateError) {
+    if (missingSession || !response) {
       setError(t("adminUpdateStatusError"));
-      setUpdatingSubmissionId(null);
+      setSavingId(null);
       return;
     }
 
-    setSubmissions((prev) => prev.map((item) => (item.id === submissionId ? { ...item, status } : item)));
-    setUpdatingSubmissionId(null);
-  };
-
-  const handleDownloadSubmissionFile = async (submission: Submission) => {
-    if (!submission.file_path) {
-      setError(t("adminFileNotAvailable"));
+    if (!response.ok) {
+      setError(t("adminUpdateStatusError"));
+      setSavingId(null);
       return;
     }
 
-    setError(null);
-    setDownloadingSubmissionId(submission.id);
-
-    const { data, error: signedUrlError } = await supabase.storage
-      .from("abstracts")
-      .createSignedUrl(submission.file_path, 60);
-
-    if (signedUrlError || !data?.signedUrl) {
-      setError(t("adminFileDownloadError"));
-      setDownloadingSubmissionId(null);
-      return;
-    }
-
-    globalThis.open(data.signedUrl, "_blank", "noopener,noreferrer");
-    setDownloadingSubmissionId(null);
-  };
-
-  const formatStatus = (status: string | null) => {
-    if (!status) {
-      return t("adminStatusUnknown");
-    }
-
-    if (status === "pending_review") {
-      return t("adminStatusPending");
-    }
-    if (status === "accepted") {
-      return t("adminStatusAccepted");
-    }
-    if (status === "rejected") {
-      return t("adminStatusRejected");
-    }
-
-    return status;
+    setSavingId(null);
   };
 
   const formatDate = (value: string | null) => {
     if (!value) {
-      return "-";
+      return "—";
     }
 
     const locale = i18n.language === "ua" ? "uk-UA" : "en-US";
@@ -245,7 +317,7 @@ export default function AdminPage() {
             </div>
           </header>
 
-          <div className="mx-auto mt-10 max-w-6xl space-y-6 pb-10">
+          <div className="mx-auto mt-10 max-w-7xl space-y-6 pb-10">
             <Card className="border-white/10 bg-black/35 backdrop-blur">
               <CardHeader>
                 <CardTitle className="text-3xl text-white">{t("adminTitle")}</CardTitle>
@@ -309,68 +381,63 @@ export default function AdminPage() {
                   </div>
                 )}
 
-                {!isLoading && isAuthorized && !error && submissions.length === 0 && (
+                {!isLoading && isAuthorized && rows.length === 0 && (
                   <p className="text-slate-300">{t("adminNoSubmissions")}</p>
                 )}
 
-                {!isLoading && isAuthorized && submissions.length > 0 && (
+                {!isLoading && isAuthorized && rows.length > 0 && (
                   <div className="overflow-x-auto rounded-md border border-white/15">
                     <table className="min-w-full divide-y divide-white/10 text-sm">
                       <thead className="bg-white/5">
                         <tr>
-                          <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminStudentName")}</th>
+                          <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminAuthorName")}</th>
                           <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminAbstractTitle")}</th>
-                          <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminAiScore")}</th>
+                          <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminSection")}</th>
+                          <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminSubmissionDate")}</th>
                           <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminStatus")}</th>
-                          <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminCreatedAt")}</th>
+                          <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminReviewerComment")}</th>
                           <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminActions")}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/10 bg-black/20">
-                        {submissions.map((submission) => {
-                          const profile = profilesById[submission.user_id];
-                          const studentName = [profile?.last_name ?? "", profile?.first_name ?? ""].join(" ").trim() || t("adminUnknownStudent");
-                          const isUpdating = updatingSubmissionId === submission.id;
-                          const isDownloading = downloadingSubmissionId === submission.id;
-
+                        {rows.map((row) => {
+                          const isSaving = savingId === row.id;
                           return (
-                            <tr key={submission.id}>
-                              <td className="px-4 py-3 text-slate-200">{studentName}</td>
-                              <td className="px-4 py-3 text-slate-200">{submission.abstract_title || "-"}</td>
-                              <td className="px-4 py-3 text-slate-200">{submission.ai_score ?? "-"}</td>
-                              <td className="px-4 py-3 text-slate-200">{formatStatus(submission.status)}</td>
-                              <td className="px-4 py-3 text-slate-200">{formatDate(submission.created_at)}</td>
-                              <td className="px-4 py-3">
-                                <div className="flex flex-wrap gap-2">
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    onClick={() => handleUpdateStatus(submission.id, "accepted")}
-                                    disabled={isUpdating}
+                            <tr key={row.id}>
+                              <td className="max-w-[10rem] px-4 py-3 text-slate-200">{row.authorName}</td>
+                              <td className="max-w-[14rem] px-4 py-3 text-slate-200">{row.title}</td>
+                              <td className="max-w-[12rem] px-4 py-3 text-slate-200">{row.section}</td>
+                              <td className="whitespace-nowrap px-4 py-3 text-slate-200">{formatDate(row.createdAt)}</td>
+                              <td className="px-4 py-3 align-top">
+                                <div className="flex flex-col gap-2">
+                                  <span className={statusBadgeClass(row.status)}>{formatStatusLabel(row.status)}</span>
+                                  <select
+                                    value={row.status}
+                                    onChange={(event) => handleStatusChange(row.id, event.target.value)}
+                                    className="h-9 w-full min-w-[10rem] rounded-md border border-white/20 bg-white/5 px-2 text-xs text-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                    aria-label={t("adminStatus")}
                                   >
-                                    {t("adminAccept")}
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-rose-300/60 text-rose-200 hover:bg-rose-500/10"
-                                    onClick={() => handleUpdateStatus(submission.id, "rejected")}
-                                    disabled={isUpdating}
-                                  >
-                                    {t("adminReject")}
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-white/30 text-white hover:bg-white/10"
-                                    onClick={() => handleDownloadSubmissionFile(submission)}
-                                    disabled={isDownloading || !submission.file_path}
-                                  >
-                                    {isDownloading ? t("adminDownloading") : t("adminDownload")}
-                                  </Button>
+                                    {STATUS_OPTIONS.map((option) => (
+                                      <option key={option} value={option} className="bg-slate-900 text-white">
+                                        {formatStatusLabel(option)}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </div>
+                              </td>
+                              <td className="min-w-[12rem] px-4 py-3 align-top">
+                                <textarea
+                                  value={row.reviewerComment}
+                                  onChange={(event) => handleCommentChange(row.id, event.target.value)}
+                                  rows={3}
+                                  className="w-full resize-y rounded-md border border-white/20 bg-white/5 px-2 py-1.5 text-xs text-white placeholder:text-slate-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                  placeholder={t("adminReviewerComment")}
+                                />
+                              </td>
+                              <td className="px-4 py-3 align-top">
+                                <Button type="button" size="sm" onClick={() => void handleSaveRow(row)} disabled={isSaving}>
+                                  {isSaving ? t("adminSaving") : t("adminSave")}
+                                </Button>
                               </td>
                             </tr>
                           );
