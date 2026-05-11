@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { Download, Loader2 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -35,6 +36,7 @@ type SubmissionRecord = {
   thematic_panel: string | null;
   status: string | null;
   reviewer_comment: string | null;
+  file_path: string | null;
 };
 
 type ProfileRecord = {
@@ -53,6 +55,8 @@ type AdminRow = {
   authorName: string;
   status: SubmissionAdminStatus;
   reviewerComment: string;
+  /** Supabase Storage path in bucket `abstracts`, or null if none. */
+  filePath: string | null;
 };
 
 function buildAuthorName(profile: ProfileRecord | undefined, unknownLabel: string): string {
@@ -98,6 +102,7 @@ export default function AdminPage() {
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
   const [rows, setRows] = useState<AdminRow[]>([]);
   const [savingId, setSavingId] = useState<number | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const adminEmailsSet = useMemo(() => {
     return new Set(ALLOWED_ADMIN_EMAILS.map((value) => value.trim().toLowerCase()).filter(Boolean));
@@ -180,7 +185,8 @@ export default function AdminPage() {
           section: submission.thematic_panel?.trim() || "—",
           authorName: buildAuthorName(profile, unknownAuthor),
           status: normalizeStatus(submission.status),
-          reviewerComment: submission.reviewer_comment ?? ""
+          reviewerComment: submission.reviewer_comment ?? "",
+          filePath: submission.file_path?.trim() || null
         };
       })
     );
@@ -298,6 +304,72 @@ export default function AdminPage() {
 
     if (notify.missingSession || !notify.response?.ok) {
       setError(t("adminEmailNotificationError"));
+    }
+  };
+
+  const parseFilenameFromContentDisposition = (header: string | null): string | null => {
+    if (!header) return null;
+    const utf8Match = /filename\*=(?:UTF-8''|utf-8'')([^;]+)/i.exec(header);
+    if (utf8Match?.[1]) {
+      try {
+        return decodeURIComponent(utf8Match[1].trim().replace(/^"(.*)"$/, "$1"));
+      } catch {
+        return utf8Match[1].trim();
+      }
+    }
+    const asciiMatch = /filename="([^"]+)"/i.exec(header);
+    if (asciiMatch?.[1]) return asciiMatch[1];
+    const looseMatch = /filename=([^;\s]+)/i.exec(header);
+    return looseMatch?.[1]?.replace(/^"(.*)"$/, "$1") ?? null;
+  };
+
+  const handleDownloadAbstract = async (row: AdminRow) => {
+    if (!row.filePath) {
+      setError(t("adminFileNotAvailable"));
+      return;
+    }
+    setError(null);
+    setDownloadingId(row.id);
+    const { response, missingSession } = await fetchAsAdmin(
+      `/api/admin/submissions/${encodeURIComponent(String(row.id))}/download`,
+      { method: "GET" }
+    );
+
+    if (missingSession || !response) {
+      setError(t("adminFileDownloadError"));
+      setDownloadingId(null);
+      return;
+    }
+
+    if (!response.ok) {
+      try {
+        const body = (await response.json()) as { error?: string };
+        setError(body.error?.trim() || t("adminFileDownloadError"));
+      } catch {
+        setError(t("adminFileDownloadError"));
+      }
+      setDownloadingId(null);
+      return;
+    }
+
+    try {
+      const blob = await response.blob();
+      const fromHeader = parseFilenameFromContentDisposition(response.headers.get("content-disposition"));
+      const fallback = row.filePath.split("/").pop() || `abstract-${row.id}`;
+      const downloadName = fromHeader || fallback;
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = downloadName;
+      anchor.rel = "noopener";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError(t("adminFileDownloadError"));
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -419,6 +491,8 @@ export default function AdminPage() {
                       <tbody className="divide-y divide-white/10 bg-black/20">
                         {rows.map((row) => {
                           const isSaving = savingId === row.id;
+                          const isDownloading = downloadingId === row.id;
+                          const canDownload = Boolean(row.filePath);
                           return (
                             <tr key={row.id}>
                               <td className="max-w-[10rem] px-4 py-3 text-slate-200">{row.authorName}</td>
@@ -452,9 +526,39 @@ export default function AdminPage() {
                                 />
                               </td>
                               <td className="px-4 py-3 align-top">
-                                <Button type="button" size="sm" onClick={() => void handleSaveRow(row)} disabled={isSaving}>
-                                  {isSaving ? t("adminSaving") : t("adminSave")}
-                                </Button>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Button type="button" size="sm" onClick={() => void handleSaveRow(row)} disabled={isSaving}>
+                                    {isSaving ? t("adminSaving") : t("adminSave")}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9 w-9 shrink-0 border-white/25 bg-white/5 p-0 text-white hover:bg-white/15"
+                                    disabled={!canDownload || isDownloading || isSaving}
+                                    title={
+                                      isDownloading
+                                        ? t("adminDownloading")
+                                        : canDownload
+                                          ? t("adminDownload")
+                                          : t("adminFileNotAvailable")
+                                    }
+                                    aria-label={
+                                      isDownloading
+                                        ? t("adminDownloading")
+                                        : canDownload
+                                          ? t("adminDownload")
+                                          : t("adminFileNotAvailable")
+                                    }
+                                    onClick={() => void handleDownloadAbstract(row)}
+                                  >
+                                    {isDownloading ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                                    ) : (
+                                      <Download className="h-4 w-4" aria-hidden />
+                                    )}
+                                  </Button>
+                                </div>
                               </td>
                             </tr>
                           );
