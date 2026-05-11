@@ -15,20 +15,21 @@ function isAllowedStatus(value: unknown): value is (typeof STATUS_OPTIONS)[numbe
   return typeof value === "string" && (STATUS_OPTIONS as readonly string[]).includes(value);
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await assertAdminFromRequest(request);
   if (!auth.ok) {
     return auth.response;
   }
 
-  const rawId = params.id?.trim();
+  const { id } = await params;
+  const rawId = id?.trim();
   if (!rawId || !/^\d+$/.test(rawId)) {
     return NextResponse.json(
-      { error: "Missing or invalid submission id", receivedId: params.id },
+      { error: "Missing or invalid submission id", receivedId: id },
       { status: 400 }
     );
   }
-  const id = Number.parseInt(rawId, 10);
+  const submissionId = Number.parseInt(rawId, 10);
 
   const rawBodyText = await request.text();
 
@@ -75,7 +76,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       reviewer_comment,
       status_updated_at: new Date().toISOString()
     })
-    .eq("id", id)
+    .eq("id", submissionId)
     .select("id");
 
   if (updateError) {
@@ -88,7 +89,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
           details: updateError.details,
           hint: updateError.hint
         },
-        submissionId: id,
+        submissionId,
         payload: { status, reviewer_comment }
       },
       { status: 500 }
@@ -99,7 +100,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     return NextResponse.json(
       {
         error: "No submission matched this id (not found or not permitted).",
-        submissionId: id,
+        submissionId,
         payload: { status, reviewer_comment }
       },
       { status: 404 }

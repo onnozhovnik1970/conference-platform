@@ -21,17 +21,18 @@ function safeAttachmentName(path: string, submissionId: number): string {
   return `abstract-${submissionId}`;
 }
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await assertAdminFromRequest(request);
   if (!auth.ok) {
     return auth.response;
   }
 
-  const rawId = params.id?.trim();
+  const { id } = await params;
+  const rawId = id?.trim();
   if (!rawId || !/^\d+$/.test(rawId)) {
     return NextResponse.json({ error: "Missing or invalid submission id" }, { status: 400 });
   }
-  const id = Number.parseInt(rawId, 10);
+  const submissionId = Number.parseInt(rawId, 10);
 
   const supabase = getServiceRoleClient();
   if (!supabase) {
@@ -41,12 +42,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
   const { data: row, error: selectError } = await supabase
     .from("submissions")
     .select("file_path")
-    .eq("id", id)
+    .eq("id", submissionId)
     .maybeSingle();
 
   if (selectError) {
     console.error("[admin/submissions download] Supabase select failed", {
-      submissionId: id,
+      submissionId,
       message: selectError.message,
       details: selectError.details,
       hint: selectError.hint,
@@ -64,7 +65,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
   if (downloadError || !fileBlob) {
     console.error("[admin/submissions download] Storage download failed", {
-      submissionId: id,
+      submissionId,
       filePath,
       message: downloadError?.message,
       name: downloadError?.name
@@ -75,7 +76,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     );
   }
 
-  const fileName = safeAttachmentName(filePath, id);
+  const fileName = safeAttachmentName(filePath, submissionId);
   const contentType = mimeForPath(fileName);
 
   return new NextResponse(fileBlob, {
