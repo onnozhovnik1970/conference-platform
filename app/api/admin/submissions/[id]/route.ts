@@ -15,9 +15,6 @@ function isAllowedStatus(value: unknown): value is (typeof STATUS_OPTIONS)[numbe
   return typeof value === "string" && (STATUS_OPTIONS as readonly string[]).includes(value);
 }
 
-/** RFC 4122 string form (hex + hyphens), case-insensitive. */
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await assertAdminFromRequest(request);
   if (!auth.ok) {
@@ -27,12 +24,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params;
   const rawId = id?.trim();
   if (!rawId) {
-    return NextResponse.json(
-      { error: "Missing or invalid submission id", receivedId: id },
-      { status: 400 }
-    );
-  }
-  if (!UUID_REGEX.test(rawId)) {
     return NextResponse.json(
       { error: "Missing or invalid submission id", receivedId: id },
       { status: 400 }
