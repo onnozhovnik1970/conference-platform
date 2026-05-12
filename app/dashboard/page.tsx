@@ -127,7 +127,7 @@ export default function DashboardPage() {
     });
   };
 
-  const saveAiReviewResult = async (result: ReviewResult) => {
+  const saveAiReviewResult = async (result: ReviewResult, canInsert: boolean) => {
     if (!userId) {
       return;
     }
@@ -146,6 +146,10 @@ export default function DashboardPage() {
         console.log("dashboard save ai review update error:", updateError);
       }
       await loadLatestSubmission(userId);
+      return;
+    }
+
+    if (!canInsert) {
       return;
     }
 
@@ -221,6 +225,14 @@ export default function DashboardPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const canStartNewSubmission =
+    !isLoading &&
+    (!latestSubmission ||
+      latestSubmission.status === "needs_revision" ||
+      latestSubmission.status === "rejected");
+
+  const submissionBlockedNotice = !isLoading && !canStartNewSubmission;
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitError(null);
@@ -228,6 +240,11 @@ export default function DashboardPage() {
 
     if (!userId) {
       setSubmitError(t("dashboardSubmissionAuthError"));
+      return;
+    }
+
+    if (!canStartNewSubmission) {
+      setSubmitError(t("dashboardSubmissionBlockedActive"));
       return;
     }
 
@@ -329,7 +346,7 @@ export default function DashboardPage() {
       }
 
       setReviewResult(result);
-      await saveAiReviewResult(result);
+      await saveAiReviewResult(result, canStartNewSubmission);
     } catch {
       setReviewError(t("dashboardReviewError"));
     } finally {
@@ -347,6 +364,11 @@ export default function DashboardPage() {
     }
     if (!reviewFile) {
       setSubmitForReviewError(t("dashboardReviewUploadRequired"));
+      return;
+    }
+
+    if (!canStartNewSubmission) {
+      setSubmitForReviewError(t("dashboardSubmissionBlockedActive"));
       return;
     }
 
@@ -507,7 +529,13 @@ export default function DashboardPage() {
               <CardContent>
                 {submitError && <div className="mb-4 rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{submitError}</div>}
                 {submitSuccess && <div className="mb-4 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{submitSuccess}</div>}
+                {submissionBlockedNotice && (
+                  <div className="mb-4 rounded-md border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                    {t("dashboardSubmissionBlockedActive")}
+                  </div>
+                )}
 
+                <fieldset disabled={!canStartNewSubmission} className="min-w-0 space-y-5 border-0 p-0">
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div><label className={labelClass}>{t("abstractTitle")}</label><input className={inputClass} value={formData.abstractTitle} onChange={(e) => updateField("abstractTitle", e.target.value)} /></div>
@@ -629,6 +657,7 @@ export default function DashboardPage() {
                     </div>
                   )}
                 </div>
+                </fieldset>
               </CardContent>
             </Card>
           </div>

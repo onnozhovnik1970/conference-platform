@@ -40,6 +40,8 @@ const resources = {
       dashboardSubmissionSuccess: "Submission saved successfully.",
       dashboardSubmissionError: "Failed to save submission. Please try again.",
       dashboardSubmissionAuthError: "You must be logged in to submit.",
+      dashboardSubmissionBlockedActive:
+        "You already have a submission in progress. You cannot start a new one until organizers finish reviewing your current submission. You may submit again only after your latest submission is marked as needing revision or rejected.",
       dashboardStatusProgressTitle: "Submission status progress",
       dashboardStatusDraft: "Draft",
       dashboardStatusAiReview: "Pending AI review",
@@ -271,6 +273,8 @@ const resources = {
       dashboardSubmissionSuccess: "Подання успішно збережено.",
       dashboardSubmissionError: "Не вдалося зберегти подання. Спробуйте ще раз.",
       dashboardSubmissionAuthError: "Щоб подати матеріали, потрібно увійти.",
+      dashboardSubmissionBlockedActive:
+        "У вас уже є подання, яке розглядається. Ви не можете створити нове, доки організатори не завершать перевірку поточного. Нове подання можливе лише після того, як останнє буде позначене як «Потрібна доопрацювання» або «Відхилено».",
       dashboardStatusProgressTitle: "Прогрес статусу подання",
       dashboardStatusDraft: "Чернетка",
       dashboardStatusAiReview: "На перевірці ШІ",
