@@ -7,7 +7,7 @@ import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server
  * `reviewer_comment` and `status_updated_at`: migration 20260512120000_submissions_reviewer_fields.sql
  */
 const SUBMISSION_SELECT =
-  "id, user_id, created_at, abstract_title, thematic_panel, status, reviewer_comment, status_updated_at, file_path, archived_at";
+  "id, user_id, created_at, abstract_title, thematic_panel, section_id, status, reviewer_comment, status_updated_at, file_path, archived_at";
 
 export async function GET(request: Request) {
   const auth = await assertAdminFromRequest(request);

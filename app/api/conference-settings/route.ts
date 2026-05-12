@@ -26,7 +26,11 @@ export async function GET() {
     });
   }
 
-  const { data, error } = await supabase.from("conference_settings").select("id, title, date, deadline, location, description, updated_at").eq("id", 1).maybeSingle();
+  const { data, error } = await supabase
+    .from("conference_settings")
+    .select("id, title, date, deadline, location, description, zoom_link, zoom_details, updated_at")
+    .eq("id", 1)
+    .maybeSingle();
 
   if (error || !data) {
     return jsonWithNoStore({

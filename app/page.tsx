@@ -2,6 +2,7 @@
 
 import { Atom, BookOpen, CalendarDays, Sparkles, Video } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -10,6 +11,7 @@ import { useConferenceSettings } from "@/components/conference-settings-provider
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatConferenceIsoDate } from "@/lib/conference-dates";
+import { sectionLabel, type ConferenceSectionRow } from "@/lib/conference-sections";
 import "@/lib/i18n/config";
 
 const steps = [
@@ -18,11 +20,23 @@ const steps = [
   { icon: Sparkles, titleKey: "step3Title", descriptionKey: "step3Description" }
 ] as const;
 
-const panels = ["panel1", "panel2", "panel3", "panel4", "panel5", "panel6"] as const;
-
 export default function HomePage() {
   const { t, i18n } = useTranslation();
   const { settings } = useConferenceSettings();
+  const [visibleSections, setVisibleSections] = useState<ConferenceSectionRow[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/conference-sections/visible", { cache: "no-store" });
+        const json = (await res.json()) as { sections?: ConferenceSectionRow[] };
+        setVisibleSections(json.sections ?? []);
+      } catch {
+        setVisibleSections([]);
+      }
+    };
+    void load();
+  }, []);
   const loc = i18n.language === "ua" ? "ua" : "en";
   const heroDateLabel = formatConferenceIsoDate(settings.date, loc) || t("heroDate");
   const deadlineLabel = settings.deadline ? formatConferenceIsoDate(settings.deadline, loc) : "";
@@ -31,6 +45,18 @@ export default function HomePage() {
   const locationText = settings.location?.trim() || t("heroFormat");
   const aboutDescription = settings.description?.trim() || t("conferenceGoal");
   const step3Text = t("step3JoinHint", { date: heroDateLabel, location: locationText });
+  const zoomLinkRaw = settings.zoom_link?.trim() ?? "";
+  const zoomDetailsText = settings.zoom_details?.trim() ?? "";
+  const zoomHref = (raw: string) => {
+    const s = raw.trim();
+    if (!s) {
+      return "#";
+    }
+    if (/^[a-z][a-z0-9+.-]*:/i.test(s)) {
+      return s;
+    }
+    return `https://${s}`;
+  };
 
   return (
     <main className="min-h-screen">
@@ -75,18 +101,20 @@ export default function HomePage() {
         <p className="mt-2 text-center text-base font-medium text-[#F0A500]">{t("conferenceLanguagesList")}</p>
       </section>
 
-      <section className="container pb-14 md:pb-20">
-        <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("thematicPanelsTitle")}</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {panels.map((panelKey) => (
-            <Card key={panelKey} className="border-white/10 bg-white/5">
-              <CardHeader>
-                <CardTitle>{t(panelKey)}</CardTitle>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      </section>
+      {visibleSections.length > 0 && (
+        <section className="container pb-14 md:pb-20">
+          <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("thematicPanelsTitle")}</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {visibleSections.map((sec) => (
+              <Card key={sec.id} className="border-white/10 bg-white/5">
+                <CardHeader>
+                  <CardTitle>{sectionLabel(sec, i18n.language)}</CardTitle>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="container pb-14 md:pb-20">
         <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("howToParticipate")}</h2>
@@ -116,12 +144,25 @@ export default function HomePage() {
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-3">
             <div>
-              <p className="text-sm text-slate-400">{t("zoomId")}</p>
-              <p className="text-lg font-semibold text-white">341 095 4568</p>
+              <p className="text-sm text-slate-400">{t("zoomLink")}</p>
+              {zoomLinkRaw ? (
+                <a
+                  href={zoomHref(zoomLinkRaw)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block text-lg font-semibold text-primary underline-offset-4 hover:underline break-all"
+                >
+                  {t("zoomOpenLink")}
+                </a>
+              ) : (
+                <p className="mt-1 text-lg font-semibold text-slate-500">—</p>
+              )}
             </div>
             <div>
-              <p className="text-sm text-slate-400">{t("zoomCode")}</p>
-              <p className="text-lg font-semibold text-white">166231</p>
+              <p className="text-sm text-slate-400">{t("zoomDetails")}</p>
+              <p className={`mt-1 text-lg font-semibold text-white ${zoomDetailsText ? "whitespace-pre-wrap" : ""}`}>
+                {zoomDetailsText || "—"}
+              </p>
             </div>
             <div>
               <p className="text-sm text-slate-400">{t("zoomDate")}</p>

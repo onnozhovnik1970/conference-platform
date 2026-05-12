@@ -24,6 +24,8 @@ type PatchBody = {
   deadline?: unknown;
   location?: unknown;
   description?: unknown;
+  zoom_link?: unknown;
+  zoom_details?: unknown;
 };
 
 function asOptionalDate(value: unknown): string | null {
@@ -61,7 +63,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
 
-  const { data, error } = await supabase.from("conference_settings").select("id, title, date, deadline, location, description, updated_at").eq("id", 1).maybeSingle();
+  const { data, error } = await supabase
+    .from("conference_settings")
+    .select("id, title, date, deadline, location, description, zoom_link, zoom_details, updated_at")
+    .eq("id", 1)
+    .maybeSingle();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -98,6 +104,8 @@ export async function PATCH(request: Request) {
   const deadline = asOptionalDate(body.deadline);
   const location = asOptionalText(body.location);
   const description = asOptionalText(body.description);
+  const zoom_link = asOptionalText(body.zoom_link);
+  const zoom_details = asOptionalText(body.zoom_details);
 
   const supabase = getServiceRoleClient();
   if (!supabase) {
@@ -113,11 +121,13 @@ export async function PATCH(request: Request) {
         date,
         deadline,
         location: location?.trim() ?? null,
-        description: description?.trim() ?? null
+        description: description?.trim() ?? null,
+        zoom_link: zoom_link?.trim() ?? null,
+        zoom_details: zoom_details?.trim() ?? null
       },
       { onConflict: "id" }
     )
-    .select("id, title, date, deadline, location, description, updated_at")
+    .select("id, title, date, deadline, location, description, zoom_link, zoom_details, updated_at")
     .single();
 
   if (error) {

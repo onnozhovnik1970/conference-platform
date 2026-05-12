@@ -6,11 +6,12 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { sectionLabel, type ConferenceSectionRow } from "@/lib/conference-sections";
 import "@/lib/i18n/config";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
-const SECTION_PANEL_KEYS = ["panel1", "panel2", "panel3", "panel4", "panel5", "panel6"] as const;
+const LEGACY_PANEL_KEYS = ["panel1", "panel2", "panel3", "panel4", "panel5", "panel6"] as const;
 
 const STATUS_OPTIONS = ["pending", "pending_review", "under_review", "accepted", "rejected", "needs_revision"] as const;
 type SubmissionAdminStatus = (typeof STATUS_OPTIONS)[number];
@@ -34,6 +35,7 @@ type SubmissionRecord = {
   created_at: string | null;
   abstract_title: string | null;
   thematic_panel: string | null;
+  section_id: string | null;
   status: string | null;
   reviewer_comment: string | null;
   file_path: string | null;
@@ -52,7 +54,8 @@ export type AdminRow = {
   userId: string;
   createdAt: string | null;
   title: string;
-  section: string;
+  sectionId: string | null;
+  thematicPanelRaw: string;
   authorName: string;
   status: SubmissionAdminStatus;
   reviewerComment: string;
@@ -122,7 +125,8 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
   const [savingId, setSavingId] = useState<number | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [archiveId, setArchiveId] = useState<number | null>(null);
-  const [sectionFilter, setSectionFilter] = useState<"all" | (typeof SECTION_PANEL_KEYS)[number]>("all");
+  const [sectionFilter, setSectionFilter] = useState<"all" | string>("all");
+  const [sections, setSections] = useState<ConferenceSectionRow[]>([]);
 
   const fetchAsAdmin = useCallback(async (input: string, init?: RequestInit) => {
     const {
@@ -198,7 +202,8 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
           userId: submission.user_id,
           createdAt: submission.created_at,
           title: submission.abstract_title?.trim() || "—",
-          section: submission.thematic_panel?.trim() || "—",
+          sectionId: submission.section_id?.trim() || null,
+          thematicPanelRaw: submission.thematic_panel?.trim() || "",
           authorName: buildAuthorName(profile, unknownAuthor),
           status: normalizeStatus(submission.status),
           reviewerComment: submission.reviewer_comment ?? "",
@@ -213,14 +218,61 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
     void loadSubmissions();
   }, [loadSubmissions]);
 
+  useEffect(() => {
+    const loadSections = async () => {
+      try {
+        const res = await fetch("/api/conference-sections", { cache: "no-store" });
+        const json = (await res.json()) as { sections?: ConferenceSectionRow[] };
+        setSections(json.sections ?? []);
+      } catch {
+        setSections([]);
+      }
+    };
+    void loadSections();
+  }, []);
+
+  const sectionsById = useMemo(() => Object.fromEntries(sections.map((s) => [s.id, s])), [sections]);
+
+  const rowMatchesSectionFilter = useCallback(
+    (row: AdminRow, filterId: string) => {
+      if (filterId === "all") {
+        return true;
+      }
+      if (row.sectionId === filterId) {
+        return true;
+      }
+      const sec = sectionsById[filterId];
+      const raw = row.thematicPanelRaw.trim();
+      if (sec?.slug && raw === sec.slug) {
+        return true;
+      }
+      return false;
+    },
+    [sectionsById]
+  );
+
+  const formatRowSectionLabel = useCallback(
+    (row: AdminRow) => {
+      if (row.sectionId && sectionsById[row.sectionId]) {
+        return sectionLabel(sectionsById[row.sectionId], i18n.language);
+      }
+      const raw = row.thematicPanelRaw.trim();
+      if ((LEGACY_PANEL_KEYS as readonly string[]).includes(raw)) {
+        return t(raw as (typeof LEGACY_PANEL_KEYS)[number]);
+      }
+      return raw || "—";
+    },
+    [sectionsById, i18n.language, t]
+  );
+
   const viewFiltered = useMemo(() => filterRows(rows, view), [rows, view]);
 
   const displayRows = useMemo(() => {
     if (sectionFilter === "all") {
       return viewFiltered;
     }
-    return viewFiltered.filter((r) => r.section === sectionFilter);
-  }, [viewFiltered, sectionFilter]);
+    return viewFiltered.filter((r) => rowMatchesSectionFilter(r, sectionFilter));
+  }, [viewFiltered, sectionFilter, rowMatchesSectionFilter]);
 
   const handleStatusChange = (id: number, value: string) => {
     const next = normalizeStatus(value);
@@ -401,19 +453,19 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
               >
                 {t("adminFilterAll")}
               </button>
-              {SECTION_PANEL_KEYS.map((key) => (
+              {sections.map((sec) => (
                 <button
-                  key={key}
+                  key={sec.id}
                   type="button"
-                  onClick={() => setSectionFilter(key)}
+                  onClick={() => setSectionFilter(sec.id)}
                   className={cn(
                     "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                    sectionFilter === key
+                    sectionFilter === sec.id
                       ? "bg-primary text-primary-foreground"
                       : "border border-white/20 bg-white/5 text-slate-200 hover:bg-white/10"
                   )}
                 >
-                  {t(key)}
+                  {sectionLabel(sec, i18n.language)}
                 </button>
               ))}
             </div>
@@ -447,14 +499,12 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
                   const isArchiving = archiveId === row.id;
                   const canDownload = Boolean(row.filePath);
                   const isArchived = Boolean(row.archivedAt);
-                  const sectionLabel = (SECTION_PANEL_KEYS as readonly string[]).includes(row.section)
-                    ? t(row.section as (typeof SECTION_PANEL_KEYS)[number])
-                    : row.section;
+                  const sectionCol = formatRowSectionLabel(row);
                   return (
                     <tr key={row.id}>
                       <td className="max-w-[10rem] px-4 py-3 text-slate-200">{row.authorName}</td>
                       <td className="max-w-[14rem] px-4 py-3 text-slate-200">{row.title}</td>
-                      <td className="max-w-[12rem] px-4 py-3 text-slate-200">{sectionLabel}</td>
+                      <td className="max-w-[12rem] px-4 py-3 text-slate-200">{sectionCol}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-200">{formatDate(row.createdAt)}</td>
                       <td className="px-4 py-3 align-top">
                         <div className="flex flex-col gap-2">

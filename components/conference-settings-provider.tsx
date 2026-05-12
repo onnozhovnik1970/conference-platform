@@ -40,7 +40,11 @@ export function ConferenceSettingsProvider({ children }: { children: React.React
       const res = await fetch("/api/conference-settings", PUBLIC_SETTINGS_FETCH);
       const json = (await res.json()) as { settings?: ConferenceSettingsRow };
       if (mountedRef.current && json.settings) {
-        setSettings(json.settings);
+        setSettings({
+          ...DEFAULT_CONFERENCE_SETTINGS,
+          ...json.settings,
+          updated_at: json.settings.updated_at
+        });
       }
     } catch {
       /* keep previous settings */

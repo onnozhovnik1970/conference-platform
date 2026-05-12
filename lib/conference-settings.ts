@@ -6,6 +6,8 @@ export type ConferenceSettingsRow = {
   deadline: string | null;
   location: string | null;
   description: string | null;
+  zoom_link: string | null;
+  zoom_details: string | null;
   updated_at: string;
 };
 
@@ -17,5 +19,7 @@ export const DEFAULT_CONFERENCE_SETTINGS: Omit<ConferenceSettingsRow, "updated_a
   deadline: "2026-04-26",
   location: "Online via Zoom",
   description:
-    "Discussion of student research on modern science trends and improving foreign language skills. Organizer: Department of Modern European Languages, State University of Trade and Economics (SUTE)."
+    "Discussion of student research on modern science trends and improving foreign language skills. Organizer: Department of Modern European Languages, State University of Trade and Economics (SUTE).",
+  zoom_link: null,
+  zoom_details: "341 095 4568\n166231"
 };

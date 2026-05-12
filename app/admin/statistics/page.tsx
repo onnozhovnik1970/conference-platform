@@ -17,16 +17,16 @@ import {
 } from "recharts";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { sectionLabel, type ConferenceSectionRow } from "@/lib/conference-sections";
 import "@/lib/i18n/config";
 import { supabase } from "@/lib/supabase";
-
-const SECTION_PANEL_KEYS = ["panel1", "panel2", "panel3", "panel4", "panel5", "panel6"] as const;
 
 const PIE_COLORS = ["#38bdf8", "#a78bfa", "#fbbf24", "#34d399", "#fb7185", "#94a3b8"];
 
 type SubmissionRecord = {
   user_id: string;
   thematic_panel: string | null;
+  section_id: string | null;
   status: string | null;
 };
 
@@ -53,8 +53,9 @@ const tooltipProps = {
 } as const;
 
 export default function AdminStatisticsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [submissions, setSubmissions] = useState<SubmissionRecord[]>([]);
+  const [sections, setSections] = useState<ConferenceSectionRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -98,26 +99,52 @@ export default function AdminStatisticsPage() {
     void load();
   }, [fetchAsAdmin, t]);
 
+  useEffect(() => {
+    const loadSections = async () => {
+      try {
+        const res = await fetch("/api/conference-sections", { cache: "no-store" });
+        const json = (await res.json()) as { sections?: ConferenceSectionRow[] };
+        setSections(json.sections ?? []);
+      } catch {
+        setSections([]);
+      }
+    };
+    void loadSections();
+  }, []);
+
   const totalSubmissions = submissions.length;
   const uniqueParticipants = useMemo(() => new Set(submissions.map((s) => s.user_id).filter(Boolean)).size, [submissions]);
 
   const sectionChartData = useMemo(() => {
+    const slugToId = new Map<string, string>();
+    for (const sec of sections) {
+      if (sec.slug) {
+        slugToId.set(sec.slug.trim(), sec.id);
+      }
+    }
+    const bucketKey = (s: SubmissionRecord): string => {
+      const sid = s.section_id?.trim();
+      if (sid) {
+        return sid;
+      }
+      const tp = s.thematic_panel?.trim() ?? "";
+      return slugToId.get(tp) ?? "__other__";
+    };
     const counts = new Map<string, number>();
     for (const s of submissions) {
-      const k = s.thematic_panel?.trim() || "";
-      const key = (SECTION_PANEL_KEYS as readonly string[]).includes(k) ? k : "__other__";
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      const k = bucketKey(s);
+      counts.set(k, (counts.get(k) ?? 0) + 1);
     }
-    const rows: { name: string; count: number }[] = SECTION_PANEL_KEYS.map((pk) => ({
-      name: t(pk),
-      count: counts.get(pk) ?? 0
+    const rows: { name: string; count: number }[] = sections.map((sec) => ({
+      name: sectionLabel(sec, i18n.language),
+      count: counts.get(sec.id) ?? 0
     }));
     const other = counts.get("__other__") ?? 0;
     if (other > 0) {
       rows.push({ name: t("adminStatsSectionOther"), count: other });
     }
     return rows;
-  }, [submissions, t]);
+  }, [submissions, sections, i18n.language, t]);
 
   const statusChartData = useMemo(() => {
     const counts = new Map<StatusBucket, number>();

@@ -9,6 +9,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { SiteTextLogo } from "@/components/site-text-logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { sectionLabel, type ConferenceSectionRow } from "@/lib/conference-sections";
 import "@/lib/i18n/config";
 import { supabase } from "@/lib/supabase";
 
@@ -98,6 +99,7 @@ export default function DashboardPage() {
   const [submitForReviewError, setSubmitForReviewError] = useState<string | null>(null);
   const [submitForReviewSuccess, setSubmitForReviewSuccess] = useState<string | null>(null);
   const [latestSubmission, setLatestSubmission] = useState<LatestSubmissionStatus | null>(null);
+  const [sections, setSections] = useState<ConferenceSectionRow[]>([]);
 
   const loadLatestSubmission = async (currentUserId: string) => {
     const { data: latestRows, error: latestSubmissionError } = await supabase
@@ -153,6 +155,9 @@ export default function DashboardPage() {
       return;
     }
 
+    const sectionMeta = sections.find((s) => s.id === formData.thematicPanel);
+    const thematicPanelDb = sectionMeta?.label_en ?? formData.thematicPanel;
+
     const { error: insertError } = await supabase.from("submissions").insert({
       user_id: userId,
       abstract_title: formData.abstractTitle,
@@ -163,7 +168,8 @@ export default function DashboardPage() {
       country: formData.country,
       phone: formData.phone,
       abstract_language: formData.abstractLanguage,
-      thematic_panel: formData.thematicPanel,
+      section_id: formData.thematicPanel || null,
+      thematic_panel: thematicPanelDb,
       supervisor_name: formData.supervisorName,
       supervisor_title_degree: formData.supervisorTitleDegree,
       supervisor_position: formData.supervisorPosition,
@@ -217,6 +223,19 @@ export default function DashboardPage() {
     void loadProfile();
   }, [router, t]);
 
+  useEffect(() => {
+    const loadSections = async () => {
+      try {
+        const res = await fetch("/api/conference-sections", { cache: "no-store" });
+        const json = (await res.json()) as { sections?: ConferenceSectionRow[] };
+        setSections(json.sections ?? []);
+      } catch {
+        setSections([]);
+      }
+    };
+    void loadSections();
+  }, []);
+
   const inputClass =
     "mt-2 h-11 w-full rounded-md border border-white/20 bg-white/5 px-3 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40";
   const labelClass = "block text-sm font-medium text-slate-100";
@@ -250,6 +269,9 @@ export default function DashboardPage() {
 
     setIsSubmitting(true);
     try {
+      const sectionMeta = sections.find((s) => s.id === formData.thematicPanel);
+      const thematicPanelDb = sectionMeta?.label_en ?? formData.thematicPanel;
+
       const { error: insertError } = await supabase.from("submissions").insert({
         user_id: userId,
         abstract_title: formData.abstractTitle,
@@ -260,7 +282,8 @@ export default function DashboardPage() {
         country: formData.country,
         phone: formData.phone,
         abstract_language: formData.abstractLanguage,
-        thematic_panel: formData.thematicPanel,
+        section_id: formData.thematicPanel || null,
+        thematic_panel: thematicPanelDb,
         supervisor_name: formData.supervisorName,
         supervisor_title_degree: formData.supervisorTitleDegree,
         supervisor_position: formData.supervisorPosition,
@@ -394,6 +417,9 @@ export default function DashboardPage() {
         return;
       }
 
+      const sectionMeta = sections.find((s) => s.id === formData.thematicPanel);
+      const thematicPanelDb = sectionMeta?.label_en ?? formData.thematicPanel;
+
       const { error: insertError } = await supabase.from("submissions").insert({
         user_id: userId,
         abstract_title: formData.abstractTitle,
@@ -404,7 +430,8 @@ export default function DashboardPage() {
         country: formData.country,
         phone: formData.phone,
         abstract_language: formData.abstractLanguage,
-        thematic_panel: formData.thematicPanel,
+        section_id: formData.thematicPanel || null,
+        thematic_panel: thematicPanelDb,
         supervisor_name: formData.supervisorName,
         supervisor_title_degree: formData.supervisorTitleDegree,
         supervisor_position: formData.supervisorPosition,
@@ -580,7 +607,11 @@ export default function DashboardPage() {
                     <label className={labelClass}>{t("thematicPanel")}</label>
                     <select className={inputClass} value={formData.thematicPanel} onChange={(e) => updateField("thematicPanel", e.target.value)}>
                       <option value="" className="bg-slate-900">--</option>
-                      {["panel1", "panel2", "panel3", "panel4", "panel5", "panel6"].map((p) => <option key={p} value={p} className="bg-slate-900">{t(p)}</option>)}
+                      {sections.map((sec) => (
+                        <option key={sec.id} value={sec.id} className="bg-slate-900">
+                          {sectionLabel(sec, i18n.language)}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div><label className={labelClass}>{t("supervisorName")}</label><input className={inputClass} value={formData.supervisorName} onChange={(e) => updateField("supervisorName", e.target.value)} /></div>
