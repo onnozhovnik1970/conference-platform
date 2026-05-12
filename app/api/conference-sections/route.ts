@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 
+import {
+  isConferenceSectionsTableMissing,
+  isMissingConferenceSectionsSlugColumn
+} from "@/lib/admin-db-compat";
 import type { ConferenceSectionRow } from "@/lib/conference-sections";
 import { getServiceRoleClient } from "@/lib/admin-server";
 
@@ -17,15 +21,36 @@ export async function GET() {
     return NextResponse.json({ sections: [] as ConferenceSectionRow[] }, { headers: NO_STORE_HEADERS });
   }
 
-  const { data, error } = await supabase
+  const selectFull = "id, sort_order, slug, label_en, label_ua, created_at";
+  const selectNoSlug = "id, sort_order, label_en, label_ua, created_at";
+
+  const attempt = await supabase
     .from("conference_sections")
-    .select("id, sort_order, slug, label_en, label_ua, created_at")
+    .select(selectFull)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500, headers: NO_STORE_HEADERS });
+  if (attempt.error && isConferenceSectionsTableMissing(attempt.error)) {
+    return NextResponse.json({ sections: [] as ConferenceSectionRow[] }, { headers: NO_STORE_HEADERS });
   }
 
-  return NextResponse.json({ sections: (data ?? []) as ConferenceSectionRow[] }, { headers: NO_STORE_HEADERS });
+  let list: ConferenceSectionRow[];
+
+  if (attempt.error && isMissingConferenceSectionsSlugColumn(attempt.error)) {
+    const second = await supabase
+      .from("conference_sections")
+      .select(selectNoSlug)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (second.error) {
+      return NextResponse.json({ error: second.error.message }, { status: 500, headers: NO_STORE_HEADERS });
+    }
+    list = (second.data ?? []).map((row) => ({ ...row, slug: null })) as ConferenceSectionRow[];
+  } else if (attempt.error) {
+    return NextResponse.json({ error: attempt.error.message }, { status: 500, headers: NO_STORE_HEADERS });
+  } else {
+    list = (attempt.data ?? []) as ConferenceSectionRow[];
+  }
+
+  return NextResponse.json({ sections: list }, { headers: NO_STORE_HEADERS });
 }

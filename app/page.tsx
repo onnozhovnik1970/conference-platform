@@ -23,16 +23,17 @@ const steps = [
 export default function HomePage() {
   const { t, i18n } = useTranslation();
   const { settings } = useConferenceSettings();
-  const [visibleSections, setVisibleSections] = useState<ConferenceSectionRow[]>([]);
+  /** All thematic sections from admin (current EN/UA names). Not filtered by submissions so renames never hide the block. */
+  const [thematicSections, setThematicSections] = useState<ConferenceSectionRow[]>([]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/conference-sections/visible", { cache: "no-store" });
+        const res = await fetch("/api/conference-sections", { cache: "no-store" });
         const json = (await res.json()) as { sections?: ConferenceSectionRow[] };
-        setVisibleSections(json.sections ?? []);
+        setThematicSections(json.sections ?? []);
       } catch {
-        setVisibleSections([]);
+        setThematicSections([]);
       }
     };
     void load();
@@ -101,11 +102,11 @@ export default function HomePage() {
         <p className="mt-2 text-center text-base font-medium text-[#F0A500]">{t("conferenceLanguagesList")}</p>
       </section>
 
-      {visibleSections.length > 0 && (
+      {thematicSections.length > 0 && (
         <section className="container pb-14 md:pb-20">
           <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("thematicPanelsTitle")}</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {visibleSections.map((sec) => (
+            {thematicSections.map((sec) => (
               <Card key={sec.id} className="border-white/10 bg-white/5">
                 <CardHeader>
                   <CardTitle>{sectionLabel(sec, i18n.language)}</CardTitle>
