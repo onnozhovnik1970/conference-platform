@@ -7,7 +7,6 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Button } from "@/components/ui/button";
 import { ALLOWED_ADMIN_EMAILS } from "@/lib/admin";
 import "@/lib/i18n/config";
@@ -41,7 +40,6 @@ function NavItem({ href, label }: { href: string; label: string }) {
 
 export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
-  const { settings } = useConferenceSettings();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -123,9 +121,8 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.25),_transparent_45%)]" />
         <div className="container relative z-10">
           <header className="flex items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-3 text-lg font-semibold tracking-tight text-white">
+            <Link href="/" className="inline-flex items-center">
               <Image src="/knteu_logo_200.png" alt="SUTE logo" width={160} height={50} className="h-[50px] w-auto" priority />
-              <span className="line-clamp-2 max-w-[14rem] md:max-w-md">{settings.title?.trim() || t("navBrand")}</span>
             </Link>
             <div className="flex items-center gap-3">
               <Button asChild size="sm">

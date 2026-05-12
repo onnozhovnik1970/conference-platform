@@ -7,7 +7,6 @@ import { FormEvent, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import "@/lib/i18n/config";
@@ -15,7 +14,6 @@ import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const { t } = useTranslation();
-  const { settings } = useConferenceSettings();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -90,9 +88,8 @@ export default function LoginPage() {
 
         <div className="container relative z-10">
           <header className="flex items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-3 text-lg font-semibold tracking-tight text-white">
+            <Link href="/" className="inline-flex items-center">
               <Image src="/knteu_logo_200.png" alt="SUTE logo" width={160} height={50} className="h-[50px] w-auto" priority />
-              <span className="line-clamp-2 max-w-[14rem] md:max-w-md">{settings.title?.trim() || t("navBrand")}</span>
             </Link>
             <div className="flex items-center gap-3">
               <Button asChild size="sm">

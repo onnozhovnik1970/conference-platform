@@ -43,10 +43,9 @@ export default function HomePage() {
           </div>
 
           <header className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
+            <Link href="/" className="inline-flex items-center">
               <Image src="/knteu_logo_200.png" alt="SUTE logo" width={160} height={50} className="h-[50px] w-auto" priority />
-              <div className="text-lg font-semibold tracking-tight text-white line-clamp-2 max-w-[14rem] md:max-w-xl">{heroTitleText}</div>
-            </div>
+            </Link>
             <LanguageSwitcher />
           </header>
 
