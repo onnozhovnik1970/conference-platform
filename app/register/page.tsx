@@ -7,6 +7,7 @@ import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import "@/lib/i18n/config";
@@ -34,6 +35,7 @@ const initialForm: FormData = {
 
 export default function RegisterPage() {
   const { t } = useTranslation();
+  const { settings } = useConferenceSettings();
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
@@ -127,7 +129,7 @@ export default function RegisterPage() {
           <header className="flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-3 text-lg font-semibold tracking-tight text-white">
               <Image src="/knteu_logo_200.png" alt="SUTE logo" width={160} height={50} className="h-[50px] w-auto" priority />
-              <span>{t("navBrand")}</span>
+              <span className="line-clamp-2 max-w-[14rem] md:max-w-md">{settings.title?.trim() || t("navBrand")}</span>
             </Link>
             <div className="flex items-center gap-3">
               <Button asChild size="sm">

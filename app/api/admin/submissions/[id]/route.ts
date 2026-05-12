@@ -49,20 +49,37 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const status = (body as { status?: unknown }).status;
   const reviewerCommentRaw = (body as { reviewer_comment?: unknown }).reviewer_comment;
+  const archiveRaw = (body as { archive?: unknown }).archive;
 
-  if (!isAllowedStatus(status)) {
+  const updatePayload: Record<string, unknown> = {
+    status_updated_at: new Date().toISOString()
+  };
+
+  let hasWork = false;
+
+  if (isAllowedStatus(status)) {
+    const reviewer_comment =
+      reviewerCommentRaw === null || reviewerCommentRaw === undefined
+        ? null
+        : typeof reviewerCommentRaw === "string"
+          ? reviewerCommentRaw.trim() || null
+          : null;
+    updatePayload.status = status;
+    updatePayload.reviewer_comment = reviewer_comment;
+    hasWork = true;
+  }
+
+  if (typeof archiveRaw === "boolean") {
+    updatePayload.archived_at = archiveRaw ? new Date().toISOString() : null;
+    hasWork = true;
+  }
+
+  if (!hasWork) {
     return NextResponse.json(
-      { error: "Invalid status", receivedBody: body, receivedStatus: status },
+      { error: "Provide a valid status/reviewer update and/or archive flag.", receivedBody: body },
       { status: 400 }
     );
   }
-
-  const reviewer_comment =
-    reviewerCommentRaw === null || reviewerCommentRaw === undefined
-      ? null
-      : typeof reviewerCommentRaw === "string"
-        ? reviewerCommentRaw.trim() || null
-        : null;
 
   const supabase = getServiceRoleClient();
   if (!supabase) {
@@ -71,11 +88,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const { data: updatedRows, error: updateError } = await supabase
     .from("submissions")
-    .update({
-      status,
-      reviewer_comment,
-      status_updated_at: new Date().toISOString()
-    })
+    .update(updatePayload)
     .eq("id", submissionId)
     .select("id");
 
@@ -90,7 +103,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           hint: updateError.hint
         },
         submissionId,
-        payload: { status, reviewer_comment }
+        payload: updatePayload
       },
       { status: 500 }
     );
@@ -101,7 +114,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       {
         error: "No submission matched this id (not found or not permitted).",
         submissionId,
-        payload: { status, reviewer_comment }
+        payload: updatePayload
       },
       { status: 404 }
     );

@@ -6,8 +6,10 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatConferenceIsoDate } from "@/lib/conference-dates";
 import "@/lib/i18n/config";
 
 const steps = [
@@ -19,7 +21,16 @@ const steps = [
 const panels = ["panel1", "panel2", "panel3", "panel4", "panel5", "panel6"] as const;
 
 export default function HomePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { settings } = useConferenceSettings();
+  const loc = i18n.language === "ua" ? "ua" : "en";
+  const heroDateLabel = formatConferenceIsoDate(settings.date, loc) || t("heroDate");
+  const deadlineLabel = settings.deadline ? formatConferenceIsoDate(settings.deadline, loc) : "";
+  const registrationBannerText = deadlineLabel ? t("registrationUntil", { date: deadlineLabel }) : t("registrationBanner");
+  const heroTitleText = settings.title?.trim() || t("heroTitle");
+  const locationText = settings.location?.trim() || t("heroFormat");
+  const aboutDescription = settings.description?.trim() || t("conferenceGoal");
+  const step3Text = t("step3JoinHint", { date: heroDateLabel, location: locationText });
 
   return (
     <main className="min-h-screen">
@@ -28,31 +39,25 @@ export default function HomePage() {
 
         <div className="container relative z-10 py-6 md:py-8">
           <div className="mb-5 rounded-md border border-[#F0A500]/70 bg-[#F0A500]/15 px-4 py-2 text-center text-sm font-semibold text-[#F0A500]">
-            {t("registrationBanner")}
+            {registrationBannerText}
           </div>
 
           <header className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Image src="/knteu_logo_200.png" alt="SUTE logo" width={160} height={50} className="h-[50px] w-auto" priority />
-              <div className="text-lg font-semibold tracking-tight text-white">{t("navBrand")}</div>
+              <div className="text-lg font-semibold tracking-tight text-white line-clamp-2 max-w-[14rem] md:max-w-xl">{heroTitleText}</div>
             </div>
             <LanguageSwitcher />
           </header>
 
           <div className="mx-auto max-w-4xl py-20 text-center md:py-28">
-            <h1 className="text-2xl font-extrabold tracking-tight text-white md:text-4xl">{t("heroTitle")}</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-white md:text-4xl">{heroTitleText}</h1>
             <p className="mx-auto mt-5 flex items-center justify-center gap-2 text-base text-white/90 sm:text-xl">
-              <CalendarDays className="h-5 w-5" /> {t("heroDate")}
+              <CalendarDays className="h-5 w-5" /> {heroDateLabel}
             </p>
             <p className="mx-auto mt-3 flex items-center justify-center gap-2 text-base text-white/90 sm:text-xl">
-              <Video className="h-5 w-5" /> {t("heroFormat")}
+              <Video className="h-5 w-5" /> {locationText}
             </p>
-
-            <div className="mx-auto mt-8 max-w-3xl rounded-xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm">
-              <p className="text-sm font-semibold text-[#F0A500]">
-               Реєстрація: до 26 квітня 2026 / Registration: until April 26, 2026
-              </p>
-            </div>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button asChild size="lg" className="min-w-44"><Link href="/register">{t("navRegister")}</Link></Button><Button asChild size="lg" variant="outline" className="min-w-44 border-white text-white hover:bg-white/10"><Link href="/login">{t("navLogin")}</Link></Button>
@@ -63,7 +68,7 @@ export default function HomePage() {
 
       <section className="container py-14 md:py-20">
         <h2 className="mb-3 text-center text-3xl font-bold md:mb-4">{t("aboutConference")}</h2>
-        <p className="mx-auto max-w-4xl text-center text-slate-300">{t("conferenceGoal")}</p>
+        <p className="mx-auto max-w-4xl text-center text-slate-300">{aboutDescription}</p>
         <p className="mx-auto mt-3 max-w-4xl text-center text-slate-300">{t("conferenceOrganizer")}</p>
       </section>
 
@@ -98,7 +103,9 @@ export default function HomePage() {
                 <CardTitle>{`${index + 1}. ${t(titleKey)}`}</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-sm leading-6 text-slate-300">{t(descriptionKey)}</CardDescription>
+                <CardDescription className="text-sm leading-6 text-slate-300">
+                  {titleKey === "step3Title" ? step3Text : t(descriptionKey)}
+                </CardDescription>
               </CardContent>
             </Card>
           ))}
@@ -121,7 +128,7 @@ export default function HomePage() {
             </div>
             <div>
               <p className="text-sm text-slate-400">{t("zoomDate")}</p>
-              <p className="text-lg font-semibold text-white">{t("heroDate")}</p>
+              <p className="text-lg font-semibold text-white">{heroDateLabel}</p>
             </div>
           </CardContent>
         </Card>
