@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 
+import { isMissingSubmissionsSectionIdColumn } from "@/lib/admin-db-compat";
 import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server";
 
 /**
  * Columns used by the admin table (see dashboard `submissions` usage).
  * `reviewer_comment` and `status_updated_at`: migration 20260512120000_submissions_reviewer_fields.sql
+ * `section_id`: migration 20260516100000_conference_sections.sql
  */
-const SUBMISSION_SELECT =
+const SUBMISSION_SELECT_WITH_SECTION =
   "id, user_id, created_at, abstract_title, thematic_panel, section_id, status, reviewer_comment, status_updated_at, file_path, archived_at";
+
+const SUBMISSION_SELECT_WITHOUT_SECTION =
+  "id, user_id, created_at, abstract_title, thematic_panel, status, reviewer_comment, status_updated_at, file_path, archived_at";
 
 export async function GET(request: Request) {
   const auth = await assertAdminFromRequest(request);
@@ -20,10 +25,25 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
 
-  const { data: submissionRows, error: submissionsError } = await supabase
+  let submissionRows: Record<string, unknown>[] | null = null;
+  let submissionsError = null as { message?: string } | null;
+
+  const first = await supabase
     .from("submissions")
-    .select(SUBMISSION_SELECT)
+    .select(SUBMISSION_SELECT_WITH_SECTION)
     .order("created_at", { ascending: false });
+
+  if (first.error && isMissingSubmissionsSectionIdColumn(first.error)) {
+    const second = await supabase
+      .from("submissions")
+      .select(SUBMISSION_SELECT_WITHOUT_SECTION)
+      .order("created_at", { ascending: false });
+    submissionRows = (second.data ?? []).map((row) => ({ ...row, section_id: null }));
+    submissionsError = second.error;
+  } else {
+    submissionRows = first.data ?? null;
+    submissionsError = first.error;
+  }
 
   if (submissionsError) {
     return NextResponse.json({ error: submissionsError.message }, { status: 500 });

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 
+import {
+  isConferenceSectionsTableMissing,
+  isMissingConferenceSectionsSlugColumn
+} from "@/lib/admin-db-compat";
 import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server";
 import type { ConferenceSectionRow } from "@/lib/conference-sections";
 
@@ -18,17 +22,40 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
 
-  const { data, error } = await supabase
+  const selectFull = "id, sort_order, slug, label_en, label_ua, created_at";
+  const selectNoSlug = "id, sort_order, label_en, label_ua, created_at";
+
+  let data: ConferenceSectionRow[] | null = null;
+  let error = null as { message?: string } | null;
+
+  const attempt = await supabase
     .from("conference_sections")
-    .select("id, sort_order, slug, label_en, label_ua, created_at")
+    .select(selectFull)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
+
+  if (attempt.error && isConferenceSectionsTableMissing(attempt.error)) {
+    return NextResponse.json({ sections: [] as ConferenceSectionRow[] });
+  }
+
+  if (attempt.error && isMissingConferenceSectionsSlugColumn(attempt.error)) {
+    const second = await supabase
+      .from("conference_sections")
+      .select(selectNoSlug)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    data = (second.data ?? []).map((row) => ({ ...row, slug: null })) as ConferenceSectionRow[];
+    error = second.error;
+  } else {
+    data = attempt.data as ConferenceSectionRow[] | null;
+    error = attempt.error;
+  }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ sections: (data ?? []) as ConferenceSectionRow[] });
+  return NextResponse.json({ sections: data ?? [] });
 }
 
 export async function POST(request: Request) {
