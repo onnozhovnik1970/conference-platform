@@ -13,12 +13,31 @@ function mimeForPath(path: string): string {
   return "application/octet-stream";
 }
 
-function safeAttachmentName(path: string, submissionId: number): string {
+function safeAttachmentName(path: string, submissionId: string): string {
   const base = path.split("/").pop()?.trim();
   if (base && !base.includes("..") && base.length <= 200) {
     return base;
   }
   return `abstract-${submissionId}`;
+}
+
+/** RFC 4122 UUID (any version), case-insensitive. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string): boolean {
+  return UUID_RE.test(value);
+}
+
+/** Canonical non-negative integer string (e.g. `"42"`), for legacy numeric PKs — no digit-only regex. */
+function parseCanonicalIntId(value: string): number | null {
+  if (!value) {
+    return null;
+  }
+  const n = Number.parseInt(value, 10);
+  if (!Number.isFinite(n) || n < 0) {
+    return null;
+  }
+  return String(n) === value ? n : null;
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -28,11 +47,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params;
-  const rawId = id?.trim();
-  if (!rawId || !/^\d+$/.test(rawId)) {
+  const raw = id?.trim() ?? "";
+  const intId = parseCanonicalIntId(raw);
+  const idForQuery: string | number | null = isUuid(raw) ? raw : intId;
+  if (idForQuery === null) {
     return NextResponse.json({ error: "Missing or invalid submission id" }, { status: 400 });
   }
-  const submissionId = Number.parseInt(rawId, 10);
 
   const supabase = getServiceRoleClient();
   if (!supabase) {
@@ -42,12 +62,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const { data: row, error: selectError } = await supabase
     .from("submissions")
     .select("file_path")
-    .eq("id", submissionId)
+    .eq("id", idForQuery)
     .maybeSingle();
 
   if (selectError) {
     console.error("[admin/submissions download] Supabase select failed", {
-      submissionId,
+      submissionId: idForQuery,
       message: selectError.message,
       details: selectError.details,
       hint: selectError.hint,
@@ -65,7 +85,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   if (downloadError || !fileBlob) {
     console.error("[admin/submissions download] Storage download failed", {
-      submissionId,
+      submissionId: idForQuery,
       filePath,
       message: downloadError?.message,
       name: downloadError?.name
@@ -76,7 +96,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     );
   }
 
-  const fileName = safeAttachmentName(filePath, submissionId);
+  const fileName = safeAttachmentName(filePath, String(idForQuery));
   const contentType = mimeForPath(fileName);
 
   return new NextResponse(fileBlob, {
