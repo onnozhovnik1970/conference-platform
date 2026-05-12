@@ -53,6 +53,8 @@ OFFICIAL FORMATTING REQUIREMENTS:
 - Title: centered, ALL CAPS, bold Times New Roman
 - References font: Times New Roman 12pt, line spacing 1.0
 - In-text citations: [3, с. 16] or [3, p. 16] format
+- Citation placement (Ukrainian / international academic style): the bracketed citation must come AFTER the sentence-ending punctuation, not before. Correct: "…результат дослідження. [1]" or "…research finding. [1]". Incorrect: "…результат дослідження [1]." or "…research finding [1]." Flag the latter pattern in formattingIssues when you see it.
+- Paragraph spacing: spacing between paragraphs should be consistent (uniform blank lines in the extracted Markdown). If some blocks are separated by one blank line and others by two or more, or spacing is clearly irregular, flag it as a formatting issue under formattingIssues.
 - References: alphabetical order (Ukrainian first, then foreign), formatted strictly per DSTU 8302:2015
 - Pages: NOT numbered
 - File name format: Surname_section_N
@@ -68,7 +70,7 @@ EVALUATION CRITERIA (score out of 10):
 1. CONTENT AND ANALYTICAL QUALITY (50%): topic relevance, author's own analysis, logical argumentation, clear research objective, conclusions
 2. STRUCTURE AND LOGIC (20%): presence of introduction/relevance, objective, main body, conclusions, bibliography
 3. SOURCE QUALITY AND CITATION (20%): minimum 3-5 sources, real and verifiable, properly cited in text, formatted per DSTU 8302:2015
-4. TECHNICAL FORMATTING (10%): correct author/supervisor block, title formatting, reference formatting, margins, font
+4. TECHNICAL FORMATTING (10%): correct author/supervisor block, title formatting, reference formatting, margins, font, consistent paragraph spacing in the extracted text, correct placement of in-text citations relative to sentence-ending punctuation
 
 PLAGIARISM AND AI-GENERATED CONTENT DETECTION: Analyze the text for signs of plagiarism or fully AI-generated content. Look for: 1) unusually formal or inconsistent writing style that switches between simple and overly complex language, 2) generic phrases without specific examples or data, 3) text that reads like a Wikipedia summary without original analysis, 4) inconsistent terminology or citation style suggesting copy-paste from multiple sources, 5) lack of author's own position or conclusions. Add plagiarismWarning field to JSON response: null if no concerns, or a specific warning string if suspicious patterns are found.
 
@@ -83,6 +85,8 @@ IMPORTANT: The abstract text is extracted from docx as Markdown: paragraph break
 IMPORTANT FOR REFERENCES: Markdown extraction may still alter or simplify punctuation and spacing compared to the original Word document. When checking DSTU 8302:2015 compliance, focus on the presence of key elements (author, title, year, URL, access date) rather than exact punctuation formatting. Only flag references as non-compliant if key required elements are genuinely missing (e.g. no access date for web sources, no author, no year). Do not penalize for minor punctuation differences that may be caused by extraction.
 
 COMMON STUDENT ERRORS TO CHECK:
+- Inconsistent paragraph spacing (irregular blank lines between paragraphs in the Markdown extract)
+- In-text citations placed before the period or full stop instead of after it (e.g. wrong: "…текст [1]."; right: "…текст. [1]")
 - "– Режим доступу:" format (old Soviet standard, not DSTU 8302:2015 compliant)
 - Missing access dates for web sources
 - Author info not in italics or not right-aligned
