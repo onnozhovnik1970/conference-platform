@@ -5,6 +5,8 @@ const resources = {
   en: {
     translation: {
       navBrand: "SUTE Conference 2026",
+      syConfTagline: "A Space for First Scientific Steps",
+      syConfLogoAria: "SYConf — home",
       navRegister: "Register",
       navLogin: "Log in",
       loginTitle: "Personal Dashboard Login",
@@ -266,6 +268,8 @@ const resources = {
   ua: {
     translation: {
       navBrand: "Конференція ДТЕУ 2026",
+      syConfTagline: "Простір перших наукових кроків",
+      syConfLogoAria: "SYConf — головна",
       navRegister: "Реєстрація",
       navLogin: "Увійти в кабінет",
       loginTitle: "Вхід до особистого кабінету",

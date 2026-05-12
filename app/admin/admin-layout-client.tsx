@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { SiteTextLogo } from "@/components/site-text-logo";
 import { Button } from "@/components/ui/button";
 import { ALLOWED_ADMIN_EMAILS } from "@/lib/admin";
 import "@/lib/i18n/config";
@@ -121,9 +121,7 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.25),_transparent_45%)]" />
         <div className="container relative z-10">
           <header className="flex items-center justify-between gap-4">
-            <Link href="/" className="inline-flex items-center">
-              <Image src="/knteu_logo_200.png" alt="SUTE logo" width={160} height={50} className="h-[50px] w-auto" priority />
-            </Link>
+            <SiteTextLogo />
             <div className="flex items-center gap-3">
               <Button asChild size="sm">
                 <Link href="/">{t("navHome")}</Link>
