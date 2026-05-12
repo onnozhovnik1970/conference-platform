@@ -1,15 +1,21 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { DEFAULT_CONFERENCE_SETTINGS, type ConferenceSettingsRow } from "@/lib/conference-settings";
 
 type ConferenceSettingsContextValue = {
   settings: ConferenceSettingsRow;
   loading: boolean;
+  /** Refetch from the server (no cache). Call after saving in admin so the site updates immediately. */
+  refresh: () => Promise<void>;
 };
 
 const ConferenceSettingsContext = createContext<ConferenceSettingsContextValue | null>(null);
+
+const PUBLIC_SETTINGS_FETCH: RequestInit = {
+  cache: "no-store"
+};
 
 export function ConferenceSettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<ConferenceSettingsRow>({
@@ -17,30 +23,50 @@ export function ConferenceSettingsProvider({ children }: { children: React.React
     updated_at: new Date().toISOString()
   });
   const [loading, setLoading] = useState(true);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch("/api/conference-settings");
-        const json = (await res.json()) as { settings?: ConferenceSettingsRow };
-        if (!cancelled && json.settings) {
-          setSettings(json.settings);
-        }
-      } catch {
-        /* keep defaults */
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    })();
+    mountedRef.current = true;
     return () => {
-      cancelled = true;
+      mountedRef.current = false;
     };
   }, []);
 
-  const value = useMemo(() => ({ settings, loading }), [settings, loading]);
+  const loadSettings = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) {
+      setLoading(true);
+    }
+    try {
+      const res = await fetch("/api/conference-settings", PUBLIC_SETTINGS_FETCH);
+      const json = (await res.json()) as { settings?: ConferenceSettingsRow };
+      if (mountedRef.current && json.settings) {
+        setSettings(json.settings);
+      }
+    } catch {
+      /* keep previous settings */
+    } finally {
+      if (mountedRef.current && !opts?.silent) {
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadSettings();
+  }, [loadSettings]);
+
+  const refresh = useCallback(async () => {
+    await loadSettings({ silent: true });
+  }, [loadSettings]);
+
+  const value = useMemo(
+    () => ({
+      settings,
+      loading,
+      refresh
+    }),
+    [settings, loading, refresh]
+  );
 
   return <ConferenceSettingsContext.Provider value={value}>{children}</ConferenceSettingsContext.Provider>;
 }
@@ -50,7 +76,8 @@ export function useConferenceSettings(): ConferenceSettingsContextValue {
   if (!ctx) {
     return {
       settings: { ...DEFAULT_CONFERENCE_SETTINGS, updated_at: new Date().toISOString() },
-      loading: false
+      loading: false,
+      refresh: async () => {}
     };
   }
   return ctx;

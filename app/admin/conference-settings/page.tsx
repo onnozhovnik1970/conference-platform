@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
+import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ConferenceSettingsRow } from "@/lib/conference-settings";
 import "@/lib/i18n/config";
@@ -11,6 +12,7 @@ import { supabase } from "@/lib/supabase";
 
 export default function AdminConferenceSettingsPage() {
   const { t } = useTranslation();
+  const { refresh } = useConferenceSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,7 @@ export default function AdminConferenceSettingsPage() {
     if (init?.body != null && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
-    const response = await fetch(input, { ...init, headers });
+    const response = await fetch(input, { ...init, headers, cache: "no-store" });
     return { response, missingSession: false as const };
   }, []);
 
@@ -83,6 +85,7 @@ export default function AdminConferenceSettingsPage() {
         return;
       }
       setSuccess(t("adminConferenceSettingsSaveSuccess"));
+      await refresh();
     } catch {
       setError(t("adminConferenceSettingsSaveError"));
     } finally {

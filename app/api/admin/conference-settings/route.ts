@@ -3,6 +3,21 @@ import { NextResponse } from "next/server";
 import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server";
 import { DEFAULT_CONFERENCE_SETTINGS, type ConferenceSettingsRow } from "@/lib/conference-settings";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+  Pragma: "no-cache"
+} as const;
+
+function jsonWithNoStore<T>(body: T, init?: { status?: number }) {
+  return NextResponse.json(body, {
+    status: init?.status,
+    headers: NO_STORE_HEADERS
+  });
+}
+
 type PatchBody = {
   title?: unknown;
   date?: unknown;
@@ -53,12 +68,12 @@ export async function GET(request: Request) {
   }
 
   if (!data) {
-    return NextResponse.json({
+    return jsonWithNoStore({
       settings: { ...DEFAULT_CONFERENCE_SETTINGS, updated_at: new Date().toISOString() } satisfies ConferenceSettingsRow
     });
   }
 
-  return NextResponse.json({ settings: data as ConferenceSettingsRow });
+  return jsonWithNoStore({ settings: data as ConferenceSettingsRow });
 }
 
 export async function PATCH(request: Request) {
@@ -109,5 +124,5 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ settings: data });
+  return jsonWithNoStore({ settings: data });
 }
