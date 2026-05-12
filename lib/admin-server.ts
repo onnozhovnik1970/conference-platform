@@ -24,6 +24,24 @@ export function getServiceRoleClient() {
 
 const adminEmailSet = new Set(ALLOWED_ADMIN_EMAILS.map((email) => email.trim().toLowerCase()).filter(Boolean));
 
+export function isBootstrapAdminEmail(email: string | undefined): boolean {
+  if (!email) {
+    return false;
+  }
+  return adminEmailSet.has(email.trim().toLowerCase());
+}
+
+export async function userHasAdminAccess(supabase: NonNullable<ReturnType<typeof getServiceRoleClient>>, user: User): Promise<boolean> {
+  if (!user.email) {
+    return false;
+  }
+  if (isBootstrapAdminEmail(user.email)) {
+    return true;
+  }
+  const { data } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  return data?.role === "admin";
+}
+
 export async function assertAdminFromRequest(request: Request): Promise<
   { ok: true; user: User } | { ok: false; response: NextResponse }
 > {
@@ -47,7 +65,7 @@ export async function assertAdminFromRequest(request: Request): Promise<
     return { ok: false, response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
 
-  if (!adminEmailSet.has(user.email.toLowerCase())) {
+  if (!(await userHasAdminAccess(supabase, user))) {
     return { ok: false, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
   }
 

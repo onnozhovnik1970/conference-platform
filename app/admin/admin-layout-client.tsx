@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { SiteTextLogo } from "@/components/site-text-logo";
 import { Button } from "@/components/ui/button";
-import { ALLOWED_ADMIN_EMAILS } from "@/lib/admin";
 import "@/lib/i18n/config";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -19,6 +18,8 @@ const nav = [
   { href: "/admin/needs-revision", labelKey: "adminNavNeedsRevision" as const },
   { href: "/admin/rejected", labelKey: "adminNavRejected" as const },
   { href: "/admin/archive", labelKey: "adminNavArchive" as const },
+  { href: "/admin/users", labelKey: "adminNavUsers" as const },
+  { href: "/admin/statistics", labelKey: "adminNavStatistics" as const },
   { href: "/admin/conference-settings", labelKey: "adminNavConferenceSettings" as const }
 ];
 
@@ -48,39 +49,32 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const [password, setPassword] = useState("");
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
 
-  const adminEmailsSet = useMemo(() => {
-    return new Set(ALLOWED_ADMIN_EMAILS.map((value) => value.trim().toLowerCase()).filter(Boolean));
-  }, []);
-
   useEffect(() => {
     const init = async () => {
       setIsLoading(true);
       const {
-        data: { user },
-        error: userError
-      } = await supabase.auth.getUser();
+        data: { session },
+        error: sessionError
+      } = await supabase.auth.getSession();
 
-      if (userError || !user) {
+      if (sessionError || !session?.user) {
         setIsAuthenticated(false);
         setIsAuthorized(false);
         setIsLoading(false);
         return;
       }
 
-      const userEmail = user.email?.toLowerCase() ?? "";
       setIsAuthenticated(true);
-      if (!adminEmailsSet.has(userEmail)) {
-        setIsAuthorized(false);
-        setIsLoading(false);
-        return;
-      }
-
-      setIsAuthorized(true);
+      const me = await fetch("/api/admin/me", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        cache: "no-store"
+      });
+      setIsAuthorized(me.ok);
       setIsLoading(false);
     };
 
     void init();
-  }, [adminEmailsSet]);
+  }, []);
 
   const handleAdminLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -94,15 +88,21 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const normalizedEmail = data.user.email?.toLowerCase() ?? "";
       setIsAuthenticated(true);
 
-      if (!adminEmailsSet.has(normalizedEmail)) {
+      const {
+        data: { session: nextSession }
+      } = await supabase.auth.getSession();
+      if (!nextSession?.access_token) {
         setIsAuthorized(false);
         return;
       }
 
-      setIsAuthorized(true);
+      const me = await fetch("/api/admin/me", {
+        headers: { Authorization: `Bearer ${nextSession.access_token}` },
+        cache: "no-store"
+      });
+      setIsAuthorized(me.ok);
       setAuthError(null);
     } catch {
       setAuthError(t("adminLoginUnexpectedError"));

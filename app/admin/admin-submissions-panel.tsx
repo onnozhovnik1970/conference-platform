@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import "@/lib/i18n/config";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
+
+const SECTION_PANEL_KEYS = ["panel1", "panel2", "panel3", "panel4", "panel5", "panel6"] as const;
 
 const STATUS_OPTIONS = ["pending", "pending_review", "under_review", "accepted", "rejected", "needs_revision"] as const;
 type SubmissionAdminStatus = (typeof STATUS_OPTIONS)[number];
@@ -119,6 +122,7 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
   const [savingId, setSavingId] = useState<number | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [archiveId, setArchiveId] = useState<number | null>(null);
+  const [sectionFilter, setSectionFilter] = useState<"all" | (typeof SECTION_PANEL_KEYS)[number]>("all");
 
   const fetchAsAdmin = useCallback(async (input: string, init?: RequestInit) => {
     const {
@@ -209,7 +213,14 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
     void loadSubmissions();
   }, [loadSubmissions]);
 
-  const visibleRows = useMemo(() => filterRows(rows, view), [rows, view]);
+  const viewFiltered = useMemo(() => filterRows(rows, view), [rows, view]);
+
+  const displayRows = useMemo(() => {
+    if (sectionFilter === "all") {
+      return viewFiltered;
+    }
+    return viewFiltered.filter((r) => r.section === sectionFilter);
+  }, [viewFiltered, sectionFilter]);
 
   const handleStatusChange = (id: number, value: string) => {
     const next = normalizeStatus(value);
@@ -374,9 +385,48 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
           <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>
         )}
 
-        {visibleRows.length === 0 && <p className="text-slate-300">{t("adminNoSubmissions")}</p>}
+        {rows.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t("adminFilterSectionLabel")}</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setSectionFilter("all")}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  sectionFilter === "all"
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-white/20 bg-white/5 text-slate-200 hover:bg-white/10"
+                )}
+              >
+                {t("adminFilterAll")}
+              </button>
+              {SECTION_PANEL_KEYS.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSectionFilter(key)}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                    sectionFilter === key
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-white/20 bg-white/5 text-slate-200 hover:bg-white/10"
+                  )}
+                >
+                  {t(key)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-        {visibleRows.length > 0 && (
+        {viewFiltered.length === 0 && <p className="text-slate-300">{t("adminNoSubmissions")}</p>}
+
+        {viewFiltered.length > 0 && displayRows.length === 0 && (
+          <p className="text-slate-300">{t("adminNoSubmissionsForFilter")}</p>
+        )}
+
+        {displayRows.length > 0 && (
           <div className="overflow-x-auto rounded-md border border-white/15">
             <table className="min-w-full divide-y divide-white/10 text-sm">
               <thead className="bg-white/5">
@@ -391,17 +441,20 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10 bg-black/20">
-                {visibleRows.map((row) => {
+                {displayRows.map((row) => {
                   const isSaving = savingId === row.id;
                   const isDownloading = downloadingId === row.id;
                   const isArchiving = archiveId === row.id;
                   const canDownload = Boolean(row.filePath);
                   const isArchived = Boolean(row.archivedAt);
+                  const sectionLabel = (SECTION_PANEL_KEYS as readonly string[]).includes(row.section)
+                    ? t(row.section as (typeof SECTION_PANEL_KEYS)[number])
+                    : row.section;
                   return (
                     <tr key={row.id}>
                       <td className="max-w-[10rem] px-4 py-3 text-slate-200">{row.authorName}</td>
                       <td className="max-w-[14rem] px-4 py-3 text-slate-200">{row.title}</td>
-                      <td className="max-w-[12rem] px-4 py-3 text-slate-200">{row.section}</td>
+                      <td className="max-w-[12rem] px-4 py-3 text-slate-200">{sectionLabel}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-200">{formatDate(row.createdAt)}</td>
                       <td className="px-4 py-3 align-top">
                         <div className="flex flex-col gap-2">
