@@ -135,15 +135,16 @@ export default function HomePage() {
                     sec.start_time && formatConferenceDateTime(sec.start_time, loc)
                       ? t("homeSectionZoomStarts", { dateTime: formatConferenceDateTime(sec.start_time, loc) })
                       : null;
+                  const sectionLabelText = t("joinSectionRoom", { sectionName: sectionLabel(sec, i18n.language) });
                   const sectionBtnClass =
-                    "h-12 w-full gap-2 md:h-14 border-white/25 bg-white/5 text-white [&_svg]:shrink-0";
+                    "!h-auto !min-h-12 w-full min-w-0 max-w-full flex items-start justify-start gap-2 whitespace-normal border-white/25 bg-white/5 px-4 py-3 text-left text-base text-white md:!min-h-14 md:text-lg [&_svg]:mt-0.5 [&_svg]:shrink-0";
                   return (
-                    <div key={sec.id}>
+                    <div key={sec.id} className="min-w-0">
                       {hasZoom ? (
                         <Button asChild variant="outline" size="lg" className={`${sectionBtnClass} hover:bg-white/10`}>
                           <a href={zoomHref(zoomRaw)} target="_blank" rel="noopener noreferrer">
                             <Video className="h-5 w-5 opacity-90" />
-                            {t("joinSectionRoom", { sectionName: sectionLabel(sec, i18n.language) })}
+                            <span className="min-w-0 flex-1 break-words leading-snug">{sectionLabelText}</span>
                           </a>
                         </Button>
                       ) : (
@@ -156,7 +157,7 @@ export default function HomePage() {
                           aria-disabled="true"
                         >
                           <Video className="h-5 w-5 opacity-50" />
-                          {t("joinSectionRoom", { sectionName: sectionLabel(sec, i18n.language) })}
+                          <span className="min-w-0 flex-1 break-words leading-snug">{sectionLabelText}</span>
                         </Button>
                       )}
                       {startLabel ? <p className="mt-1.5 text-center text-sm text-slate-400">{startLabel}</p> : null}
