@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
+import { sendRegistrationWelcomeEmail } from "@/lib/email/send-registration-welcome";
+
 type RegisterPayload = {
   lastName: string;
   firstName: string;
@@ -154,6 +156,11 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
+
+    void sendRegistrationWelcomeEmail(supabase, {
+      to: payload.email.trim(),
+      firstName: payload.firstName.trim()
+    }).catch((err) => console.error("[register] welcome email:", err));
 
     return NextResponse.json({ success: true, participantId: data.id });
   } catch {
