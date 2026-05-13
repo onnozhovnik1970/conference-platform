@@ -207,14 +207,13 @@ export function renderCertificatePdfBuffer(payload: CertificatePayload): Buffer 
   const contentW = bandX - marginL - logoReserve;
 
   const SIGNATURE_TOP = pageH - 86;
-  const CONTENT_BOTTOM = SIGNATURE_TOP - 14;
 
   doc.setFillColor(WHITE.r, WHITE.g, WHITE.b);
   doc.rect(0, 0, pageW, pageH, "F");
 
   drawSoftWatermarkShapes(doc, pageH);
 
-  /** Fixed slots: [yTop, height] in pt — gaps keep stack above CONTENT_BOTTOM (signature). */
+  /** Fixed slots: [yTop, height] in pt — gaps keep stack above signature chrome (SIGNATURE_TOP). */
   let y = 32;
   const gap = 5;
   const slot = (h: number) => {
