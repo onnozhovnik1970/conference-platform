@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import sharp from "sharp";
 
@@ -159,6 +160,7 @@ export async function renderCertificatePdfBuffer(payload: CertificatePayload): P
   const italicBytes = readFileSync(join(FONTS_DIR, "Roboto-Italic.ttf"));
 
   const pdfDoc = await PDFDocument.create();
+  pdfDoc.registerFontkit(fontkit);
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
   const png = await pdfDoc.embedPng(pngBuffer);
   page.drawImage(png, { x: 0, y: 0, width: PAGE_W, height: PAGE_H });
