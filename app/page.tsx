@@ -48,9 +48,7 @@ export default function HomePage() {
   const aboutDescription = settings.description?.trim() || t("conferenceGoal");
   const step3Text = t("step3JoinHint", { date: heroDateLabel, location: locationText });
   const zoomLinkRaw = settings.zoom_link?.trim() ?? "";
-  const zoomDetailsText = settings.zoom_details?.trim() ?? "";
-  const sectionJoinButtons = thematicSections.filter((s) => (s.zoom_link ?? "").trim().length > 0);
-  const showJoinLiveBlock = Boolean(zoomLinkRaw) || sectionJoinButtons.length > 0;
+  const showJoinLiveBlock = Boolean(zoomLinkRaw) || thematicSections.length > 0;
 
   return (
     <main className="min-h-screen">
@@ -95,21 +93,6 @@ export default function HomePage() {
         <p className="mt-2 text-center text-base font-medium text-[#F0A500]">{t("conferenceLanguagesList")}</p>
       </section>
 
-      {thematicSections.length > 0 && (
-        <section className="container pb-14 md:pb-20">
-          <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("thematicPanelsTitle")}</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {thematicSections.map((sec) => (
-              <Card key={sec.id} className="border-white/10 bg-white/5">
-                <CardHeader>
-                  <CardTitle>{sectionLabel(sec, i18n.language)}</CardTitle>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
-
       <section className="container pb-14 md:pb-20">
         <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("howToParticipate")}</h2>
         <div className="grid gap-6 md:grid-cols-3">
@@ -134,31 +117,48 @@ export default function HomePage() {
       {showJoinLiveBlock && (
         <section className="container pb-14 md:pb-20">
           <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("homeJoinLiveTitle")}</h2>
-          <div className="mx-auto flex max-w-xl flex-col items-stretch gap-4">
+          <div className="mx-auto flex w-full max-w-xl flex-col items-stretch gap-4 md:max-w-3xl">
             {zoomLinkRaw ? (
-              <Button asChild size="lg" className="h-14 gap-2 text-base font-semibold shadow-lg shadow-primary/20 md:h-16 md:text-lg">
+              <Button asChild size="lg" className="h-14 w-full gap-2 text-base font-semibold shadow-lg shadow-primary/20 md:h-16 md:text-lg">
                 <a href={zoomHref(zoomLinkRaw)} target="_blank" rel="noopener noreferrer">
                   <Video className="h-6 w-6 shrink-0" />
                   {t("joinPlenarySession")}
                 </a>
               </Button>
             ) : null}
-            {sectionJoinButtons.length > 0 ? (
-              <div className="flex flex-col gap-3">
-                {sectionJoinButtons.map((sec) => {
-                  const href = zoomHref(sec.zoom_link ?? "");
+            {thematicSections.length > 0 ? (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {thematicSections.map((sec) => {
+                  const zoomRaw = (sec.zoom_link ?? "").trim();
+                  const hasZoom = zoomRaw.length > 0;
                   const startLabel =
                     sec.start_time && formatConferenceDateTime(sec.start_time, loc)
                       ? t("homeSectionZoomStarts", { dateTime: formatConferenceDateTime(sec.start_time, loc) })
                       : null;
+                  const sectionBtnClass =
+                    "h-12 w-full gap-2 md:h-14 border-white/25 bg-white/5 text-white [&_svg]:shrink-0";
                   return (
                     <div key={sec.id}>
-                      <Button asChild variant="outline" size="lg" className="h-12 w-full gap-2 border-white/25 bg-white/5 text-white hover:bg-white/10 md:h-14">
-                        <a href={href} target="_blank" rel="noopener noreferrer">
-                          <Video className="h-5 w-5 shrink-0 opacity-90" />
+                      {hasZoom ? (
+                        <Button asChild variant="outline" size="lg" className={`${sectionBtnClass} hover:bg-white/10`}>
+                          <a href={zoomHref(zoomRaw)} target="_blank" rel="noopener noreferrer">
+                            <Video className="h-5 w-5 opacity-90" />
+                            {t("joinSectionRoom", { sectionName: sectionLabel(sec, i18n.language) })}
+                          </a>
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          disabled
+                          className={`${sectionBtnClass} cursor-not-allowed border-white/10 bg-white/[0.03] text-slate-500 opacity-70 hover:bg-white/[0.03]`}
+                          aria-disabled="true"
+                        >
+                          <Video className="h-5 w-5 opacity-50" />
                           {t("joinSectionRoom", { sectionName: sectionLabel(sec, i18n.language) })}
-                        </a>
-                      </Button>
+                        </Button>
+                      )}
                       {startLabel ? <p className="mt-1.5 text-center text-sm text-slate-400">{startLabel}</p> : null}
                     </div>
                   );
@@ -169,40 +169,20 @@ export default function HomePage() {
         </section>
       )}
 
-      <section className="container pb-14 md:pb-20">
-        <Card className="border-white/10 bg-white/5">
-          <CardHeader>
-            <CardTitle>{t("zoomTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-sm text-slate-400">{t("zoomLink")}</p>
-              {zoomLinkRaw ? (
-                <a
-                  href={zoomHref(zoomLinkRaw)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 inline-block text-lg font-semibold text-primary underline-offset-4 hover:underline break-all"
-                >
-                  {t("zoomOpenLink")}
-                </a>
-              ) : (
-                <p className="mt-1 text-lg font-semibold text-slate-500">—</p>
-              )}
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">{t("zoomDetails")}</p>
-              <p className={`mt-1 text-lg font-semibold text-white ${zoomDetailsText ? "whitespace-pre-wrap" : ""}`}>
-                {zoomDetailsText || "—"}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">{t("zoomDate")}</p>
-              <p className="text-lg font-semibold text-white">{heroDateLabel}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+      {thematicSections.length > 0 && (
+        <section className="container pb-14 md:pb-20">
+          <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("thematicPanelsTitle")}</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {thematicSections.map((sec) => (
+              <Card key={sec.id} className="border-white/10 bg-white/5">
+                <CardHeader>
+                  <CardTitle>{sectionLabel(sec, i18n.language)}</CardTitle>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       <footer className="border-t border-white/10 bg-black/30 py-8">
         <div className="container flex flex-col items-center justify-between gap-3 text-sm text-slate-300 sm:flex-row">
