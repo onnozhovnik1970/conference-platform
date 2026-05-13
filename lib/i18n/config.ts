@@ -201,6 +201,17 @@ const resources = {
       adminProgramSuccess:
         "Program: sent {{sent}} email(s); {{recipientCount}} accepted author(s); skipped (no email): {{skipped}}; failed: {{failed}}.",
       adminProgramError: "Could not send program emails.",
+      adminCertificatesCardTitle: "Certificates (PDF)",
+      adminCertificatesCardSubtitle:
+        "Generate participation certificates for every accepted, non-archived submission. PDFs use pdfmake (Roboto via bundled virtual fonts — supports Ukrainian and English).",
+      adminCertificatesGenerateZip: "Generate certificates (ZIP)",
+      adminCertificatesGenerating: "Generating…",
+      adminCertificatesZipConfirm:
+        "Create a ZIP with one PDF per accepted submission? This may take a moment for large cohorts.",
+      adminCertificatesZipError: "Could not generate certificates.",
+      adminCertificatesZipSuccess: "Saved file: {{file}}",
+      adminCertificatesDownloadOne: "Download certificate (PDF)",
+      adminCertificatesRowError: "Could not download certificate.",
       adminConferenceFieldTitleEn: "Conference title (English)",
       adminConferenceFieldTitleUa: "Conference title (Ukrainian)",
       adminConferenceFieldDate: "Conference date",
@@ -564,6 +575,17 @@ const resources = {
       adminProgramSuccess:
         "Програма: надіслано {{sent}} лист(ів); {{recipientCount}} автор(ів); пропущено (немає email): {{skipped}}; помилок: {{failed}}.",
       adminProgramError: "Не вдалося надіслати програму.",
+      adminCertificatesCardTitle: "Грамоти (PDF)",
+      adminCertificatesCardSubtitle:
+        "Згенерувати грамоти учасникам з прийнятими неархівованими поданнями. PDF через pdfmake (Roboto у вбудованих шрифтах — підтримка української та англійської).",
+      adminCertificatesGenerateZip: "Згенерувати грамоти (ZIP)",
+      adminCertificatesGenerating: "Генерація…",
+      adminCertificatesZipConfirm:
+        "Створити ZIP з одним PDF на кожне прийняте подання? Для великої кількості це може тривати довше.",
+      adminCertificatesZipError: "Не вдалося згенерувати грамоти.",
+      adminCertificatesZipSuccess: "Файл збережено: {{file}}",
+      adminCertificatesDownloadOne: "Завантажити грамоту (PDF)",
+      adminCertificatesRowError: "Не вдалося завантажити грамоту.",
       adminConferenceFieldTitleEn: "Назва конференції (англійською)",
       adminConferenceFieldTitleUa: "Назва конференції (українською)",
       adminConferenceFieldDate: "Дата проведення",

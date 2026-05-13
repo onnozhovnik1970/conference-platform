@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Loader2 } from "lucide-react";
+import { Award, Download, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -96,9 +96,7 @@ function statusBadgeClass(status: SubmissionAdminStatus): string {
 function filterRows(rows: AdminRow[], view: AdminSubmissionsView): AdminRow[] {
   switch (view) {
     case "pipeline":
-      return rows.filter(
-        (r) => !r.archivedAt && ["pending", "pending_review", "under_review"].includes(r.status)
-      );
+      return rows.filter((r) => !r.archivedAt);
     case "accepted":
       return rows.filter((r) => !r.archivedAt && r.status === "accepted");
     case "needs_revision":
@@ -124,6 +122,7 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
   const [rows, setRows] = useState<AdminRow[]>([]);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [certificateDownloadingId, setCertificateDownloadingId] = useState<number | null>(null);
   const [archiveId, setArchiveId] = useState<number | null>(null);
   const [sectionFilter, setSectionFilter] = useState<"all" | string>("all");
   const [sections, setSections] = useState<ConferenceSectionRow[]>([]);
@@ -411,6 +410,54 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
     }
   };
 
+  const handleDownloadCertificate = async (row: AdminRow) => {
+    if (row.status !== "accepted" || row.archivedAt) {
+      return;
+    }
+    setError(null);
+    setCertificateDownloadingId(row.id);
+    const { response, missingSession } = await fetchAsAdmin(
+      `/api/admin/certificates/${encodeURIComponent(String(row.id))}`,
+      { method: "GET" }
+    );
+
+    if (missingSession || !response) {
+      setError(t("adminCertificatesRowError"));
+      setCertificateDownloadingId(null);
+      return;
+    }
+
+    if (!response.ok) {
+      try {
+        const body = (await response.json()) as { error?: string };
+        setError(body.error?.trim() || t("adminCertificatesRowError"));
+      } catch {
+        setError(t("adminCertificatesRowError"));
+      }
+      setCertificateDownloadingId(null);
+      return;
+    }
+
+    try {
+      const blob = await response.blob();
+      const fromHeader = parseFilenameFromContentDisposition(response.headers.get("content-disposition"));
+      const downloadName = fromHeader || `certificate-${row.id}.pdf`;
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = downloadName;
+      anchor.rel = "noopener";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError(t("adminCertificatesRowError"));
+    } finally {
+      setCertificateDownloadingId(null);
+    }
+  };
+
   const formatDate = (value: string | null) => {
     if (!value) {
       return "—";
@@ -496,9 +543,11 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
                 {displayRows.map((row) => {
                   const isSaving = savingId === row.id;
                   const isDownloading = downloadingId === row.id;
+                  const isCertDownloading = certificateDownloadingId === row.id;
                   const isArchiving = archiveId === row.id;
                   const canDownload = Boolean(row.filePath);
                   const isArchived = Boolean(row.archivedAt);
+                  const canCertificate = row.status === "accepted" && !isArchived;
                   const sectionCol = formatRowSectionLabel(row);
                   return (
                     <tr key={row.id}>
@@ -565,6 +614,24 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
                               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                             ) : (
                               <Download className="h-4 w-4" aria-hidden />
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-9 w-9 shrink-0 border-amber-400/40 bg-amber-500/10 p-0 text-amber-100 hover:bg-amber-500/20"
+                            disabled={!canCertificate || isCertDownloading || isSaving || isArchived}
+                            title={
+                              isCertDownloading ? t("adminCertificatesGenerating") : t("adminCertificatesDownloadOne")
+                            }
+                            aria-label={t("adminCertificatesDownloadOne")}
+                            onClick={() => void handleDownloadCertificate(row)}
+                          >
+                            {isCertDownloading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                            ) : (
+                              <Award className="h-4 w-4" aria-hidden />
                             )}
                           </Button>
                           {!isArchived ? (

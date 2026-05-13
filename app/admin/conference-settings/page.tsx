@@ -45,6 +45,10 @@ export default function AdminConferenceSettingsPage() {
   const [programNotice, setProgramNotice] = useState<string | null>(null);
   const [programErr, setProgramErr] = useState<string | null>(null);
 
+  const [certificatesZipBusy, setCertificatesZipBusy] = useState(false);
+  const [certificatesErr, setCertificatesErr] = useState<string | null>(null);
+  const [certificatesNotice, setCertificatesNotice] = useState<string | null>(null);
+
   const fetchAsAdmin = useCallback(async (input: string, init?: RequestInit) => {
     const {
       data: { session }
@@ -240,6 +244,8 @@ export default function AdminConferenceSettingsPage() {
     setReminderNotice(null);
     setProgramErr(null);
     setProgramNotice(null);
+    setCertificatesErr(null);
+    setCertificatesNotice(null);
     setReminderBusy(dryRun ? "preview" : "send");
     try {
       const qs = dryRun ? "?dryRun=true" : "";
@@ -282,13 +288,15 @@ export default function AdminConferenceSettingsPage() {
     void runReminder(false);
   };
 
-  const emailBatchIdle = reminderBusy === null && programBusy === null;
+  const emailBatchIdle = reminderBusy === null && programBusy === null && !certificatesZipBusy;
 
   const runProgram = async (dryRun: boolean) => {
     setProgramErr(null);
     setProgramNotice(null);
     setReminderErr(null);
     setReminderNotice(null);
+    setCertificatesErr(null);
+    setCertificatesNotice(null);
     setProgramBusy(dryRun ? "preview" : "send");
     try {
       const qs = dryRun ? "?dryRun=true" : "";
@@ -329,6 +337,73 @@ export default function AdminConferenceSettingsPage() {
       return;
     }
     void runProgram(false);
+  };
+
+  const parseZipFilename = (header: string | null): string | null => {
+    if (!header) {
+      return null;
+    }
+    const utf8Match = /filename\*=(?:UTF-8''|utf-8'')([^;]+)/i.exec(header);
+    if (utf8Match?.[1]) {
+      try {
+        return decodeURIComponent(utf8Match[1].trim().replace(/^"(.*)"$/, "$1"));
+      } catch {
+        return utf8Match[1].trim();
+      }
+    }
+    const asciiMatch = /filename="([^"]+)"/i.exec(header);
+    if (asciiMatch?.[1]) {
+      return asciiMatch[1];
+    }
+    return null;
+  };
+
+  const handleCertificatesZip = async () => {
+    if (!globalThis.confirm(t("adminCertificatesZipConfirm"))) {
+      return;
+    }
+    setCertificatesErr(null);
+    setCertificatesNotice(null);
+    setReminderErr(null);
+    setReminderNotice(null);
+    setProgramErr(null);
+    setProgramNotice(null);
+    setCertificatesZipBusy(true);
+    try {
+      const { response, missingSession } = await fetchAsAdmin("/api/admin/certificates/generate", {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      if (missingSession || !response) {
+        setCertificatesErr(t("adminCertificatesZipError"));
+        return;
+      }
+      if (!response.ok) {
+        try {
+          const body = (await response.json()) as { error?: string };
+          setCertificatesErr(body.error?.trim() || t("adminCertificatesZipError"));
+        } catch {
+          setCertificatesErr(t("adminCertificatesZipError"));
+        }
+        return;
+      }
+      const blob = await response.blob();
+      const downloadName = parseZipFilename(response.headers.get("content-disposition")) ?? "conference-certificates.zip";
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = downloadName;
+      anchor.rel = "noopener";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setCertificatesNotice(t("adminCertificatesZipSuccess", { file: downloadName }));
+    } catch {
+      setCertificatesErr(t("adminCertificatesZipError"));
+    } finally {
+      setCertificatesZipBusy(false);
+    }
   };
 
   const inputClass =
@@ -516,6 +591,26 @@ export default function AdminConferenceSettingsPage() {
               {programBusy === "send" ? t("adminProgramSending") : t("adminProgramSend")}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-white/10 bg-black/35 backdrop-blur">
+        <CardHeader>
+          <CardTitle className="text-2xl text-white">{t("adminCertificatesCardTitle")}</CardTitle>
+          <CardDescription className="text-slate-300">{t("adminCertificatesCardSubtitle")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {certificatesErr && (
+            <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{certificatesErr}</div>
+          )}
+          {certificatesNotice && (
+            <div className="rounded-md border border-violet-400/40 bg-violet-500/10 px-4 py-3 text-sm text-violet-100">
+              {certificatesNotice}
+            </div>
+          )}
+          <Button type="button" disabled={!emailBatchIdle} onClick={() => void handleCertificatesZip()}>
+            {certificatesZipBusy ? t("adminCertificatesGenerating") : t("adminCertificatesGenerateZip")}
+          </Button>
         </CardContent>
       </Card>
 
