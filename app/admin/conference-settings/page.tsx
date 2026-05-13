@@ -46,6 +46,7 @@ export default function AdminConferenceSettingsPage() {
   const [programErr, setProgramErr] = useState<string | null>(null);
 
   const [certificatesZipBusy, setCertificatesZipBusy] = useState(false);
+  const [certificatesSendAllBusy, setCertificatesSendAllBusy] = useState(false);
   const [certificatesErr, setCertificatesErr] = useState<string | null>(null);
   const [certificatesNotice, setCertificatesNotice] = useState<string | null>(null);
 
@@ -288,7 +289,7 @@ export default function AdminConferenceSettingsPage() {
     void runReminder(false);
   };
 
-  const emailBatchIdle = reminderBusy === null && programBusy === null && !certificatesZipBusy;
+  const emailBatchIdle = reminderBusy === null && programBusy === null && !certificatesZipBusy && !certificatesSendAllBusy;
 
   const runProgram = async (dryRun: boolean) => {
     setProgramErr(null);
@@ -369,6 +370,7 @@ export default function AdminConferenceSettingsPage() {
     setProgramErr(null);
     setProgramNotice(null);
     setCertificatesZipBusy(true);
+    setCertificatesSendAllBusy(false);
     try {
       const { response, missingSession } = await fetchAsAdmin("/api/admin/certificates/generate", {
         method: "POST",
@@ -403,6 +405,46 @@ export default function AdminConferenceSettingsPage() {
       setCertificatesErr(t("adminCertificatesZipError"));
     } finally {
       setCertificatesZipBusy(false);
+    }
+  };
+
+  const handleCertificatesSendAll = async () => {
+    if (!globalThis.confirm(t("adminCertificatesSendAllConfirm"))) {
+      return;
+    }
+    setCertificatesErr(null);
+    setCertificatesNotice(null);
+    setReminderErr(null);
+    setReminderNotice(null);
+    setProgramErr(null);
+    setProgramNotice(null);
+    setCertificatesSendAllBusy(true);
+    setCertificatesZipBusy(false);
+    try {
+      const { response, missingSession } = await fetchAsAdmin("/api/admin/certificates/send-all", {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      if (missingSession || !response) {
+        setCertificatesErr(t("adminCertificatesSendAllError"));
+        return;
+      }
+      const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+      if (!response.ok) {
+        setCertificatesErr(typeof data?.error === "string" ? data.error : t("adminCertificatesSendAllError"));
+        return;
+      }
+      const sent = typeof data?.sent === "number" ? data.sent : 0;
+      const recipientCount = typeof data?.recipientCount === "number" ? data.recipientCount : 0;
+      const skippedNoEmail = typeof data?.skippedNoEmail === "number" ? data.skippedNoEmail : 0;
+      const failedCount = typeof data?.failedCount === "number" ? data.failedCount : 0;
+      setCertificatesNotice(
+        t("adminCertificatesSendAllSuccess", { sent, recipientCount, skippedNoEmail, failedCount })
+      );
+    } catch {
+      setCertificatesErr(t("adminCertificatesSendAllError"));
+    } finally {
+      setCertificatesSendAllBusy(false);
     }
   };
 
@@ -608,9 +650,20 @@ export default function AdminConferenceSettingsPage() {
               {certificatesNotice}
             </div>
           )}
-          <Button type="button" disabled={!emailBatchIdle} onClick={() => void handleCertificatesZip()}>
-            {certificatesZipBusy ? t("adminCertificatesGenerating") : t("adminCertificatesGenerateZip")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" disabled={!emailBatchIdle} onClick={() => void handleCertificatesZip()}>
+              {certificatesZipBusy ? t("adminCertificatesGenerating") : t("adminCertificatesGenerateZip")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/25 text-white hover:bg-white/10"
+              disabled={!emailBatchIdle}
+              onClick={() => void handleCertificatesSendAll()}
+            >
+              {certificatesSendAllBusy ? t("adminCertificatesSendAllBusy") : t("adminCertificatesSendAll")}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

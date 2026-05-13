@@ -149,9 +149,17 @@ export default function AdminUsersPage() {
           institution: draft.institution.trim()
         })
       });
-      if (missingSession || !response?.ok) {
-        const body = response ? ((await response.json().catch(() => null)) as { error?: string } | null) : null;
-        setError(body?.error?.trim() || t("adminUsersProfileUpdateError"));
+      if (missingSession || !response) {
+        setError(t("adminUsersProfileUpdateError"));
+        return;
+      }
+      const payload = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
+      if (!response.ok) {
+        setError(payload?.error?.trim() || t("adminUsersProfileUpdateError"));
+        return;
+      }
+      if (payload?.success === false) {
+        setError(payload.error?.trim() || t("adminUsersProfileUpdateError"));
         return;
       }
       closeEdit();

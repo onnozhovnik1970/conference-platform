@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, Download, Loader2 } from "lucide-react";
+import { Award, Download, Loader2, Mail } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -119,10 +119,12 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
   const { t, i18n } = useTranslation();
 
   const [error, setError] = useState<string | null>(null);
+  const [infoNotice, setInfoNotice] = useState<string | null>(null);
   const [rows, setRows] = useState<AdminRow[]>([]);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [certificateDownloadingId, setCertificateDownloadingId] = useState<number | null>(null);
+  const [certificateSendingId, setCertificateSendingId] = useState<number | null>(null);
   const [archiveId, setArchiveId] = useState<number | null>(null);
   const [sectionFilter, setSectionFilter] = useState<"all" | string>("all");
   const [sections, setSections] = useState<ConferenceSectionRow[]>([]);
@@ -167,6 +169,7 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
 
   const loadSubmissions = useCallback(async () => {
     setError(null);
+    setInfoNotice(null);
 
     const { response, missingSession } = await fetchAsAdmin("/api/admin/submissions");
     if (missingSession || !response) {
@@ -458,6 +461,38 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
     }
   };
 
+  const handleSendCertificateEmail = async (row: AdminRow) => {
+    if (row.status !== "accepted" || row.archivedAt || view !== "accepted") {
+      return;
+    }
+    setError(null);
+    setInfoNotice(null);
+    setCertificateSendingId(row.id);
+    try {
+      const { response, missingSession } = await fetchAsAdmin(
+        `/api/admin/certificates/send/${encodeURIComponent(String(row.id))}`,
+        { method: "POST" }
+      );
+      if (missingSession || !response) {
+        setError(t("adminCertificatesSendEmailError"));
+        return;
+      }
+      const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string; to?: string } | null;
+      if (!response.ok) {
+        setError(data?.error?.trim() || t("adminCertificatesSendEmailError"));
+        return;
+      }
+      if (data?.success && data.to) {
+        setError(null);
+        setInfoNotice(t("adminCertificatesSendEmailSuccess", { email: data.to }));
+      }
+    } catch {
+      setError(t("adminCertificatesSendEmailError"));
+    } finally {
+      setCertificateSendingId(null);
+    }
+  };
+
   const formatDate = (value: string | null) => {
     if (!value) {
       return "—";
@@ -482,6 +517,9 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
       <CardContent className="space-y-4">
         {error && (
           <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>
+        )}
+        {infoNotice && (
+          <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{infoNotice}</div>
         )}
 
         {rows.length > 0 && (
@@ -544,6 +582,7 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
                   const isSaving = savingId === row.id;
                   const isDownloading = downloadingId === row.id;
                   const isCertDownloading = certificateDownloadingId === row.id;
+                  const isCertSending = certificateSendingId === row.id;
                   const isArchiving = archiveId === row.id;
                   const canDownload = Boolean(row.filePath);
                   const isArchived = Boolean(row.archivedAt);
@@ -634,6 +673,24 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
                               <Award className="h-4 w-4" aria-hidden />
                             )}
                           </Button>
+                          {view === "accepted" && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-9 w-9 shrink-0 border-sky-400/40 bg-sky-500/10 p-0 text-sky-100 hover:bg-sky-500/20"
+                              disabled={!canCertificate || isCertSending || isSaving || isArchived}
+                              title={isCertSending ? t("adminCertificatesSendingEmail") : t("adminCertificatesSendEmail")}
+                              aria-label={t("adminCertificatesSendEmail")}
+                              onClick={() => void handleSendCertificateEmail(row)}
+                            >
+                              {isCertSending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                              ) : (
+                                <Mail className="h-4 w-4" aria-hidden />
+                              )}
+                            </Button>
+                          )}
                           {!isArchived ? (
                             <Button
                               type="button"

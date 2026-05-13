@@ -7,6 +7,7 @@ import { DEFAULT_CONFERENCE_SETTINGS, type ConferenceSettingsRow } from "@/lib/c
 
 export type CertificatePayload = {
   submissionId: string;
+  userId: string;
   participantName: string;
   abstractTitle: string;
   sectionBilingual: string;
@@ -174,6 +175,7 @@ export async function loadCertificatePayloads(supabase: SupabaseClient): Promise
 
   return submissions.map((row) => ({
     submissionId: String(row.id),
+    userId: row.user_id,
     participantName: buildParticipantName(profilesById[row.user_id]),
     abstractTitle: (row.abstract_title ?? "").trim() || "—",
     sectionBilingual: sectionBilingualLabel(row, byId, bySlug),
@@ -248,6 +250,7 @@ export async function loadCertificatePayloadBySubmissionId(
 
   return {
     submissionId: String(row.id),
+    userId: row.user_id,
     participantName: buildParticipantName(profile ?? undefined),
     abstractTitle: (row.abstract_title ?? "").trim() || "—",
     sectionBilingual: sectionBilingualLabel(row, byId, bySlug),

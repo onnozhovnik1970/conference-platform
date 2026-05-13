@@ -203,7 +203,7 @@ const resources = {
       adminProgramError: "Could not send program emails.",
       adminCertificatesCardTitle: "Certificates (PDF)",
       adminCertificatesCardSubtitle:
-        "Generate participation certificates for every accepted, non-archived submission. PDFs use jsPDF with embedded Roboto (Ukrainian and English).",
+        "Download or email participation certificates (PDF) for accepted, non-archived submissions. Uses jsPDF with embedded Roboto. Bulk email uses Resend.",
       adminCertificatesGenerateZip: "Generate certificates (ZIP)",
       adminCertificatesGenerating: "Generating…",
       adminCertificatesZipConfirm:
@@ -211,6 +211,17 @@ const resources = {
       adminCertificatesZipError: "Could not generate certificates.",
       adminCertificatesZipSuccess: "Saved file: {{file}}",
       adminCertificatesDownloadOne: "Download certificate (PDF)",
+      adminCertificatesSendEmail: "Send certificate (email)",
+      adminCertificatesSendingEmail: "Sending…",
+      adminCertificatesSendEmailSuccess: "Certificate sent to {{email}}.",
+      adminCertificatesSendEmailError: "Could not send certificate email.",
+      adminCertificatesSendAll: "Send all certificates (email)",
+      adminCertificatesSendAllConfirm:
+        "Email a personalized certificate PDF to every accepted, non-archived participant? Uses Resend; skipped if no account email. This cannot be undone.",
+      adminCertificatesSendAllBusy: "Sending certificates…",
+      adminCertificatesSendAllSuccess:
+        "Certificates: sent {{sent}} email(s); {{recipientCount}} accepted submission(s); skipped (no email): {{skippedNoEmail}}; failed: {{failedCount}}.",
+      adminCertificatesSendAllError: "Could not complete bulk certificate emails.",
       adminCertificatesRowError: "Could not download certificate.",
       adminConferenceFieldTitleEn: "Conference title (English)",
       adminConferenceFieldTitleUa: "Conference title (Ukrainian)",
@@ -577,7 +588,7 @@ const resources = {
       adminProgramError: "Не вдалося надіслати програму.",
       adminCertificatesCardTitle: "Грамоти (PDF)",
       adminCertificatesCardSubtitle:
-        "Згенерувати грамоти учасникам з прийнятими неархівованими поданнями. PDF через jsPDF зі вбудованим Roboto (українська та англійська).",
+        "Завантаження або надсилання PDF-сертифікатів учасникам з прийнятими неархівованими поданнями (jsPDF, Roboto). Масове надсилання — через Resend.",
       adminCertificatesGenerateZip: "Згенерувати грамоти (ZIP)",
       adminCertificatesGenerating: "Генерація…",
       adminCertificatesZipConfirm:
@@ -585,6 +596,17 @@ const resources = {
       adminCertificatesZipError: "Не вдалося згенерувати грамоти.",
       adminCertificatesZipSuccess: "Файл збережено: {{file}}",
       adminCertificatesDownloadOne: "Завантажити грамоту (PDF)",
+      adminCertificatesSendEmail: "Надіслати сертифікат (email)",
+      adminCertificatesSendingEmail: "Надсилання…",
+      adminCertificatesSendEmailSuccess: "Сертифікат надіслано на {{email}}.",
+      adminCertificatesSendEmailError: "Не вдалося надіслати сертифікат електронною поштою.",
+      adminCertificatesSendAll: "Надіслати всі сертифікати (email)",
+      adminCertificatesSendAllConfirm:
+        "Надіслати персональний PDF-сертифікат усім прийнятим неархівованим учасникам? Використовується Resend; пропуск, якщо немає email в обліковому записі. Дію не скасувати.",
+      adminCertificatesSendAllBusy: "Надсилання сертифікатів…",
+      adminCertificatesSendAllSuccess:
+        "Сертифікати: надіслано {{sent}} лист(ів); подань: {{recipientCount}}; пропущено (немає email): {{skippedNoEmail}}; помилок: {{failedCount}}.",
+      adminCertificatesSendAllError: "Не вдалося надіслати сертифікати масово.",
       adminCertificatesRowError: "Не вдалося завантажити грамоту.",
       adminConferenceFieldTitleEn: "Назва конференції (англійською)",
       adminConferenceFieldTitleUa: "Назва конференції (українською)",

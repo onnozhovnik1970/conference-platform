@@ -14,6 +14,19 @@ type PatchBody = {
   institution?: unknown;
 };
 
+type RawPatchBody = Record<string, unknown>;
+
+/** Accept camelCase (UI) or snake_case (legacy / tools). */
+function normalizePatchBody(raw: RawPatchBody): PatchBody {
+  return {
+    role: raw.role,
+    firstName: raw.firstName ?? raw.first_name,
+    lastName: raw.lastName ?? raw.last_name,
+    middleName: raw.middleName ?? raw.middle_name,
+    institution: raw.institution
+  };
+}
+
 function parseProfileFields(body: PatchBody): {
   ok: true;
   firstName: string;
@@ -39,30 +52,31 @@ function parseProfileFields(body: PatchBody): {
   return { ok: true, firstName, lastName, middleName, institution };
 }
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> | { id: string } }) {
   const auth = await assertAdminFromRequest(request);
   if (!auth.ok) {
     return auth.response;
   }
 
-  const { id: rawId } = await params;
-  const targetId = rawId?.trim() ?? "";
+  const resolvedParams = await Promise.resolve(context.params);
+  const targetId = resolvedParams.id?.trim() ?? "";
   if (!UUID_RE.test(targetId)) {
     return NextResponse.json({ error: "Invalid user id" }, { status: 400 });
   }
 
-  let body: PatchBody;
+  let raw: RawPatchBody;
   try {
-    body = (await request.json()) as PatchBody;
+    raw = (await request.json()) as RawPatchBody;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  const body = normalizePatchBody(raw);
+
   const roleRaw = body.role;
   const hasRole = roleRaw === "user" || roleRaw === "admin";
 
-  const profileKeysPresent =
-    "firstName" in body || "lastName" in body || "middleName" in body || "institution" in body;
+  const profileKeysPresent = [body.firstName, body.lastName, body.middleName, body.institution].some((v) => v !== undefined);
 
   if (!hasRole && !profileKeysPresent) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
@@ -114,9 +128,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   if (existing) {
-    const { error: upErr } = await supabase.from("profiles").update(profileUpdate).eq("id", targetId);
+    if (Object.keys(profileUpdate).length === 0) {
+      return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+    }
+    const { data: updatedRow, error: upErr } = await supabase
+      .from("profiles")
+      .update(profileUpdate)
+      .eq("id", targetId)
+      .select("id")
+      .maybeSingle();
     if (upErr) {
       return NextResponse.json({ error: upErr.message }, { status: 500 });
+    }
+    if (!updatedRow) {
+      return NextResponse.json({ error: "Profile update did not apply (no matching profile row)." }, { status: 500 });
     }
   } else {
     const roleToInsert = hasRole ? (roleRaw as "user" | "admin") : "user";
@@ -152,7 +177,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   if (profileFields && targetEmail) {
-    const normEmail = targetEmail.trim().toLowerCase();
+    const rawEmail = targetEmail.trim();
+    const normEmail = rawEmail.toLowerCase();
+    const emailVariants = [...new Set([normEmail, rawEmail].filter(Boolean))];
     const { error: partErr } = await supabase
       .from("participants")
       .update({
@@ -161,12 +188,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         middle_name: profileFields.middleName,
         institution: profileFields.institution
       })
-      .eq("email", normEmail);
+      .in("email", emailVariants);
 
     if (partErr) {
-      return NextResponse.json({ error: `Could not sync participants row: ${partErr.message}` }, { status: 500 });
+      console.error("[admin/users PATCH] participants sync skipped:", partErr.message);
     }
   }
 
-  return NextResponse.json({ success: true, role: hasRole ? roleRaw : undefined });
+  return NextResponse.json({
+    success: true,
+    role: hasRole ? roleRaw : undefined,
+    profile: profileFields
+      ? {
+          firstName: profileFields.firstName,
+          lastName: profileFields.lastName,
+          middleName: profileFields.middleName,
+          institution: profileFields.institution
+        }
+      : undefined
+  });
 }
