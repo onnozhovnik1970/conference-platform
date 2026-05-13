@@ -10,7 +10,7 @@ import { SiteTextLogo } from "@/components/site-text-logo";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatConferenceDateTime, formatConferenceIsoDate } from "@/lib/conference-dates";
+import { formatConferenceIsoDate } from "@/lib/conference-dates";
 import { sectionLabel, type ConferenceSectionRow } from "@/lib/conference-sections";
 import { zoomHref } from "@/lib/zoom-href";
 import "@/lib/i18n/config";
@@ -43,12 +43,18 @@ export default function HomePage() {
   const heroDateLabel = formatConferenceIsoDate(settings.date, loc) || t("heroDate");
   const deadlineLabel = settings.deadline ? formatConferenceIsoDate(settings.deadline, loc) : "";
   const registrationBannerText = deadlineLabel ? t("registrationUntil", { date: deadlineLabel }) : t("registrationBanner");
-  const heroTitleText = settings.title?.trim() || t("heroTitle");
+  const heroTitleText =
+    loc === "ua"
+      ? settings.title_ua?.trim() || t("heroTitle")
+      : settings.title?.trim() || t("heroTitle");
   const locationText = settings.location?.trim() || t("heroFormat");
-  const aboutDescription = settings.description?.trim() || t("conferenceGoal");
+  const aboutDescription =
+    loc === "ua"
+      ? settings.description_ua?.trim() || t("conferenceGoal")
+      : settings.description?.trim() || t("conferenceGoal");
   const step3Text = t("step3JoinHint", { date: heroDateLabel, location: locationText });
   const zoomLinkRaw = settings.zoom_link?.trim() ?? "";
-  const showJoinLiveBlock = Boolean(zoomLinkRaw) || thematicSections.length > 0;
+  const showLiveSessionsBlock = thematicSections.length > 0 || Boolean(zoomLinkRaw);
 
   return (
     <main className="min-h-screen">
@@ -114,73 +120,74 @@ export default function HomePage() {
         </div>
       </section>
 
-      {showJoinLiveBlock && (
+      {showLiveSessionsBlock && (
         <section className="container pb-14 md:pb-20">
-          <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("homeJoinLiveTitle")}</h2>
-          <div className="mx-auto flex w-full max-w-xl flex-col items-stretch gap-4 md:max-w-3xl">
-            {zoomLinkRaw ? (
-              <Button asChild size="lg" className="h-14 w-full gap-2 text-base font-semibold shadow-lg shadow-primary/20 md:h-16 md:text-lg">
-                <a href={zoomHref(zoomLinkRaw)} target="_blank" rel="noopener noreferrer">
-                  <Video className="h-6 w-6 shrink-0" />
-                  {t("joinPlenarySession")}
-                </a>
-              </Button>
-            ) : null}
+          <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("liveSessionsTitle")}</h2>
+          <div className="mx-auto flex w-full max-w-xl flex-col gap-6 md:max-w-3xl">
+            <div className="w-full">
+              {zoomLinkRaw ? (
+                <Button asChild size="lg" className="h-14 w-full gap-2 text-base font-semibold shadow-lg shadow-primary/20 md:h-16 md:text-lg">
+                  <a href={zoomHref(zoomLinkRaw)} target="_blank" rel="noopener noreferrer">
+                    <Video className="h-6 w-6 shrink-0" />
+                    {t("plenarySessionOpening")}
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="lg"
+                  disabled
+                  className="h-14 w-full gap-2 text-base opacity-60 md:h-16 md:text-lg"
+                  aria-disabled="true"
+                >
+                  <Video className="h-6 w-6 shrink-0 opacity-50" />
+                  {t("plenarySessionOpening")}
+                </Button>
+              )}
+            </div>
             {thematicSections.length > 0 ? (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-stretch">
                 {thematicSections.map((sec) => {
                   const zoomRaw = (sec.zoom_link ?? "").trim();
                   const hasZoom = zoomRaw.length > 0;
-                  const startLabel =
-                    sec.start_time && formatConferenceDateTime(sec.start_time, loc)
-                      ? t("homeSectionZoomStarts", { dateTime: formatConferenceDateTime(sec.start_time, loc) })
-                      : null;
-                  const sectionLabelText = t("joinSectionRoom", { sectionName: sectionLabel(sec, i18n.language) });
+                  const titleText = sectionLabel(sec, i18n.language);
                   const sectionBtnClass =
-                    "!h-auto !min-h-12 w-full min-w-0 max-w-full flex items-start justify-start gap-2 whitespace-normal border-white/25 bg-white/5 px-4 py-3 text-left text-base text-white md:!min-h-14 md:text-lg [&_svg]:mt-0.5 [&_svg]:shrink-0";
+                    "flex h-full min-h-[80px] w-full min-w-0 max-w-full flex-1 items-center justify-center gap-2 whitespace-normal border-white/25 bg-white/5 px-4 py-3 text-center text-base leading-snug text-white md:text-lg [&_svg]:shrink-0";
                   return (
-                    <div key={sec.id} className="min-w-0">
+                    <div key={sec.id} className="flex min-h-[80px] min-w-0 self-stretch">
                       {hasZoom ? (
-                        <Button asChild variant="outline" size="lg" className={`${sectionBtnClass} hover:bg-white/10`}>
-                          <a href={zoomHref(zoomRaw)} target="_blank" rel="noopener noreferrer">
-                            <Video className="h-5 w-5 opacity-90" />
-                            <span className="min-w-0 flex-1 break-words leading-snug">{sectionLabelText}</span>
+                        <Button
+                          asChild
+                          variant="outline"
+                          className={`${sectionBtnClass} border-[#F0A500]/50 bg-[#F0A500]/10 text-white hover:bg-[#F0A500]/18`}
+                        >
+                          <a
+                            href={zoomHref(zoomRaw)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex h-full min-h-[80px] w-full items-center justify-center gap-2 text-center"
+                          >
+                            <Video className="h-5 w-5 shrink-0 text-[#F0A500]" />
+                            <span className="min-w-0 break-words">{titleText}</span>
                           </a>
                         </Button>
                       ) : (
                         <Button
                           type="button"
                           variant="outline"
-                          size="lg"
                           disabled
                           className={`${sectionBtnClass} cursor-not-allowed border-white/10 bg-white/[0.03] text-slate-500 opacity-70 hover:bg-white/[0.03]`}
                           aria-disabled="true"
                         >
-                          <Video className="h-5 w-5 opacity-50" />
-                          <span className="min-w-0 flex-1 break-words leading-snug">{sectionLabelText}</span>
+                          <Video className="h-5 w-5 shrink-0 opacity-50" />
+                          <span className="min-w-0 break-words">{titleText}</span>
                         </Button>
                       )}
-                      {startLabel ? <p className="mt-1.5 text-center text-sm text-slate-400">{startLabel}</p> : null}
                     </div>
                   );
                 })}
               </div>
             ) : null}
-          </div>
-        </section>
-      )}
-
-      {thematicSections.length > 0 && (
-        <section className="container pb-14 md:pb-20">
-          <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("thematicPanelsTitle")}</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {thematicSections.map((sec) => (
-              <Card key={sec.id} className="border-white/10 bg-white/5">
-                <CardHeader>
-                  <CardTitle>{sectionLabel(sec, i18n.language)}</CardTitle>
-                </CardHeader>
-              </Card>
-            ))}
           </div>
         </section>
       )}

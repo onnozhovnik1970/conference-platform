@@ -20,10 +20,12 @@ export default function AdminConferenceSettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [title, setTitle] = useState("");
+  const [titleUa, setTitleUa] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [deadline, setDeadline] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
+  const [descriptionUa, setDescriptionUa] = useState("");
   const [zoomLink, setZoomLink] = useState("");
   const [zoomDetails, setZoomDetails] = useState("");
 
@@ -78,10 +80,12 @@ export default function AdminConferenceSettingsPage() {
       const s = json.settings;
       if (s) {
         setTitle(s.title ?? "");
+        setTitleUa(s.title_ua ?? "");
         setEventDate(s.date ?? "");
         setDeadline(s.deadline ?? "");
         setLocation(s.location ?? "");
         setDescription(s.description ?? "");
+        setDescriptionUa(s.description_ua ?? "");
         setZoomLink(s.zoom_link ?? "");
         setZoomDetails(s.zoom_details ?? "");
       }
@@ -104,10 +108,12 @@ export default function AdminConferenceSettingsPage() {
         method: "PATCH",
         body: JSON.stringify({
           title: title.trim(),
+          title_ua: titleUa.trim() || null,
           date: eventDate || null,
           deadline: deadline || null,
           location: location.trim() || null,
           description: description.trim() || null,
+          description_ua: descriptionUa.trim() || null,
           zoom_link: zoomLink.trim() || null,
           zoom_details: zoomDetails.trim() || null
         })
@@ -240,15 +246,27 @@ export default function AdminConferenceSettingsPage() {
                 <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{success}</div>
               )}
               <div>
-                <label className={labelClass} htmlFor="cs-title">
-                  {t("adminConferenceFieldTitle")}
+                <label className={labelClass} htmlFor="cs-title-en">
+                  {t("adminConferenceFieldTitleEn")}
                 </label>
                 <textarea
-                  id="cs-title"
+                  id="cs-title-en"
                   required
                   rows={3}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
+                  className={`${inputClass} min-h-[5rem]`}
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="cs-title-ua">
+                  {t("adminConferenceFieldTitleUa")}
+                </label>
+                <textarea
+                  id="cs-title-ua"
+                  rows={3}
+                  value={titleUa}
+                  onChange={(e) => setTitleUa(e.target.value)}
                   className={`${inputClass} min-h-[5rem]`}
                 />
               </div>
@@ -273,14 +291,26 @@ export default function AdminConferenceSettingsPage() {
                 <input id="cs-location" type="text" value={location} onChange={(e) => setLocation(e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass} htmlFor="cs-description">
-                  {t("adminConferenceFieldDescription")}
+                <label className={labelClass} htmlFor="cs-description-en">
+                  {t("adminConferenceFieldDescriptionEn")}
                 </label>
                 <textarea
-                  id="cs-description"
+                  id="cs-description-en"
                   rows={5}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  className={`${inputClass} min-h-[8rem]`}
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="cs-description-ua">
+                  {t("adminConferenceFieldDescriptionUa")}
+                </label>
+                <textarea
+                  id="cs-description-ua"
+                  rows={5}
+                  value={descriptionUa}
+                  onChange={(e) => setDescriptionUa(e.target.value)}
                   className={`${inputClass} min-h-[8rem]`}
                 />
               </div>

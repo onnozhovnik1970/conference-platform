@@ -20,10 +20,12 @@ function jsonWithNoStore<T>(body: T, init?: { status?: number }) {
 
 type PatchBody = {
   title?: unknown;
+  title_ua?: unknown;
   date?: unknown;
   deadline?: unknown;
   location?: unknown;
   description?: unknown;
+  description_ua?: unknown;
   zoom_link?: unknown;
   zoom_details?: unknown;
 };
@@ -65,7 +67,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("conference_settings")
-    .select("id, title, date, deadline, location, description, zoom_link, zoom_details, updated_at")
+    .select("id, title, title_ua, date, deadline, location, description, description_ua, zoom_link, zoom_details, updated_at")
     .eq("id", 1)
     .maybeSingle();
 
@@ -100,10 +102,13 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "title is required" }, { status: 400 });
   }
 
+  const title_ua = asOptionalText(body.title_ua);
+
   const date = asOptionalDate(body.date);
   const deadline = asOptionalDate(body.deadline);
   const location = asOptionalText(body.location);
   const description = asOptionalText(body.description);
+  const description_ua = asOptionalText(body.description_ua);
   const zoom_link = asOptionalText(body.zoom_link);
   const zoom_details = asOptionalText(body.zoom_details);
 
@@ -118,16 +123,18 @@ export async function PATCH(request: Request) {
       {
         id: 1,
         title: titleRaw.trim(),
+        title_ua: title_ua?.trim() ?? null,
         date,
         deadline,
         location: location?.trim() ?? null,
         description: description?.trim() ?? null,
+        description_ua: description_ua?.trim() ?? null,
         zoom_link: zoom_link?.trim() ?? null,
         zoom_details: zoom_details?.trim() ?? null
       },
       { onConflict: "id" }
     )
-    .select("id, title, date, deadline, location, description, zoom_link, zoom_details, updated_at")
+    .select("id, title, title_ua, date, deadline, location, description, description_ua, zoom_link, zoom_details, updated_at")
     .single();
 
   if (error) {
