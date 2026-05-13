@@ -176,6 +176,19 @@ const resources = {
       adminConferenceSettingsSaveSuccess: "Settings saved.",
       adminConferenceSettingsSaveError: "Could not save settings.",
       adminConferenceSettingsLoadError: "Could not load settings.",
+      adminReminderCardTitle: "Reminder emails",
+      adminReminderCardSubtitle:
+        "Send a bilingual (UA/EN) “conference is tomorrow” email to every account with an accepted, non-archived submission. Includes conference name, date, plenary time and Zoom link, plus their section name, section Zoom, and section start time when available.",
+      adminReminderPreview: "Preview count",
+      adminReminderPreviewing: "Counting…",
+      adminReminderSend: "Send reminder",
+      adminReminderSending: "Sending…",
+      adminReminderSendConfirm:
+        "Send reminder emails now to all accepted participants? This uses your Resend configuration and cannot be undone.",
+      adminReminderPreviewResult: "Dry run: {{count}} recipient(s) would receive an email (no messages sent).",
+      adminReminderSuccess:
+        "Sent {{sent}} email(s) to {{recipientCount}} accepted author(s). Skipped (no auth email): {{skipped}}. Failed: {{failed}}.",
+      adminReminderError: "Could not send reminders.",
       adminConferenceFieldTitleEn: "Conference title (English)",
       adminConferenceFieldTitleUa: "Conference title (Ukrainian)",
       adminConferenceFieldDate: "Conference date",
@@ -514,6 +527,19 @@ const resources = {
       adminConferenceSettingsSaveSuccess: "Налаштування збережено.",
       adminConferenceSettingsSaveError: "Не вдалося зберегти налаштування.",
       adminConferenceSettingsLoadError: "Не вдалося завантажити налаштування.",
+      adminReminderCardTitle: "Нагадування електронною поштою",
+      adminReminderCardSubtitle:
+        "Надіслати двомовний (UA/EN) лист «конференція завтра» усім обліковим записам із прийнятим неархівованим поданням. У листі: назва, дата, час і Zoom пленару, а також назва секції, Zoom секції та час початку (якщо задано).",
+      adminReminderPreview: "Перевірити кількість",
+      adminReminderPreviewing: "Підрахунок…",
+      adminReminderSend: "Надіслати нагадування",
+      adminReminderSending: "Надсилання…",
+      adminReminderSendConfirm:
+        "Надіслати нагадування зараз усім прийнятим учасникам? Використовується Resend; дію не скасувати.",
+      adminReminderPreviewResult: "Тест: {{count}} одержувач(ів) отримали б лист (листи не надіслані).",
+      adminReminderSuccess:
+        "Надіслано {{sent}} лист(ів) для {{recipientCount}} автор(ів) із прийнятими тезами. Пропущено (немає email): {{skipped}}. Помилок: {{failed}}.",
+      adminReminderError: "Не вдалося надіслати нагадування.",
       adminConferenceFieldTitleEn: "Назва конференції (англійською)",
       adminConferenceFieldTitleUa: "Назва конференції (українською)",
       adminConferenceFieldDate: "Дата проведення",

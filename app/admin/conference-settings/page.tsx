@@ -37,6 +37,10 @@ export default function AdminConferenceSettingsPage() {
   const [newLabelEn, setNewLabelEn] = useState("");
   const [newLabelUa, setNewLabelUa] = useState("");
 
+  const [reminderBusy, setReminderBusy] = useState<"preview" | "send" | null>(null);
+  const [reminderNotice, setReminderNotice] = useState<string | null>(null);
+  const [reminderErr, setReminderErr] = useState<string | null>(null);
+
   const fetchAsAdmin = useCallback(async (input: string, init?: RequestInit) => {
     const {
       data: { session }
@@ -227,6 +231,51 @@ export default function AdminConferenceSettingsPage() {
     }
   };
 
+  const runReminder = async (dryRun: boolean) => {
+    setReminderErr(null);
+    setReminderNotice(null);
+    setReminderBusy(dryRun ? "preview" : "send");
+    try {
+      const qs = dryRun ? "?dryRun=true" : "";
+      const { response, missingSession } = await fetchAsAdmin(`/api/email/reminder${qs}`, {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      if (missingSession || !response) {
+        setReminderErr(t("adminReminderError"));
+        return;
+      }
+      const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+      if (!response.ok) {
+        setReminderErr(typeof data?.error === "string" ? data.error : t("adminReminderError"));
+        return;
+      }
+      if (dryRun && data) {
+        const count = typeof data.recipientCount === "number" ? data.recipientCount : 0;
+        setReminderNotice(t("adminReminderPreviewResult", { count }));
+      } else if (!dryRun && data) {
+        const sent = typeof data.sent === "number" ? data.sent : 0;
+        const recipientCount = typeof data.recipientCount === "number" ? data.recipientCount : 0;
+        const skipped = typeof data.skippedNoEmail === "number" ? data.skippedNoEmail : 0;
+        const failed = typeof data.failed === "number" ? data.failed : 0;
+        setReminderNotice(t("adminReminderSuccess", { sent, recipientCount, skipped, failed }));
+      }
+    } catch {
+      setReminderErr(t("adminReminderError"));
+    } finally {
+      setReminderBusy(null);
+    }
+  };
+
+  const handlePreviewReminder = () => void runReminder(true);
+
+  const handleSendReminder = () => {
+    if (!globalThis.confirm(t("adminReminderSendConfirm"))) {
+      return;
+    }
+    void runReminder(false);
+  };
+
   const inputClass =
     "mt-2 w-full rounded-md border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40";
   const labelClass = "block text-sm font-medium text-slate-100";
@@ -362,6 +411,35 @@ export default function AdminConferenceSettingsPage() {
               </Button>
             </form>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-white/10 bg-black/35 backdrop-blur">
+        <CardHeader>
+          <CardTitle className="text-2xl text-white">{t("adminReminderCardTitle")}</CardTitle>
+          <CardDescription className="text-slate-300">{t("adminReminderCardSubtitle")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {reminderErr && (
+            <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{reminderErr}</div>
+          )}
+          {reminderNotice && (
+            <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{reminderNotice}</div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/25 text-white hover:bg-white/10"
+              disabled={reminderBusy !== null}
+              onClick={handlePreviewReminder}
+            >
+              {reminderBusy === "preview" ? t("adminReminderPreviewing") : t("adminReminderPreview")}
+            </Button>
+            <Button type="button" disabled={reminderBusy !== null} onClick={handleSendReminder}>
+              {reminderBusy === "send" ? t("adminReminderSending") : t("adminReminderSend")}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
