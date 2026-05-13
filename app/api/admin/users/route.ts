@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { assertAdminFromRequest, getServiceRoleClient, isBootstrapAdminEmail } from "@/lib/admin-server";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type ProfileRow = {
   id: string;
@@ -71,5 +72,13 @@ export async function GET(request: Request) {
     };
   });
 
-  return NextResponse.json({ users });
+  return NextResponse.json(
+    { users },
+    {
+      headers: {
+        "Cache-Control": "private, no-store, no-cache, must-revalidate, max-age=0",
+        Pragma: "no-cache"
+      }
+    }
+  );
 }

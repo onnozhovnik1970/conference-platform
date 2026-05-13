@@ -67,7 +67,8 @@ export default function AdminUsersPage() {
       if (!opts?.silent) {
         setLoading(true);
       }
-      const { response, missingSession } = await fetchAsAdmin("/api/admin/users");
+      const listUrl = `/api/admin/users?_=${Date.now()}`;
+      const { response, missingSession } = await fetchAsAdmin(listUrl);
       if (missingSession || !response) {
         setError(t("adminUsersLoadError"));
         if (!opts?.silent) {
@@ -83,7 +84,8 @@ export default function AdminUsersPage() {
         return;
       }
       const json = (await response.json()) as { users: AdminUserRow[] };
-      setUsers(json.users ?? []);
+      const rows = json.users ?? [];
+      setUsers(rows.map((u) => ({ ...u })));
       if (!opts?.silent) {
         setLoading(false);
       }
@@ -120,12 +122,14 @@ export default function AdminUsersPage() {
   const openEdit = (row: AdminUserRow) => {
     setError(null);
     setEditing(row);
-    setDraft({
+    const nextDraft: ProfileDraft = {
       firstName: row.firstName,
       lastName: row.lastName,
       middleName: row.middleName,
       institution: row.institution
-    });
+    };
+    setDraft(nextDraft);
+    console.log("Edit opened", nextDraft);
   };
 
   const closeEdit = () => {
@@ -160,27 +164,15 @@ export default function AdminUsersPage() {
         return;
       }
 
-      const responseText = await response.text();
-      let payload: { success?: boolean; error?: string } | null = null;
-      try {
-        payload = responseText ? (JSON.parse(responseText) as { success?: boolean; error?: string }) : null;
-      } catch {
-        payload = null;
-      }
-      console.log("[admin users] PATCH response", {
-        ok: response.ok,
-        status: response.status,
-        statusText: response.statusText,
-        bodyText: responseText,
-        parsed: payload
-      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string; success?: boolean };
+      console.log("[admin users] PATCH response", response.status, data);
 
       if (!response.ok) {
-        setError(payload?.error?.trim() || t("adminUsersProfileUpdateError"));
+        setError(data.error ?? "Failed to save");
         return;
       }
-      if (payload?.success === false) {
-        setError(payload.error?.trim() || t("adminUsersProfileUpdateError"));
+      if (data.success === false) {
+        setError(data.error?.trim() || t("adminUsersProfileUpdateError"));
         return;
       }
       closeEdit();
@@ -394,7 +386,11 @@ export default function AdminUsersPage() {
                   <Button type="button" variant="outline" className="border-white/25 text-white" onClick={closeEdit}>
                     {t("adminUsersCancel")}
                   </Button>
-                  <Button type="submit" disabled={savingId === editing.id}>
+                  <Button
+                    type="submit"
+                    disabled={savingId === editing.id}
+                    onClick={() => console.log("Save clicked", draft)}
+                  >
                     {t("adminUsersSave")}
                   </Button>
                 </div>

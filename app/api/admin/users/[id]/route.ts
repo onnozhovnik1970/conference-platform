@@ -71,6 +71,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  console.log("PATCH received", resolvedParams, raw);
+
   const body = normalizePatchBody(raw);
 
   const roleRaw = body.role;
