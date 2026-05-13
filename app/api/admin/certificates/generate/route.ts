@@ -8,7 +8,7 @@ import { renderCertificatePdfBuffer } from "@/lib/certificates/render-pdf";
 
 export const dynamic = "force-dynamic";
 
-function pdfFileName(submissionId: number): string {
+function pdfFileName(submissionId: string): string {
   return `certificate-${submissionId}.pdf`;
 }
 

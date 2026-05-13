@@ -6,7 +6,7 @@ import { firstTitleLine } from "@/lib/email/conference-email-bundle";
 import { DEFAULT_CONFERENCE_SETTINGS, type ConferenceSettingsRow } from "@/lib/conference-settings";
 
 export type CertificatePayload = {
-  submissionId: number;
+  submissionId: string;
   participantName: string;
   abstractTitle: string;
   sectionBilingual: string;
@@ -30,7 +30,7 @@ type ProfileRow = {
 type SectionRow = { id: string; slug: string | null; label_en: string; label_ua: string };
 
 type SubmissionCertRow = {
-  id: number;
+  id: string | number;
   user_id: string;
   abstract_title: string | null;
   thematic_panel: string | null;
@@ -173,7 +173,7 @@ export async function loadCertificatePayloads(supabase: SupabaseClient): Promise
   const profilesById = Object.fromEntries((profRows ?? []).map((p) => [p.id as string, p as ProfileRow]));
 
   return submissions.map((row) => ({
-    submissionId: row.id,
+    submissionId: String(row.id),
     participantName: buildParticipantName(profilesById[row.user_id]),
     abstractTitle: (row.abstract_title ?? "").trim() || "—",
     sectionBilingual: sectionBilingualLabel(row, byId, bySlug),
@@ -189,7 +189,7 @@ export async function loadCertificatePayloads(supabase: SupabaseClient): Promise
 
 export async function loadCertificatePayloadBySubmissionId(
   supabase: SupabaseClient,
-  submissionId: number
+  submissionId: string
 ): Promise<CertificatePayload | null> {
   const first = await supabase
     .from("submissions")
@@ -247,7 +247,7 @@ export async function loadCertificatePayloadBySubmissionId(
   const profile = prof as ProfileRow | null;
 
   return {
-    submissionId: row.id,
+    submissionId: String(row.id),
     participantName: buildParticipantName(profile ?? undefined),
     abstractTitle: (row.abstract_title ?? "").trim() || "—",
     sectionBilingual: sectionBilingualLabel(row, byId, bySlug),

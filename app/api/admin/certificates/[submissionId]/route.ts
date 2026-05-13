@@ -7,15 +7,17 @@ import { renderCertificatePdfBuffer } from "@/lib/certificates/render-pdf";
 
 export const dynamic = "force-dynamic";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(_request: Request, { params }: { params: Promise<{ submissionId: string }> }) {
   const auth = await assertAdminFromRequest(_request);
   if (!auth.ok) {
     return auth.response;
   }
 
-  const { submissionId: raw } = await params;
-  const id = Number.parseInt(raw?.trim() ?? "", 10);
-  if (!Number.isFinite(id) || id <= 0) {
+  const { submissionId } = await params;
+  const id = submissionId?.trim() ?? "";
+  if (!UUID_RE.test(id)) {
     return NextResponse.json({ error: "Invalid submission id" }, { status: 400 });
   }
 
@@ -35,7 +37,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ sub
 
     const doc = buildCertificateDocumentDefinition(payload);
     const buf = await renderCertificatePdfBuffer(doc);
-    const filename = `certificate-${id}.pdf`;
+    const filename = `certificate-${payload.submissionId}.pdf`;
 
     return new NextResponse(new Uint8Array(buf), {
       status: 200,
