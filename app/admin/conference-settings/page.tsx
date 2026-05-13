@@ -41,6 +41,10 @@ export default function AdminConferenceSettingsPage() {
   const [reminderNotice, setReminderNotice] = useState<string | null>(null);
   const [reminderErr, setReminderErr] = useState<string | null>(null);
 
+  const [programBusy, setProgramBusy] = useState<"preview" | "send" | null>(null);
+  const [programNotice, setProgramNotice] = useState<string | null>(null);
+  const [programErr, setProgramErr] = useState<string | null>(null);
+
   const fetchAsAdmin = useCallback(async (input: string, init?: RequestInit) => {
     const {
       data: { session }
@@ -234,6 +238,8 @@ export default function AdminConferenceSettingsPage() {
   const runReminder = async (dryRun: boolean) => {
     setReminderErr(null);
     setReminderNotice(null);
+    setProgramErr(null);
+    setProgramNotice(null);
     setReminderBusy(dryRun ? "preview" : "send");
     try {
       const qs = dryRun ? "?dryRun=true" : "";
@@ -274,6 +280,55 @@ export default function AdminConferenceSettingsPage() {
       return;
     }
     void runReminder(false);
+  };
+
+  const emailBatchIdle = reminderBusy === null && programBusy === null;
+
+  const runProgram = async (dryRun: boolean) => {
+    setProgramErr(null);
+    setProgramNotice(null);
+    setReminderErr(null);
+    setReminderNotice(null);
+    setProgramBusy(dryRun ? "preview" : "send");
+    try {
+      const qs = dryRun ? "?dryRun=true" : "";
+      const { response, missingSession } = await fetchAsAdmin(`/api/email/program${qs}`, {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      if (missingSession || !response) {
+        setProgramErr(t("adminProgramError"));
+        return;
+      }
+      const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+      if (!response.ok) {
+        setProgramErr(typeof data?.error === "string" ? data.error : t("adminProgramError"));
+        return;
+      }
+      if (dryRun && data) {
+        const count = typeof data.recipientCount === "number" ? data.recipientCount : 0;
+        setProgramNotice(t("adminProgramPreviewResult", { count }));
+      } else if (!dryRun && data) {
+        const sent = typeof data.sent === "number" ? data.sent : 0;
+        const recipientCount = typeof data.recipientCount === "number" ? data.recipientCount : 0;
+        const skipped = typeof data.skippedNoEmail === "number" ? data.skippedNoEmail : 0;
+        const failed = typeof data.failed === "number" ? data.failed : 0;
+        setProgramNotice(t("adminProgramSuccess", { sent, recipientCount, skipped, failed }));
+      }
+    } catch {
+      setProgramErr(t("adminProgramError"));
+    } finally {
+      setProgramBusy(null);
+    }
+  };
+
+  const handlePreviewProgram = () => void runProgram(true);
+
+  const handleSendProgram = () => {
+    if (!globalThis.confirm(t("adminProgramSendConfirm"))) {
+      return;
+    }
+    void runProgram(false);
   };
 
   const inputClass =
@@ -417,27 +472,48 @@ export default function AdminConferenceSettingsPage() {
       <Card className="border-white/10 bg-black/35 backdrop-blur">
         <CardHeader>
           <CardTitle className="text-2xl text-white">{t("adminReminderCardTitle")}</CardTitle>
-          <CardDescription className="text-slate-300">{t("adminReminderCardSubtitle")}</CardDescription>
+          <CardDescription className="space-y-2 text-slate-300">
+            <span className="block">{t("adminReminderCardSubtitle")}</span>
+            <span className="block text-slate-400">{t("adminProgramCardSubtitle")}</span>
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {reminderErr && (
             <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{reminderErr}</div>
           )}
+          {programErr && (
+            <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{programErr}</div>
+          )}
           {reminderNotice && (
             <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{reminderNotice}</div>
+          )}
+          {programNotice && (
+            <div className="rounded-md border border-sky-400/40 bg-sky-500/10 px-4 py-3 text-sm text-sky-200">{programNotice}</div>
           )}
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               variant="outline"
               className="border-white/25 text-white hover:bg-white/10"
-              disabled={reminderBusy !== null}
+              disabled={!emailBatchIdle}
               onClick={handlePreviewReminder}
             >
               {reminderBusy === "preview" ? t("adminReminderPreviewing") : t("adminReminderPreview")}
             </Button>
-            <Button type="button" disabled={reminderBusy !== null} onClick={handleSendReminder}>
+            <Button type="button" disabled={!emailBatchIdle} onClick={handleSendReminder}>
               {reminderBusy === "send" ? t("adminReminderSending") : t("adminReminderSend")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/25 text-white hover:bg-white/10"
+              disabled={!emailBatchIdle}
+              onClick={handlePreviewProgram}
+            >
+              {programBusy === "preview" ? t("adminProgramPreviewing") : t("adminProgramPreview")}
+            </Button>
+            <Button type="button" disabled={!emailBatchIdle} onClick={handleSendProgram}>
+              {programBusy === "send" ? t("adminProgramSending") : t("adminProgramSend")}
             </Button>
           </div>
         </CardContent>

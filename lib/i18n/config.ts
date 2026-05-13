@@ -189,6 +189,18 @@ const resources = {
       adminReminderSuccess:
         "Sent {{sent}} email(s) to {{recipientCount}} accepted author(s). Skipped (no auth email): {{skipped}}. Failed: {{failed}}.",
       adminReminderError: "Could not send reminders.",
+      adminProgramCardSubtitle:
+        "Send the full bilingual conference schedule (plenary + all sections with Kyiv times and Zoom links) to the same audience as reminders.",
+      adminProgramPreview: "Preview program",
+      adminProgramPreviewing: "Counting…",
+      adminProgramSend: "Send program",
+      adminProgramSending: "Sending…",
+      adminProgramSendConfirm:
+        "Send the conference program email to all accepted participants now? This cannot be undone.",
+      adminProgramPreviewResult: "Program dry run: {{count}} recipient(s) would receive an email (none sent).",
+      adminProgramSuccess:
+        "Program: sent {{sent}} email(s); {{recipientCount}} accepted author(s); skipped (no email): {{skipped}}; failed: {{failed}}.",
+      adminProgramError: "Could not send program emails.",
       adminConferenceFieldTitleEn: "Conference title (English)",
       adminConferenceFieldTitleUa: "Conference title (Ukrainian)",
       adminConferenceFieldDate: "Conference date",
@@ -540,6 +552,18 @@ const resources = {
       adminReminderSuccess:
         "Надіслано {{sent}} лист(ів) для {{recipientCount}} автор(ів) із прийнятими тезами. Пропущено (немає email): {{skipped}}. Помилок: {{failed}}.",
       adminReminderError: "Не вдалося надіслати нагадування.",
+      adminProgramCardSubtitle:
+        "Надіслати повну двомовну програму (пленар + усі секції з часом за Києвом і Zoom) тій самій аудиторії, що й нагадування.",
+      adminProgramPreview: "Перевірити програму",
+      adminProgramPreviewing: "Підрахунок…",
+      adminProgramSend: "Надіслати програму",
+      adminProgramSending: "Надсилання…",
+      adminProgramSendConfirm:
+        "Надіслати лист із програмою конференції зараз усім прийнятим учасникам? Цю дію не скасувати.",
+      adminProgramPreviewResult: "Тест програми: {{count}} одержувач(ів) отримали б лист (листи не надіслані).",
+      adminProgramSuccess:
+        "Програма: надіслано {{sent}} лист(ів); {{recipientCount}} автор(ів); пропущено (немає email): {{skipped}}; помилок: {{failed}}.",
+      adminProgramError: "Не вдалося надіслати програму.",
       adminConferenceFieldTitleEn: "Назва конференції (англійською)",
       adminConferenceFieldTitleUa: "Назва конференції (українською)",
       adminConferenceFieldDate: "Дата проведення",
