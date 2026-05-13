@@ -203,7 +203,7 @@ const resources = {
       adminProgramError: "Could not send program emails.",
       adminCertificatesCardTitle: "Certificates (PDF)",
       adminCertificatesCardSubtitle:
-        "Download or email participation certificates (PDF) for accepted, non-archived submissions. Uses jsPDF with embedded Roboto. Bulk email uses Resend.",
+        "Download or email participation certificates (PDF) for accepted, non-archived submissions. PDFs use your SVG template (pdf-lib + Sharp) with embedded Roboto Italic. Bulk email uses Resend.",
       adminCertificatesGenerateZip: "Generate certificates (ZIP)",
       adminCertificatesGenerating: "Generating…",
       adminCertificatesZipConfirm:
@@ -588,7 +588,7 @@ const resources = {
       adminProgramError: "Не вдалося надіслати програму.",
       adminCertificatesCardTitle: "Грамоти (PDF)",
       adminCertificatesCardSubtitle:
-        "Завантаження або надсилання PDF-сертифікатів учасникам з прийнятими неархівованими поданнями (jsPDF, Roboto). Масове надсилання — через Resend.",
+        "Завантаження або надсилання PDF-сертифікатів учасникам з прийнятими неархівованими поданнями (SVG-шаблон, pdf-lib, Sharp, Roboto Italic). Масове надсилання — через Resend.",
       adminCertificatesGenerateZip: "Згенерувати грамоти (ZIP)",
       adminCertificatesGenerating: "Генерація…",
       adminCertificatesZipConfirm:

@@ -26,7 +26,8 @@ export async function GET(_request: Request, context: { params: Promise<{ submis
   }
 
   try {
-    const payload = await loadCertificatePayloadBySubmissionId(supabase, id);
+    const langParam = new URL(_request.url).searchParams.get("lang");
+    const payload = await loadCertificatePayloadBySubmissionId(supabase, id, { languageOverride: langParam });
     if (!payload) {
       return NextResponse.json(
         { error: "Submission not found or not eligible (must be accepted and not archived)." },
@@ -34,7 +35,7 @@ export async function GET(_request: Request, context: { params: Promise<{ submis
       );
     }
 
-    const buf = renderCertificatePdfBuffer(payload);
+    const buf = await renderCertificatePdfBuffer(payload);
     const filename = `certificate-${payload.submissionId}.pdf`;
 
     return new NextResponse(new Uint8Array(buf), {

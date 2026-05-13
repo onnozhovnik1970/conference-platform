@@ -23,14 +23,15 @@ export async function POST(_request: Request) {
   }
 
   try {
-    const payloads = await loadCertificatePayloads(supabase);
+    const langParam = new URL(_request.url).searchParams.get("lang");
+    const payloads = await loadCertificatePayloads(supabase, { languageOverride: langParam });
     if (payloads.length === 0) {
       return NextResponse.json({ error: "No accepted submissions to generate certificates for." }, { status: 400 });
     }
 
     const zip = new JSZip();
     for (const p of payloads) {
-      const buf = renderCertificatePdfBuffer(p);
+      const buf = await renderCertificatePdfBuffer(p);
       zip.file(pdfFileName(p.submissionId), buf);
     }
 

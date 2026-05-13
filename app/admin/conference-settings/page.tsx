@@ -139,6 +139,20 @@ export default function AdminConferenceSettingsPage() {
         setError(body?.error?.trim() || t("adminConferenceSettingsSaveError"));
         return;
       }
+      const saved = (await response.json()) as { settings?: ConferenceSettingsRow };
+      if (saved.settings) {
+        const s = saved.settings;
+        setTitle(s.title ?? "");
+        setTitleUa(s.title_ua ?? "");
+        setEventDate(s.date ?? "");
+        setDeadline(s.deadline ?? "");
+        setLocation(s.location ?? "");
+        setPlenaryStartLocal(isoToDatetimeLocalValue(s.plenary_start_time));
+        setDescription(s.description ?? "");
+        setDescriptionUa(s.description_ua ?? "");
+        setZoomLink(s.zoom_link ?? "");
+        setZoomDetails(s.zoom_details ?? "");
+      }
       setSuccess(t("adminConferenceSettingsSaveSuccess"));
       await refresh();
     } catch {

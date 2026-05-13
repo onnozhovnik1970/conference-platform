@@ -145,30 +145,50 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
 
-  const { data, error } = await supabase
-    .from("conference_settings")
-    .upsert(
-      {
-        id: 1,
-        title: titleRaw.trim(),
-        title_ua: title_ua?.trim() ?? null,
-        date,
-        deadline,
-        location: location?.trim() ?? null,
-        description: description?.trim() ?? null,
-        description_ua: description_ua?.trim() ?? null,
-        zoom_link: zoom_link?.trim() ?? null,
-        zoom_details: zoom_details?.trim() ?? null,
-        ...(plenary_start_time_parsed !== undefined ? { plenary_start_time: plenary_start_time_parsed } : {})
-      },
-      { onConflict: "id" }
-    )
-    .select("id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, updated_at")
-    .single();
+  const selectCols =
+    "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, updated_at";
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const values = {
+    title: titleRaw.trim(),
+    title_ua: title_ua?.trim() ?? null,
+    date,
+    deadline,
+    location: location?.trim() ?? null,
+    description: description?.trim() ?? null,
+    description_ua: description_ua?.trim() ?? null,
+    zoom_link: zoom_link?.trim() ?? null,
+    zoom_details: zoom_details?.trim() ?? null,
+    ...(plenary_start_time_parsed !== undefined ? { plenary_start_time: plenary_start_time_parsed } : {})
+  };
+
+  const { data: updated, error: updateErr } = await supabase
+    .from("conference_settings")
+    .update(values)
+    .eq("id", 1)
+    .select(selectCols)
+    .maybeSingle();
+
+  if (updateErr) {
+    return NextResponse.json({ error: updateErr.message }, { status: 500 });
   }
 
-  return jsonWithNoStore({ settings: data });
+  if (updated) {
+    return jsonWithNoStore({ settings: updated as ConferenceSettingsRow });
+  }
+
+  const { data: inserted, error: insertErr } = await supabase
+    .from("conference_settings")
+    .insert({ id: 1, ...values })
+    .select(selectCols)
+    .maybeSingle();
+
+  if (insertErr) {
+    return NextResponse.json({ error: insertErr.message }, { status: 500 });
+  }
+
+  if (!inserted) {
+    return NextResponse.json({ error: "Save did not return a conference_settings row." }, { status: 500 });
+  }
+
+  return jsonWithNoStore({ settings: inserted as ConferenceSettingsRow });
 }

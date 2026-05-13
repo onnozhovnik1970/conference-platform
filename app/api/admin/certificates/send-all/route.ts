@@ -19,7 +19,8 @@ export async function POST(_request: Request) {
   }
 
   try {
-    const payloads = await loadCertificatePayloads(supabase);
+    const langParam = new URL(_request.url).searchParams.get("lang");
+    const payloads = await loadCertificatePayloads(supabase, { languageOverride: langParam });
     if (payloads.length === 0) {
       return NextResponse.json({ error: "No accepted, non-archived submissions to send certificates for." }, { status: 400 });
     }
@@ -36,7 +37,7 @@ export async function POST(_request: Request) {
         continue;
       }
 
-      const pdfBuffer = renderCertificatePdfBuffer(payload);
+      const pdfBuffer = await renderCertificatePdfBuffer(payload);
       const result = await sendCertificateThankYouEmail({ to, payload, pdfBuffer });
       if (!result.ok) {
         failed.push({ submissionId: payload.submissionId, error: result.error });

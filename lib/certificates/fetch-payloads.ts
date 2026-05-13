@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isMissingSubmissionsSectionIdColumn } from "@/lib/admin-db-compat";
 import { formatConferenceIsoDate } from "@/lib/conference-dates";
 import { firstTitleLine } from "@/lib/email/conference-email-bundle";
+import { certificateLanguageFromAbstractLanguage, resolveCertificateLanguage, type CertificateLanguage } from "@/lib/certificates/translations";
 import { DEFAULT_CONFERENCE_SETTINGS, type ConferenceSettingsRow } from "@/lib/conference-settings";
 
 export type CertificatePayload = {
@@ -17,7 +18,11 @@ export type CertificatePayload = {
   titleEn: string;
   dateUa: string;
   dateEn: string;
+  /** ISO `YYYY-MM-DD` from conference settings for locale-aware certificate date line. */
+  conferenceDateIso: string | null;
   locationDisplay: string;
+  /** Derived from `abstract_language` on the submission; may be overridden by `?lang=` when generating. */
+  certificateLanguage: CertificateLanguage;
 };
 
 type ProfileRow = {
@@ -34,6 +39,7 @@ type SubmissionCertRow = {
   id: string | number;
   user_id: string;
   abstract_title: string | null;
+  abstract_language: string | null;
   thematic_panel: string | null;
   section_id: string | null;
   supervisor_name: string | null;
@@ -110,10 +116,10 @@ function mergeSettings(row: Partial<ConferenceSettingsRow> | null): ConferenceSe
 }
 
 const SUBMISSION_SELECT_WITH_SECTION =
-  "id, user_id, abstract_title, thematic_panel, section_id, supervisor_name, supervisor_title_degree, supervisor_position, status, archived_at";
+  "id, user_id, abstract_title, abstract_language, thematic_panel, section_id, supervisor_name, supervisor_title_degree, supervisor_position, status, archived_at";
 
 const SUBMISSION_SELECT_WITHOUT_SECTION =
-  "id, user_id, abstract_title, thematic_panel, supervisor_name, supervisor_title_degree, supervisor_position, status, archived_at";
+  "id, user_id, abstract_title, abstract_language, thematic_panel, supervisor_name, supervisor_title_degree, supervisor_position, status, archived_at";
 
 async function fetchAcceptedSubmissions(supabase: SupabaseClient): Promise<SubmissionCertRow[]> {
   const first = await supabase
@@ -142,7 +148,23 @@ async function fetchAcceptedSubmissions(supabase: SupabaseClient): Promise<Submi
   return (first.data ?? []) as SubmissionCertRow[];
 }
 
-export async function loadCertificatePayloads(supabase: SupabaseClient): Promise<CertificatePayload[]> {
+function resolvePayloadLanguage(abstractLanguage: string | null | undefined, override: string | null | undefined): CertificateLanguage {
+  const fromQuery = resolveCertificateLanguage(override ?? undefined);
+  if (fromQuery) {
+    return fromQuery;
+  }
+  return certificateLanguageFromAbstractLanguage(abstractLanguage);
+}
+
+export type LoadCertificatePayloadOptions = {
+  /** When set (e.g. `?lang=de` from admin), overrides submission `abstract_language`. */
+  languageOverride?: string | null;
+};
+
+export async function loadCertificatePayloads(
+  supabase: SupabaseClient,
+  options?: LoadCertificatePayloadOptions
+): Promise<CertificatePayload[]> {
   const submissions = await fetchAcceptedSubmissions(supabase);
   if (submissions.length === 0) {
     return [];
@@ -185,13 +207,16 @@ export async function loadCertificatePayloads(supabase: SupabaseClient): Promise
     titleEn,
     dateUa: dateUa || "—",
     dateEn: dateEn || "—",
-    locationDisplay
+    conferenceDateIso: s.date,
+    locationDisplay,
+    certificateLanguage: resolvePayloadLanguage(row.abstract_language, options?.languageOverride)
   }));
 }
 
 export async function loadCertificatePayloadBySubmissionId(
   supabase: SupabaseClient,
-  submissionId: string
+  submissionId: string,
+  options?: LoadCertificatePayloadOptions
 ): Promise<CertificatePayload | null> {
   const first = await supabase
     .from("submissions")
@@ -260,6 +285,8 @@ export async function loadCertificatePayloadBySubmissionId(
     titleEn,
     dateUa: dateUa || "—",
     dateEn: dateEn || "—",
-    locationDisplay
+    conferenceDateIso: s.date,
+    locationDisplay,
+    certificateLanguage: resolvePayloadLanguage(row.abstract_language, options?.languageOverride)
   };
 }

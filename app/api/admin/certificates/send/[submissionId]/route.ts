@@ -27,7 +27,8 @@ export async function POST(_request: Request, context: { params: Promise<{ submi
   }
 
   try {
-    const payload = await loadCertificatePayloadBySubmissionId(supabase, rawId);
+    const langParam = new URL(_request.url).searchParams.get("lang");
+    const payload = await loadCertificatePayloadBySubmissionId(supabase, rawId, { languageOverride: langParam });
     if (!payload) {
       return NextResponse.json(
         { error: "Submission not found or not eligible (must be accepted and not archived)." },
@@ -41,7 +42,7 @@ export async function POST(_request: Request, context: { params: Promise<{ submi
       return NextResponse.json({ error: "Could not resolve participant email for this submission." }, { status: 400 });
     }
 
-    const pdfBuffer = renderCertificatePdfBuffer(payload);
+    const pdfBuffer = await renderCertificatePdfBuffer(payload);
     const sent = await sendCertificateThankYouEmail({ to, payload, pdfBuffer });
     if (!sent.ok) {
       return NextResponse.json({ error: sent.error }, { status: 502 });

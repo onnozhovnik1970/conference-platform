@@ -32,7 +32,14 @@ export async function GET() {
     .eq("id", 1)
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    console.error("[conference-settings GET]", error.message);
+    return jsonWithNoStore({
+      settings: { ...DEFAULT_CONFERENCE_SETTINGS, updated_at: new Date().toISOString() } satisfies ConferenceSettingsRow
+    });
+  }
+
+  if (!data) {
     return jsonWithNoStore({
       settings: { ...DEFAULT_CONFERENCE_SETTINGS, updated_at: new Date().toISOString() } satisfies ConferenceSettingsRow
     });
