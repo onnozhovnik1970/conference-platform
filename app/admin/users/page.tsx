@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import "@/lib/i18n/config";
 import { supabase } from "@/lib/supabase";
@@ -12,9 +13,27 @@ type AdminUserRow = {
   email: string;
   createdAt: string;
   fullName: string;
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  institution: string;
   role: "user" | "admin";
   effectiveRole: "user" | "admin";
   isBootstrapAdmin: boolean;
+};
+
+type ProfileDraft = {
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  institution: string;
+};
+
+const emptyDraft: ProfileDraft = {
+  firstName: "",
+  lastName: "",
+  middleName: "",
+  institution: ""
 };
 
 export default function AdminUsersPage() {
@@ -23,6 +42,8 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<AdminUserRow | null>(null);
+  const [draft, setDraft] = useState<ProfileDraft>(emptyDraft);
 
   const fetchAsAdmin = useCallback(async (input: string, init?: RequestInit) => {
     const {
@@ -74,6 +95,19 @@ export default function AdminUsersPage() {
     void loadUsers();
   }, [loadUsers]);
 
+  useEffect(() => {
+    if (!editing) {
+      return;
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setEditing(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [editing]);
+
   const formatDate = (iso: string) => {
     if (!iso) return "—";
     const locale = i18n.language === "ua" ? "uk-UA" : "en-US";
@@ -81,6 +115,52 @@ export default function AdminUsersPage() {
       dateStyle: "medium",
       timeStyle: "short"
     }).format(new Date(iso));
+  };
+
+  const openEdit = (row: AdminUserRow) => {
+    setError(null);
+    setEditing(row);
+    setDraft({
+      firstName: row.firstName,
+      lastName: row.lastName,
+      middleName: row.middleName,
+      institution: row.institution
+    });
+  };
+
+  const closeEdit = () => {
+    setEditing(null);
+    setDraft(emptyDraft);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editing) {
+      return;
+    }
+    setError(null);
+    setSavingId(editing.id);
+    try {
+      const { response, missingSession } = await fetchAsAdmin(`/api/admin/users/${encodeURIComponent(editing.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          firstName: draft.firstName.trim(),
+          lastName: draft.lastName.trim(),
+          middleName: draft.middleName.trim() || null,
+          institution: draft.institution.trim()
+        })
+      });
+      if (missingSession || !response?.ok) {
+        const body = response ? ((await response.json().catch(() => null)) as { error?: string } | null) : null;
+        setError(body?.error?.trim() || t("adminUsersProfileUpdateError"));
+        return;
+      }
+      closeEdit();
+      await loadUsers({ silent: true });
+    } catch {
+      setError(t("adminUsersProfileUpdateError"));
+    } finally {
+      setSavingId(null);
+    }
   };
 
   const handleRoleChange = async (row: AdminUserRow, nextRole: "user" | "admin") => {
@@ -115,6 +195,10 @@ export default function AdminUsersPage() {
     }
   };
 
+  const inputClass =
+    "mt-1 h-10 w-full rounded-md border border-white/20 bg-white/5 px-3 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40";
+  const labelClass = "block text-xs font-medium text-slate-300";
+
   return (
     <Card className="border-white/10 bg-black/35 backdrop-blur">
       <CardHeader>
@@ -140,6 +224,7 @@ export default function AdminUsersPage() {
                   <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminUsersRegistered")}</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminUsersRole")}</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminUsersRoleControl")}</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-200">{t("adminUsersActions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10 bg-black/20">
@@ -177,11 +262,108 @@ export default function AdminUsersPage() {
                           </option>
                         </select>
                       </td>
+                      <td className="px-4 py-3 align-top">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isSaving}
+                          className="border-white/25 bg-white/5 text-white hover:bg-white/10"
+                          onClick={() => openEdit(row)}
+                        >
+                          {t("adminUsersEdit")}
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {editing && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+            role="presentation"
+            onClick={closeEdit}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="admin-user-edit-title"
+              className="w-full max-w-md rounded-lg border border-white/20 bg-slate-900 p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 id="admin-user-edit-title" className="text-lg font-semibold text-white">
+                {t("adminUsersEditTitle")}
+              </h2>
+              <p className="mt-1 text-xs text-slate-400">{editing.email}</p>
+
+              <div className="mt-5 space-y-3">
+                <div>
+                  <label className={labelClass} htmlFor="admin-edit-last">
+                    {t("adminUsersLastName")}
+                  </label>
+                  <input
+                    id="admin-edit-last"
+                    className={inputClass}
+                    value={draft.lastName}
+                    onChange={(e) => setDraft((d) => ({ ...d, lastName: e.target.value }))}
+                    autoComplete="family-name"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="admin-edit-first">
+                    {t("adminUsersFirstName")}
+                  </label>
+                  <input
+                    id="admin-edit-first"
+                    className={inputClass}
+                    value={draft.firstName}
+                    onChange={(e) => setDraft((d) => ({ ...d, firstName: e.target.value }))}
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="admin-edit-middle">
+                    {t("adminUsersPatronymic")}
+                  </label>
+                  <input
+                    id="admin-edit-middle"
+                    className={inputClass}
+                    value={draft.middleName}
+                    onChange={(e) => setDraft((d) => ({ ...d, middleName: e.target.value }))}
+                    autoComplete="additional-name"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="admin-edit-inst">
+                    {t("adminUsersInstitution")}
+                  </label>
+                  <input
+                    id="admin-edit-inst"
+                    className={inputClass}
+                    value={draft.institution}
+                    onChange={(e) => setDraft((d) => ({ ...d, institution: e.target.value }))}
+                    autoComplete="organization"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-wrap justify-end gap-2">
+                <Button type="button" variant="outline" className="border-white/25 text-white" onClick={closeEdit}>
+                  {t("adminUsersCancel")}
+                </Button>
+                <Button
+                  type="button"
+                  disabled={savingId === editing.id}
+                  onClick={() => void handleSaveProfile()}
+                >
+                  {t("adminUsersSave")}
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </CardContent>

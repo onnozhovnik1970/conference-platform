@@ -9,6 +9,7 @@ type ProfileRow = {
   first_name: string | null;
   last_name: string | null;
   middle_name: string | null;
+  institution: string | null;
   role: string | null;
 };
 
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
   if (ids.length > 0) {
     const { data: profs, error: pErr } = await supabase
       .from("profiles")
-      .select("id, first_name, last_name, middle_name, role")
+      .select("id, first_name, last_name, middle_name, institution, role")
       .in("id", ids);
 
     if (pErr) {
@@ -60,6 +61,10 @@ export async function GET(request: Request) {
       email: u.email ?? "—",
       createdAt: u.created_at,
       fullName,
+      firstName: (prof?.first_name ?? "").trim(),
+      lastName: (prof?.last_name ?? "").trim(),
+      middleName: (prof?.middle_name ?? "").trim(),
+      institution: (prof?.institution ?? "").trim(),
       role: storedRole,
       effectiveRole,
       isBootstrapAdmin: bootstrap
