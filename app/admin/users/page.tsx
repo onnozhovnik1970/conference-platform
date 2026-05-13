@@ -140,20 +140,41 @@ export default function AdminUsersPage() {
     setError(null);
     setSavingId(editing.id);
     try {
-      const { response, missingSession } = await fetchAsAdmin(`/api/admin/users/${encodeURIComponent(editing.id)}`, {
+      const patchUrl = `/api/admin/users/${encodeURIComponent(editing.id)}`;
+      const patchBody = {
+        firstName: draft.firstName.trim(),
+        lastName: draft.lastName.trim(),
+        middleName: draft.middleName.trim() || null,
+        institution: draft.institution.trim()
+      };
+      // DevTools: Network → PATCH …/api/admin/users/[id] — compare with console output below.
+      console.log("[admin users] PATCH request", { url: patchUrl, body: patchBody });
+
+      const { response, missingSession } = await fetchAsAdmin(patchUrl, {
         method: "PATCH",
-        body: JSON.stringify({
-          firstName: draft.firstName.trim(),
-          lastName: draft.lastName.trim(),
-          middleName: draft.middleName.trim() || null,
-          institution: draft.institution.trim()
-        })
+        body: JSON.stringify(patchBody)
       });
       if (missingSession || !response) {
+        console.log("[admin users] PATCH response (no response)", { missingSession });
         setError(t("adminUsersProfileUpdateError"));
         return;
       }
-      const payload = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
+
+      const responseText = await response.text();
+      let payload: { success?: boolean; error?: string } | null = null;
+      try {
+        payload = responseText ? (JSON.parse(responseText) as { success?: boolean; error?: string }) : null;
+      } catch {
+        payload = null;
+      }
+      console.log("[admin users] PATCH response", {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        bodyText: responseText,
+        parsed: payload
+      });
+
       if (!response.ok) {
         setError(payload?.error?.trim() || t("adminUsersProfileUpdateError"));
         return;
@@ -164,7 +185,8 @@ export default function AdminUsersPage() {
       }
       closeEdit();
       await loadUsers({ silent: true });
-    } catch {
+    } catch (e) {
+      console.error("[admin users] PATCH failed", e);
       setError(t("adminUsersProfileUpdateError"));
     } finally {
       setSavingId(null);
@@ -302,75 +324,81 @@ export default function AdminUsersPage() {
               aria-labelledby="admin-user-edit-title"
               className="w-full max-w-md rounded-lg border border-white/20 bg-slate-900 p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
             >
-              <h2 id="admin-user-edit-title" className="text-lg font-semibold text-white">
-                {t("adminUsersEditTitle")}
-              </h2>
-              <p className="mt-1 text-xs text-slate-400">{editing.email}</p>
+              <form
+                className="block"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void handleSaveProfile();
+                }}
+              >
+                <h2 id="admin-user-edit-title" className="text-lg font-semibold text-white">
+                  {t("adminUsersEditTitle")}
+                </h2>
+                <p className="mt-1 text-xs text-slate-400">{editing.email}</p>
 
-              <div className="mt-5 space-y-3">
-                <div>
-                  <label className={labelClass} htmlFor="admin-edit-last">
-                    {t("adminUsersLastName")}
-                  </label>
-                  <input
-                    id="admin-edit-last"
-                    className={inputClass}
-                    value={draft.lastName}
-                    onChange={(e) => setDraft((d) => ({ ...d, lastName: e.target.value }))}
-                    autoComplete="family-name"
-                  />
+                <div className="mt-5 space-y-3">
+                  <div>
+                    <label className={labelClass} htmlFor="admin-edit-last">
+                      {t("adminUsersLastName")}
+                    </label>
+                    <input
+                      id="admin-edit-last"
+                      className={inputClass}
+                      value={draft.lastName}
+                      onChange={(e) => setDraft((d) => ({ ...d, lastName: e.target.value }))}
+                      autoComplete="family-name"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="admin-edit-first">
+                      {t("adminUsersFirstName")}
+                    </label>
+                    <input
+                      id="admin-edit-first"
+                      className={inputClass}
+                      value={draft.firstName}
+                      onChange={(e) => setDraft((d) => ({ ...d, firstName: e.target.value }))}
+                      autoComplete="given-name"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="admin-edit-middle">
+                      {t("adminUsersPatronymic")}
+                    </label>
+                    <input
+                      id="admin-edit-middle"
+                      className={inputClass}
+                      value={draft.middleName}
+                      onChange={(e) => setDraft((d) => ({ ...d, middleName: e.target.value }))}
+                      autoComplete="additional-name"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="admin-edit-inst">
+                      {t("adminUsersInstitution")}
+                    </label>
+                    <input
+                      id="admin-edit-inst"
+                      className={inputClass}
+                      value={draft.institution}
+                      onChange={(e) => setDraft((d) => ({ ...d, institution: e.target.value }))}
+                      autoComplete="organization"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className={labelClass} htmlFor="admin-edit-first">
-                    {t("adminUsersFirstName")}
-                  </label>
-                  <input
-                    id="admin-edit-first"
-                    className={inputClass}
-                    value={draft.firstName}
-                    onChange={(e) => setDraft((d) => ({ ...d, firstName: e.target.value }))}
-                    autoComplete="given-name"
-                  />
-                </div>
-                <div>
-                  <label className={labelClass} htmlFor="admin-edit-middle">
-                    {t("adminUsersPatronymic")}
-                  </label>
-                  <input
-                    id="admin-edit-middle"
-                    className={inputClass}
-                    value={draft.middleName}
-                    onChange={(e) => setDraft((d) => ({ ...d, middleName: e.target.value }))}
-                    autoComplete="additional-name"
-                  />
-                </div>
-                <div>
-                  <label className={labelClass} htmlFor="admin-edit-inst">
-                    {t("adminUsersInstitution")}
-                  </label>
-                  <input
-                    id="admin-edit-inst"
-                    className={inputClass}
-                    value={draft.institution}
-                    onChange={(e) => setDraft((d) => ({ ...d, institution: e.target.value }))}
-                    autoComplete="organization"
-                  />
-                </div>
-              </div>
 
-              <div className="mt-6 flex flex-wrap justify-end gap-2">
-                <Button type="button" variant="outline" className="border-white/25 text-white" onClick={closeEdit}>
-                  {t("adminUsersCancel")}
-                </Button>
-                <Button
-                  type="button"
-                  disabled={savingId === editing.id}
-                  onClick={() => void handleSaveProfile()}
-                >
-                  {t("adminUsersSave")}
-                </Button>
-              </div>
+                <div className="mt-6 flex flex-wrap justify-end gap-2">
+                  <Button type="button" variant="outline" className="border-white/25 text-white" onClick={closeEdit}>
+                    {t("adminUsersCancel")}
+                  </Button>
+                  <Button type="submit" disabled={savingId === editing.id}>
+                    {t("adminUsersSave")}
+                  </Button>
+                </div>
+              </form>
             </div>
           </div>
         )}
