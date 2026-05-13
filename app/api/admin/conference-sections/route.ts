@@ -5,7 +5,11 @@ import {
   isMissingConferenceSectionsSlugColumn
 } from "@/lib/admin-db-compat";
 import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server";
-import type { ConferenceSectionRow } from "@/lib/conference-sections";
+import {
+  CONFERENCE_SECTION_SELECT_FULL,
+  CONFERENCE_SECTION_SELECT_NO_SLUG,
+  type ConferenceSectionRow
+} from "@/lib/conference-sections";
 
 function isNonEmptyString(v: unknown): v is string {
   return typeof v === "string" && v.trim().length > 0;
@@ -22,15 +26,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
 
-  const selectFull = "id, sort_order, slug, label_en, label_ua, created_at";
-  const selectNoSlug = "id, sort_order, label_en, label_ua, created_at";
-
   let data: ConferenceSectionRow[] | null = null;
   let error = null as { message?: string } | null;
 
   const attempt = await supabase
     .from("conference_sections")
-    .select(selectFull)
+    .select(CONFERENCE_SECTION_SELECT_FULL)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
   if (attempt.error && isMissingConferenceSectionsSlugColumn(attempt.error)) {
     const second = await supabase
       .from("conference_sections")
-      .select(selectNoSlug)
+      .select(CONFERENCE_SECTION_SELECT_NO_SLUG)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
     data = (second.data ?? []).map((row) => ({ ...row, slug: null })) as ConferenceSectionRow[];
@@ -108,7 +109,7 @@ export async function POST(request: Request) {
       label_en: label_en.trim(),
       label_ua: label_ua.trim()
     })
-    .select("id, sort_order, slug, label_en, label_ua, created_at")
+    .select(CONFERENCE_SECTION_SELECT_FULL)
     .single();
 
   if (insertError) {

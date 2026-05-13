@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { datetimeLocalValueToIso, isoToDatetimeLocalValue } from "@/lib/conference-dates";
 import type { ConferenceSectionRow } from "@/lib/conference-sections";
 import type { ConferenceSettingsRow } from "@/lib/conference-settings";
 import "@/lib/i18n/config";
@@ -125,7 +126,7 @@ export default function AdminConferenceSettingsPage() {
     }
   };
 
-  const updateSectionLocal = (id: string, patch: Partial<Pick<ConferenceSectionRow, "label_en" | "label_ua" | "sort_order">>) => {
+  const updateSectionLocal = (id: string, patch: Partial<ConferenceSectionRow>) => {
     setSections((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   };
 
@@ -138,7 +139,11 @@ export default function AdminConferenceSettingsPage() {
         body: JSON.stringify({
           label_en: row.label_en.trim(),
           label_ua: row.label_ua.trim(),
-          sort_order: row.sort_order
+          sort_order: row.sort_order,
+          zoom_link: row.zoom_link?.trim() ? row.zoom_link.trim() : null,
+          zoom_meeting_id: row.zoom_meeting_id?.trim() ? row.zoom_meeting_id.trim() : null,
+          zoom_password: row.zoom_password?.trim() ? row.zoom_password.trim() : null,
+          start_time: row.start_time
         })
       });
       if (missingSession || !response?.ok) {
@@ -333,51 +338,115 @@ export default function AdminConferenceSettingsPage() {
               {sections.map((row) => {
                 const busy = sectionBusyId === row.id;
                 return (
-                  <div
-                    key={row.id}
-                    className="grid gap-3 rounded-lg border border-white/15 bg-black/25 p-4 md:grid-cols-[1fr_1fr_6rem_auto] md:items-end"
-                  >
-                    <div>
-                      <label className={labelClass} htmlFor={`sec-en-${row.id}`}>
-                        {t("adminSectionsLabelEn")}
-                      </label>
-                      <input
-                        id={`sec-en-${row.id}`}
-                        value={row.label_en}
-                        onChange={(e) => updateSectionLocal(row.id, { label_en: e.target.value })}
-                        className={inputClass}
-                      />
+                  <div key={row.id} className="space-y-4 rounded-lg border border-white/15 bg-black/25 p-4">
+                    <div className="grid gap-3 md:grid-cols-[1fr_1fr_6rem_auto] md:items-end">
+                      <div>
+                        <label className={labelClass} htmlFor={`sec-en-${row.id}`}>
+                          {t("adminSectionsLabelEn")}
+                        </label>
+                        <input
+                          id={`sec-en-${row.id}`}
+                          value={row.label_en}
+                          onChange={(e) => updateSectionLocal(row.id, { label_en: e.target.value })}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass} htmlFor={`sec-ua-${row.id}`}>
+                          {t("adminSectionsLabelUa")}
+                        </label>
+                        <input
+                          id={`sec-ua-${row.id}`}
+                          value={row.label_ua}
+                          onChange={(e) => updateSectionLocal(row.id, { label_ua: e.target.value })}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass} htmlFor={`sec-ord-${row.id}`}>
+                          {t("adminSectionsOrder")}
+                        </label>
+                        <input
+                          id={`sec-ord-${row.id}`}
+                          type="number"
+                          value={row.sort_order}
+                          onChange={(e) => updateSectionLocal(row.id, { sort_order: Number.parseInt(e.target.value, 10) || 0 })}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div className="flex flex-wrap gap-2 sm:justify-end">
+                        <Button type="button" size="sm" disabled={busy} onClick={() => void handleSaveSection(row)}>
+                          {busy ? t("adminSectionsSaving") : t("adminSectionsSave")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="border-rose-400/50 text-rose-200 hover:bg-rose-500/10"
+                          disabled={busy}
+                          onClick={() => void handleDeleteSection(row)}
+                        >
+                          {t("adminSectionsDelete")}
+                        </Button>
+                      </div>
                     </div>
-                    <div>
-                      <label className={labelClass} htmlFor={`sec-ua-${row.id}`}>
-                        {t("adminSectionsLabelUa")}
-                      </label>
-                      <input
-                        id={`sec-ua-${row.id}`}
-                        value={row.label_ua}
-                        onChange={(e) => updateSectionLocal(row.id, { label_ua: e.target.value })}
-                        className={inputClass}
-                      />
-                    </div>
-                    <div>
-                      <label className={labelClass} htmlFor={`sec-ord-${row.id}`}>
-                        {t("adminSectionsOrder")}
-                      </label>
-                      <input
-                        id={`sec-ord-${row.id}`}
-                        type="number"
-                        value={row.sort_order}
-                        onChange={(e) => updateSectionLocal(row.id, { sort_order: Number.parseInt(e.target.value, 10) || 0 })}
-                        className={inputClass}
-                      />
-                    </div>
-                    <div className="flex flex-wrap gap-2 sm:justify-end">
-                      <Button type="button" size="sm" disabled={busy} onClick={() => void handleSaveSection(row)}>
-                        {busy ? t("adminSectionsSaving") : t("adminSectionsSave")}
-                      </Button>
-                      <Button type="button" size="sm" variant="outline" className="border-rose-400/50 text-rose-200 hover:bg-rose-500/10" disabled={busy} onClick={() => void handleDeleteSection(row)}>
-                        {t("adminSectionsDelete")}
-                      </Button>
+                    <div className="border-t border-white/10 pt-4">
+                      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-400">{t("adminSectionsZoomForSection")}</p>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="sm:col-span-2">
+                          <label className={labelClass} htmlFor={`sec-zoom-link-${row.id}`}>
+                            {t("adminConferenceFieldZoomLink")}
+                          </label>
+                          <input
+                            id={`sec-zoom-link-${row.id}`}
+                            type="text"
+                            inputMode="url"
+                            autoComplete="off"
+                            placeholder="https://zoom.us/j/..."
+                            value={row.zoom_link ?? ""}
+                            onChange={(e) => updateSectionLocal(row.id, { zoom_link: e.target.value || null })}
+                            className={inputClass}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass} htmlFor={`sec-zoom-id-${row.id}`}>
+                            {t("adminSectionFieldZoomMeetingId")}
+                          </label>
+                          <input
+                            id={`sec-zoom-id-${row.id}`}
+                            type="text"
+                            autoComplete="off"
+                            value={row.zoom_meeting_id ?? ""}
+                            onChange={(e) => updateSectionLocal(row.id, { zoom_meeting_id: e.target.value || null })}
+                            className={inputClass}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass} htmlFor={`sec-zoom-pw-${row.id}`}>
+                            {t("adminSectionFieldZoomPassword")}
+                          </label>
+                          <input
+                            id={`sec-zoom-pw-${row.id}`}
+                            type="text"
+                            autoComplete="off"
+                            value={row.zoom_password ?? ""}
+                            onChange={(e) => updateSectionLocal(row.id, { zoom_password: e.target.value || null })}
+                            className={inputClass}
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className={labelClass} htmlFor={`sec-start-${row.id}`}>
+                            {t("adminSectionFieldStartTime")}
+                          </label>
+                          <input
+                            id={`sec-start-${row.id}`}
+                            type="datetime-local"
+                            value={isoToDatetimeLocalValue(row.start_time)}
+                            onChange={(e) => updateSectionLocal(row.id, { start_time: datetimeLocalValueToIso(e.target.value) })}
+                            className={inputClass}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );

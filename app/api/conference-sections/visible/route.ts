@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import type { ConferenceSectionRow } from "@/lib/conference-sections";
+import { CONFERENCE_SECTION_SELECT_FULL, type ConferenceSectionRow } from "@/lib/conference-sections";
 import { getServiceRoleClient } from "@/lib/admin-server";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export async function GET() {
   }
 
   const [{ data: sections, error: sectionsError }, { data: acceptedRows, error: accError }] = await Promise.all([
-    supabase.from("conference_sections").select("id, sort_order, slug, label_en, label_ua, created_at"),
+    supabase.from("conference_sections").select(CONFERENCE_SECTION_SELECT_FULL),
     supabase.from("submissions").select("section_id, thematic_panel").eq("status", "accepted").is("archived_at", null)
   ]);
 

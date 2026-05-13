@@ -10,8 +10,9 @@ import { SiteTextLogo } from "@/components/site-text-logo";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatConferenceIsoDate } from "@/lib/conference-dates";
+import { formatConferenceDateTime, formatConferenceIsoDate } from "@/lib/conference-dates";
 import { sectionLabel, type ConferenceSectionRow } from "@/lib/conference-sections";
+import { zoomHref } from "@/lib/zoom-href";
 import "@/lib/i18n/config";
 
 const steps = [
@@ -48,16 +49,8 @@ export default function HomePage() {
   const step3Text = t("step3JoinHint", { date: heroDateLabel, location: locationText });
   const zoomLinkRaw = settings.zoom_link?.trim() ?? "";
   const zoomDetailsText = settings.zoom_details?.trim() ?? "";
-  const zoomHref = (raw: string) => {
-    const s = raw.trim();
-    if (!s) {
-      return "#";
-    }
-    if (/^[a-z][a-z0-9+.-]*:/i.test(s)) {
-      return s;
-    }
-    return `https://${s}`;
-  };
+  const sectionJoinButtons = thematicSections.filter((s) => (s.zoom_link ?? "").trim().length > 0);
+  const showJoinLiveBlock = Boolean(zoomLinkRaw) || sectionJoinButtons.length > 0;
 
   return (
     <main className="min-h-screen">
@@ -137,6 +130,44 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {showJoinLiveBlock && (
+        <section className="container pb-14 md:pb-20">
+          <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("homeJoinLiveTitle")}</h2>
+          <div className="mx-auto flex max-w-xl flex-col items-stretch gap-4">
+            {zoomLinkRaw ? (
+              <Button asChild size="lg" className="h-14 gap-2 text-base font-semibold shadow-lg shadow-primary/20 md:h-16 md:text-lg">
+                <a href={zoomHref(zoomLinkRaw)} target="_blank" rel="noopener noreferrer">
+                  <Video className="h-6 w-6 shrink-0" />
+                  {t("joinPlenarySession")}
+                </a>
+              </Button>
+            ) : null}
+            {sectionJoinButtons.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {sectionJoinButtons.map((sec) => {
+                  const href = zoomHref(sec.zoom_link ?? "");
+                  const startLabel =
+                    sec.start_time && formatConferenceDateTime(sec.start_time, loc)
+                      ? t("homeSectionZoomStarts", { dateTime: formatConferenceDateTime(sec.start_time, loc) })
+                      : null;
+                  return (
+                    <div key={sec.id}>
+                      <Button asChild variant="outline" size="lg" className="h-12 w-full gap-2 border-white/25 bg-white/5 text-white hover:bg-white/10 md:h-14">
+                        <a href={href} target="_blank" rel="noopener noreferrer">
+                          <Video className="h-5 w-5 shrink-0 opacity-90" />
+                          {t("joinSectionRoom", { sectionName: sectionLabel(sec, i18n.language) })}
+                        </a>
+                      </Button>
+                      {startLabel ? <p className="mt-1.5 text-center text-sm text-slate-400">{startLabel}</p> : null}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      )}
 
       <section className="container pb-14 md:pb-20">
         <Card className="border-white/10 bg-white/5">

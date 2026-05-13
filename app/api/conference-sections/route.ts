@@ -4,7 +4,11 @@ import {
   isConferenceSectionsTableMissing,
   isMissingConferenceSectionsSlugColumn
 } from "@/lib/admin-db-compat";
-import type { ConferenceSectionRow } from "@/lib/conference-sections";
+import {
+  CONFERENCE_SECTION_SELECT_FULL,
+  CONFERENCE_SECTION_SELECT_NO_SLUG,
+  type ConferenceSectionRow
+} from "@/lib/conference-sections";
 import { getServiceRoleClient } from "@/lib/admin-server";
 
 export const dynamic = "force-dynamic";
@@ -21,12 +25,9 @@ export async function GET() {
     return NextResponse.json({ sections: [] as ConferenceSectionRow[] }, { headers: NO_STORE_HEADERS });
   }
 
-  const selectFull = "id, sort_order, slug, label_en, label_ua, created_at";
-  const selectNoSlug = "id, sort_order, label_en, label_ua, created_at";
-
   const attempt = await supabase
     .from("conference_sections")
-    .select(selectFull)
+    .select(CONFERENCE_SECTION_SELECT_FULL)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
@@ -39,7 +40,7 @@ export async function GET() {
   if (attempt.error && isMissingConferenceSectionsSlugColumn(attempt.error)) {
     const second = await supabase
       .from("conference_sections")
-      .select(selectNoSlug)
+      .select(CONFERENCE_SECTION_SELECT_NO_SLUG)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
     if (second.error) {
