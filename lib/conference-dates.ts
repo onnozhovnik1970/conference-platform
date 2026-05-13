@@ -25,8 +25,12 @@ export function formatConferenceDateTime(iso: string | null | undefined, locale:
   }).format(d);
 }
 
+/** Display times stored as UTC/`timestamptz` in Kyiv local time (conference emails and schedule copy). */
+export const CONFERENCE_DISPLAY_TIMEZONE = "Europe/Kyiv";
+
 /**
  * "May 14, 2026, 2:25 PM" (en) / locale-appropriate uk-UA for live-session labels after "Starts:".
+ * Uses the runtime default time zone (browser on client, often UTC on server).
  */
 export function formatConferenceStartsDateTime(iso: string | null | undefined, locale: "en" | "ua"): string {
   if (!iso) {
@@ -39,6 +43,25 @@ export function formatConferenceStartsDateTime(iso: string | null | undefined, l
   const loc = locale === "ua" ? "uk-UA" : "en-US";
   const datePart = new Intl.DateTimeFormat(loc, { dateStyle: "long" }).format(d);
   const timePart = new Intl.DateTimeFormat(loc, { timeStyle: "short" }).format(d);
+  return `${datePart}, ${timePart}`;
+}
+
+/**
+ * Same as {@link formatConferenceStartsDateTime} but always in {@link CONFERENCE_DISPLAY_TIMEZONE}
+ * so UTC-stored instants match Kyiv wall-clock in emails.
+ */
+export function formatConferenceStartsDateTimeKyiv(iso: string | null | undefined, locale: "en" | "ua"): string {
+  if (!iso) {
+    return "";
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return iso;
+  }
+  const loc = locale === "ua" ? "uk-UA" : "en-US";
+  const tz = CONFERENCE_DISPLAY_TIMEZONE;
+  const datePart = new Intl.DateTimeFormat(loc, { dateStyle: "long", timeZone: tz }).format(d);
+  const timePart = new Intl.DateTimeFormat(loc, { timeStyle: "short", timeZone: tz }).format(d);
   return `${datePart}, ${timePart}`;
 }
 

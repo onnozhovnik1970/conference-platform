@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { formatConferenceIsoDate, formatConferenceStartsDateTime } from "@/lib/conference-dates";
+import { formatConferenceIsoDate, formatConferenceStartsDateTimeKyiv } from "@/lib/conference-dates";
 import { DEFAULT_CONFERENCE_SETTINGS, type ConferenceSettingsRow } from "@/lib/conference-settings";
 
 export type ConferenceEmailBundle = {
@@ -39,10 +39,10 @@ export async function loadConferenceEmailBundle(
   const locationDisplay = (s.location ?? "").trim() || "Online";
 
   const plenaryWhenEn = s.plenary_start_time?.trim()
-    ? formatConferenceStartsDateTime(s.plenary_start_time, "en")
+    ? formatConferenceStartsDateTimeKyiv(s.plenary_start_time, "en")
     : dateLongEn;
   const plenaryWhenUa = s.plenary_start_time?.trim()
-    ? formatConferenceStartsDateTime(s.plenary_start_time, "ua")
+    ? formatConferenceStartsDateTimeKyiv(s.plenary_start_time, "ua")
     : dateLongUa;
 
   return {

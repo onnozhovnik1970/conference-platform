@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { formatConferenceStartsDateTime } from "@/lib/conference-dates";
+import { formatConferenceStartsDateTimeKyiv } from "@/lib/conference-dates";
 import { loadConferenceEmailBundle } from "@/lib/email/conference-email-bundle";
 import type { ReminderSectionInfo } from "@/lib/email/reminder-html";
 import { buildConferenceReminderHtml } from "@/lib/email/reminder-html";
@@ -40,8 +40,8 @@ function sectionToReminderInfo(sec: Pick<SectionRow, "label_en" | "label_ua" | "
     labelEn: sec.label_en,
     labelUa: sec.label_ua,
     zoomLink: sec.zoom_link?.trim() || null,
-    startsEn: st ? formatConferenceStartsDateTime(st, "en") : "",
-    startsUa: st ? formatConferenceStartsDateTime(st, "ua") : ""
+    startsEn: st ? formatConferenceStartsDateTimeKyiv(st, "en") : "",
+    startsUa: st ? formatConferenceStartsDateTimeKyiv(st, "ua") : ""
   };
 }
 
