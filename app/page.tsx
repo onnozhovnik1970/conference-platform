@@ -10,7 +10,7 @@ import { SiteTextLogo } from "@/components/site-text-logo";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatConferenceIsoDate } from "@/lib/conference-dates";
+import { formatConferenceIsoDate, formatConferenceStartsDateTime } from "@/lib/conference-dates";
 import { sectionLabel, type ConferenceSectionRow } from "@/lib/conference-sections";
 import { zoomHref } from "@/lib/zoom-href";
 import "@/lib/i18n/config";
@@ -69,6 +69,11 @@ export default function HomePage() {
   const step3Text = t("step3JoinHint", { date: heroDateLabel, location: locationText });
   const zoomLinkRaw = settings.zoom_link?.trim() ?? "";
   const showLiveSessionsBlock = thematicSections.length > 0 || Boolean(zoomLinkRaw);
+  const plenaryStartsWhen = settings.plenary_start_time?.trim()
+    ? formatConferenceStartsDateTime(settings.plenary_start_time, loc)
+    : settings.date
+      ? formatConferenceIsoDate(settings.date, loc)
+      : "";
 
   return (
     <main className="min-h-screen">
@@ -165,6 +170,9 @@ export default function HomePage() {
                   {t("plenarySessionOpening")}
                 </Button>
               )}
+              {plenaryStartsWhen ? (
+                <p className="mt-3 text-center text-sm text-slate-400">{t("homeSectionZoomStarts", { dateTime: plenaryStartsWhen })}</p>
+              ) : null}
             </div>
             {thematicSections.length > 0 ? (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-stretch">
@@ -172,10 +180,13 @@ export default function HomePage() {
                   const zoomRaw = (sec.zoom_link ?? "").trim();
                   const hasZoom = zoomRaw.length > 0;
                   const titleText = sectionLabel(sec, i18n.language);
+                  const sectionStartsWhen =
+                    sec.start_time?.trim() ? formatConferenceStartsDateTime(sec.start_time, loc) : "";
                   const sectionBtnClass =
                     "flex h-full min-h-[80px] w-full min-w-0 max-w-full flex-1 items-center justify-center gap-2 whitespace-normal border-white/25 bg-white/5 px-4 py-3 text-center text-base leading-snug text-white md:text-lg [&_svg]:shrink-0";
                   return (
-                    <div key={sec.id} className="flex min-h-[80px] min-w-0 self-stretch">
+                    <div key={sec.id} className="flex min-h-[80px] min-w-0 flex-col gap-2 self-stretch">
+                      <div className="flex min-h-[80px] w-full flex-1">
                       {hasZoom ? (
                         <Button
                           asChild
@@ -204,6 +215,10 @@ export default function HomePage() {
                           <span className="min-w-0 break-words">{titleText}</span>
                         </Button>
                       )}
+                      </div>
+                      {sectionStartsWhen ? (
+                        <p className="text-center text-sm text-slate-400">{t("homeSectionZoomStarts", { dateTime: sectionStartsWhen })}</p>
+                      ) : null}
                     </div>
                   );
                 })}

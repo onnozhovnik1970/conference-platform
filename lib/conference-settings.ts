@@ -4,6 +4,8 @@ export type ConferenceSettingsRow = {
   title_ua: string | null;
   /** ISO date string (YYYY-MM-DD); DB column is `"date"` */
   date: string | null;
+  /** Plenary session start instant (timestamptz ISO from API). */
+  plenary_start_time: string | null;
   deadline: string | null;
   location: string | null;
   description: string | null;
@@ -20,6 +22,7 @@ export const DEFAULT_CONFERENCE_SETTINGS: Omit<ConferenceSettingsRow, "updated_a
   title_ua:
     "ІХ Всеукраїнська студентська науково-практична конференція іноземними мовами «НАУКА ХХІ СТОЛІТТЯ: ВИКЛИКИ СЬОГОДЕННЯ»",
   date: "2026-05-14",
+  plenary_start_time: null,
   deadline: "2026-04-26",
   location: "Online via Zoom",
   description:

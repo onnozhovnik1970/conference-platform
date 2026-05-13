@@ -24,6 +24,7 @@ export default function AdminConferenceSettingsPage() {
   const [eventDate, setEventDate] = useState("");
   const [deadline, setDeadline] = useState("");
   const [location, setLocation] = useState("");
+  const [plenaryStartLocal, setPlenaryStartLocal] = useState("");
   const [description, setDescription] = useState("");
   const [descriptionUa, setDescriptionUa] = useState("");
   const [zoomLink, setZoomLink] = useState("");
@@ -84,6 +85,7 @@ export default function AdminConferenceSettingsPage() {
         setEventDate(s.date ?? "");
         setDeadline(s.deadline ?? "");
         setLocation(s.location ?? "");
+        setPlenaryStartLocal(isoToDatetimeLocalValue(s.plenary_start_time));
         setDescription(s.description ?? "");
         setDescriptionUa(s.description_ua ?? "");
         setZoomLink(s.zoom_link ?? "");
@@ -112,6 +114,7 @@ export default function AdminConferenceSettingsPage() {
           date: eventDate || null,
           deadline: deadline || null,
           location: location.trim() || null,
+          plenary_start_time: datetimeLocalValueToIso(plenaryStartLocal),
           description: description.trim() || null,
           description_ua: descriptionUa.trim() || null,
           zoom_link: zoomLink.trim() || null,
@@ -289,6 +292,18 @@ export default function AdminConferenceSettingsPage() {
                   {t("adminConferenceFieldLocation")}
                 </label>
                 <input id="cs-location" type="text" value={location} onChange={(e) => setLocation(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="cs-plenary-start">
+                  {t("adminConferenceFieldPlenaryStartTime")}
+                </label>
+                <input
+                  id="cs-plenary-start"
+                  type="datetime-local"
+                  value={plenaryStartLocal}
+                  onChange={(e) => setPlenaryStartLocal(e.target.value)}
+                  className={inputClass}
+                />
               </div>
               <div>
                 <label className={labelClass} htmlFor="cs-description-en">

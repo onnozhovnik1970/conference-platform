@@ -28,6 +28,7 @@ type PatchBody = {
   description_ua?: unknown;
   zoom_link?: unknown;
   zoom_details?: unknown;
+  plenary_start_time?: unknown;
 };
 
 function asOptionalDate(value: unknown): string | null {
@@ -42,6 +43,28 @@ function asOptionalDate(value: unknown): string | null {
     return null;
   }
   return trimmed;
+}
+
+function readOptionalPlenaryStartTime(body: PatchBody): string | null | "invalid" | undefined {
+  if (!("plenary_start_time" in body)) {
+    return undefined;
+  }
+  const v = body.plenary_start_time;
+  if (v === null || v === undefined || v === "") {
+    return null;
+  }
+  if (typeof v !== "string") {
+    return "invalid";
+  }
+  const t = v.trim();
+  if (t === "") {
+    return null;
+  }
+  const d = new Date(t);
+  if (Number.isNaN(d.getTime())) {
+    return "invalid";
+  }
+  return d.toISOString();
 }
 
 function asOptionalText(value: unknown): string | null {
@@ -67,7 +90,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("conference_settings")
-    .select("id, title, title_ua, date, deadline, location, description, description_ua, zoom_link, zoom_details, updated_at")
+    .select("id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, updated_at")
     .eq("id", 1)
     .maybeSingle();
 
@@ -112,6 +135,11 @@ export async function PATCH(request: Request) {
   const zoom_link = asOptionalText(body.zoom_link);
   const zoom_details = asOptionalText(body.zoom_details);
 
+  const plenary_start_time_parsed = readOptionalPlenaryStartTime(body);
+  if (plenary_start_time_parsed === "invalid") {
+    return NextResponse.json({ error: "plenary_start_time must be an ISO date string or null" }, { status: 400 });
+  }
+
   const supabase = getServiceRoleClient();
   if (!supabase) {
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
@@ -130,11 +158,12 @@ export async function PATCH(request: Request) {
         description: description?.trim() ?? null,
         description_ua: description_ua?.trim() ?? null,
         zoom_link: zoom_link?.trim() ?? null,
-        zoom_details: zoom_details?.trim() ?? null
+        zoom_details: zoom_details?.trim() ?? null,
+        ...(plenary_start_time_parsed !== undefined ? { plenary_start_time: plenary_start_time_parsed } : {})
       },
       { onConflict: "id" }
     )
-    .select("id, title, title_ua, date, deadline, location, description, description_ua, zoom_link, zoom_details, updated_at")
+    .select("id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, updated_at")
     .single();
 
   if (error) {

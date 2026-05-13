@@ -25,6 +25,23 @@ export function formatConferenceDateTime(iso: string | null | undefined, locale:
   }).format(d);
 }
 
+/**
+ * "May 14, 2026, 2:25 PM" (en) / locale-appropriate uk-UA for live-session labels after "Starts:".
+ */
+export function formatConferenceStartsDateTime(iso: string | null | undefined, locale: "en" | "ua"): string {
+  if (!iso) {
+    return "";
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return iso;
+  }
+  const loc = locale === "ua" ? "uk-UA" : "en-US";
+  const datePart = new Intl.DateTimeFormat(loc, { dateStyle: "long" }).format(d);
+  const timePart = new Intl.DateTimeFormat(loc, { timeStyle: "short" }).format(d);
+  return `${datePart}, ${timePart}`;
+}
+
 /** Value for `<input type="datetime-local" />` from a DB/ISO timestamp. */
 export function isoToDatetimeLocalValue(iso: string | null | undefined): string {
   if (!iso) {
