@@ -21,6 +21,19 @@ const steps = [
   { icon: Sparkles, titleKey: "step3Title", descriptionKey: "step3Description" }
 ] as const;
 
+/** First line = short title (hero); further lines joined as subtitle (full name). */
+function splitHeroTitleLines(raw: string): { primary: string; secondary: string | null } {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return { primary: "", secondary: null };
+  }
+  const lines = trimmed.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
+  if (lines.length <= 1) {
+    return { primary: lines[0] ?? trimmed, secondary: null };
+  }
+  return { primary: lines[0], secondary: lines.slice(1).join(" ") };
+}
+
 export default function HomePage() {
   const { t, i18n } = useTranslation();
   const { settings } = useConferenceSettings();
@@ -47,6 +60,7 @@ export default function HomePage() {
     loc === "ua"
       ? settings.title_ua?.trim() || t("heroTitle")
       : settings.title?.trim() || t("heroTitle");
+  const { primary: heroTitlePrimary, secondary: heroTitleSecondary } = splitHeroTitleLines(heroTitleText);
   const locationText = settings.location?.trim() || t("heroFormat");
   const aboutDescription =
     loc === "ua"
@@ -72,7 +86,14 @@ export default function HomePage() {
           </header>
 
           <div className="mx-auto max-w-4xl py-20 text-center md:py-28">
-            <h1 className="text-2xl font-extrabold tracking-tight text-white md:text-4xl">{heroTitleText}</h1>
+            <h1 className="mx-auto max-w-4xl text-balance tracking-tight text-white">
+              <span className="block text-2xl font-extrabold md:text-4xl">{heroTitlePrimary}</span>
+              {heroTitleSecondary ? (
+                <span className="mt-3 block text-base font-medium leading-snug text-white/85 md:text-lg">
+                  {heroTitleSecondary}
+                </span>
+              ) : null}
+            </h1>
             <p className="mx-auto mt-5 flex items-center justify-center gap-2 text-base text-white/90 sm:text-xl">
               <CalendarDays className="h-5 w-5" /> {heroDateLabel}
             </p>
