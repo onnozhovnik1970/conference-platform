@@ -110,6 +110,22 @@ export default function RegisterPage() {
         return;
       }
 
+      const accessToken = data.session?.access_token;
+      if (accessToken) {
+        void fetch("/api/email/welcome-registration", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ firstName: formData.firstName.trim() })
+        }).catch((err) => console.error("welcome-registration email:", err));
+      } else {
+        console.warn(
+          "No session after signUp — welcome email skipped. Enable auto-confirm or send welcome after email verification (e.g. Auth Hook)."
+        );
+      }
+
       router.push("/login");
     } catch {
       setSubmitError(t("registerUnexpectedError"));
