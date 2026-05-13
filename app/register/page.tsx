@@ -111,20 +111,34 @@ export default function RegisterPage() {
       }
 
       const accessToken = data.session?.access_token;
-      if (accessToken) {
-        void fetch("/api/email/welcome-registration", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ firstName: formData.firstName.trim() })
-        }).catch((err) => console.error("welcome-registration email:", err));
-      } else {
-        console.warn(
-          "No session after signUp — welcome email skipped. Enable auto-confirm or send welcome after email verification (e.g. Auth Hook)."
-        );
-      }
+      const welcomePayload = {
+        firstName: formData.firstName.trim(),
+        userId,
+        email: formData.email.trim().toLowerCase()
+      };
+
+      console.log("[register] welcome email: starting fetch", {
+        hasSession: Boolean(accessToken),
+        userId
+      });
+
+      void fetch("/api/email/welcome-registration", {
+        method: "POST",
+        headers: {
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(welcomePayload)
+      })
+        .then(async (res) => {
+          console.log("[register] welcome email: fetch completed", {
+            status: res.status,
+            ok: res.ok
+          });
+        })
+        .catch((err) => {
+          console.error("[register] welcome email fetch failed:", err);
+        });
 
       router.push("/login");
     } catch {
