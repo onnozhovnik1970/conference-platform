@@ -31,7 +31,7 @@ function statusBilingual(status: string): { uk: string; en: string } {
     under_review: { uk: "На розгляді", en: "Under review" },
     accepted: { uk: "Прийнято", en: "Accepted" },
     rejected: { uk: "Відхилено", en: "Rejected" },
-    needs_revision: { uk: "Потрібна доопрацювання", en: "Needs revision" }
+    needs_revision: { uk: "Потребує доопрацювання", en: "Needs revision" }
   };
   return map[status] ?? { uk: status, en: status };
 }

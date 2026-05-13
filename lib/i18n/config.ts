@@ -203,7 +203,7 @@ const resources = {
       adminProgramError: "Could not send program emails.",
       adminCertificatesCardTitle: "Certificates (PDF)",
       adminCertificatesCardSubtitle:
-        "Generate participation certificates for every accepted, non-archived submission. PDFs use pdfmake (Roboto via bundled virtual fonts — supports Ukrainian and English).",
+        "Generate participation certificates for every accepted, non-archived submission. PDFs use jsPDF with embedded Roboto (Ukrainian and English).",
       adminCertificatesGenerateZip: "Generate certificates (ZIP)",
       adminCertificatesGenerating: "Generating…",
       adminCertificatesZipConfirm:
@@ -417,7 +417,7 @@ const resources = {
       dashboardSubmissionError: "Не вдалося зберегти подання. Спробуйте ще раз.",
       dashboardSubmissionAuthError: "Щоб подати матеріали, потрібно увійти.",
       dashboardSubmissionBlockedActive:
-        "У вас уже є подання, яке розглядається. Ви не можете створити нове, доки організатори не завершать перевірку поточного. Нове подання можливе лише після того, як останнє буде позначене як «Потрібна доопрацювання» або «Відхилено».",
+        "У вас уже є подання, яке розглядається. Ви не можете створити нове, доки організатори не завершать перевірку поточного. Нове подання можливе лише після того, як останнє буде позначене як «Потребує доопрацювання» або «Відхилено».",
       dashboardStatusProgressTitle: "Прогрес статусу подання",
       dashboardStatusDraft: "Чернетка",
       dashboardStatusAiReview: "На перевірці ШІ",
@@ -483,7 +483,7 @@ const resources = {
       adminStatusPending: "Очікує",
       adminStatusPendingReview: "На перевірці",
       adminStatusUnderReview: "На розгляді",
-      adminStatusNeedsRevision: "Потрібна доопрацювання",
+      adminStatusNeedsRevision: "Потребує доопрацювання",
       adminStatusAccepted: "Прийнято",
       adminStatusRejected: "Відхилено",
       adminDownload: "Завантажити",
@@ -493,7 +493,7 @@ const resources = {
       adminMenuTitle: "Меню",
       adminNavSubmissions: "Подання",
       adminNavAccepted: "Прийняті",
-      adminNavNeedsRevision: "Потрібна доопрацювання",
+      adminNavNeedsRevision: "Потребує доопрацювання",
       adminNavRejected: "Відхилені",
       adminNavArchive: "Архів",
       adminNavUsers: "Користувачі",
@@ -538,10 +538,10 @@ const resources = {
       adminStatsSectionOther: "Інше / не призначено",
       adminPanelTitleSubmissions: "Подання (активні)",
       adminPanelTitleAccepted: "Прийняті подання",
-      adminPanelTitleNeedsRevision: "Потрібна доопрацювання",
+      adminPanelTitleNeedsRevision: "Потребує доопрацювання",
       adminPanelTitleRejected: "Відхилені подання",
       adminPanelTitleArchive: "Архів",
-      adminArchive: "В архів",
+      adminArchive: "Архівувати",
       adminRestore: "Відновити",
       adminConferenceSettingsSubtitle: "Ці поля відображаються на публічному сайті (герой, дати, формат, опис).",
       adminConferenceSettingsLoading: "Завантаження налаштувань…",
@@ -577,7 +577,7 @@ const resources = {
       adminProgramError: "Не вдалося надіслати програму.",
       adminCertificatesCardTitle: "Грамоти (PDF)",
       adminCertificatesCardSubtitle:
-        "Згенерувати грамоти учасникам з прийнятими неархівованими поданнями. PDF через pdfmake (Roboto у вбудованих шрифтах — підтримка української та англійської).",
+        "Згенерувати грамоти учасникам з прийнятими неархівованими поданнями. PDF через jsPDF зі вбудованим Roboto (українська та англійська).",
       adminCertificatesGenerateZip: "Згенерувати грамоти (ZIP)",
       adminCertificatesGenerating: "Генерація…",
       adminCertificatesZipConfirm:

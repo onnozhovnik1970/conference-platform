@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server";
-import { buildCertificateDocumentDefinition } from "@/lib/certificates/build-document";
 import { loadCertificatePayloadBySubmissionId } from "@/lib/certificates/fetch-payloads";
-import { renderCertificatePdfBuffer } from "@/lib/certificates/render-pdf";
+import { renderCertificatePdfBuffer } from "@/lib/certificates/render-certificate-pdf";
 
 export const dynamic = "force-dynamic";
 
@@ -35,8 +34,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ sub
       );
     }
 
-    const doc = buildCertificateDocumentDefinition(payload);
-    const buf = await renderCertificatePdfBuffer(doc);
+    const buf = renderCertificatePdfBuffer(payload);
     const filename = `certificate-${payload.submissionId}.pdf`;
 
     return new NextResponse(new Uint8Array(buf), {

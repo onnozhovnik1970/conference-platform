@@ -2,9 +2,8 @@ import JSZip from "jszip";
 import { NextResponse } from "next/server";
 
 import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server";
-import { buildCertificateDocumentDefinition } from "@/lib/certificates/build-document";
 import { loadCertificatePayloads } from "@/lib/certificates/fetch-payloads";
-import { renderCertificatePdfBuffer } from "@/lib/certificates/render-pdf";
+import { renderCertificatePdfBuffer } from "@/lib/certificates/render-certificate-pdf";
 
 export const dynamic = "force-dynamic";
 
@@ -31,8 +30,7 @@ export async function POST(_request: Request) {
 
     const zip = new JSZip();
     for (const p of payloads) {
-      const doc = buildCertificateDocumentDefinition(p);
-      const buf = await renderCertificatePdfBuffer(doc);
+      const buf = renderCertificatePdfBuffer(p);
       zip.file(pdfFileName(p.submissionId), buf);
     }
 
