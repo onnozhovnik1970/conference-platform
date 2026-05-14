@@ -21,6 +21,8 @@ function jsonWithNoStore<T>(body: T, init?: { status?: number }) {
 type PatchBody = {
   title?: unknown;
   title_ua?: unknown;
+  hero_subtitle?: unknown;
+  hero_subtitle_ua?: unknown;
   date?: unknown;
   deadline?: unknown;
   location?: unknown;
@@ -108,7 +110,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("conference_settings")
     .select(
-      "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, updated_at"
+      "id, title, title_ua, hero_subtitle, hero_subtitle_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, updated_at"
     )
     .eq("id", 1)
     .maybeSingle();
@@ -175,7 +177,7 @@ export async function PATCH(request: Request) {
   }
 
   const selectCols =
-    "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, updated_at";
+    "id, title, title_ua, hero_subtitle, hero_subtitle_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, updated_at";
 
   const values = {
     title: titleRaw.trim(),
@@ -197,7 +199,9 @@ export async function PATCH(request: Request) {
     ...(body.facebook_url !== undefined ? { facebook_url } : {}),
     ...(body.instagram_url !== undefined ? { instagram_url } : {}),
     ...(body.telegram_url !== undefined ? { telegram_url } : {}),
-    ...(body.hero_image_url !== undefined ? { hero_image_url } : {})
+    ...(body.hero_image_url !== undefined ? { hero_image_url } : {}),
+    ...(body.hero_subtitle !== undefined ? { hero_subtitle: trimOrNull(body.hero_subtitle) } : {}),
+    ...(body.hero_subtitle_ua !== undefined ? { hero_subtitle_ua: trimOrNull(body.hero_subtitle_ua) } : {})
   };
 
   const { data: updated, error: updateErr } = await supabase

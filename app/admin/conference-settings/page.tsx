@@ -21,6 +21,8 @@ export default function AdminConferenceSettingsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [titleUa, setTitleUa] = useState("");
+  const [heroSubtitle, setHeroSubtitle] = useState("");
+  const [heroSubtitleUa, setHeroSubtitleUa] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [deadline, setDeadline] = useState("");
   const [location, setLocation] = useState("");
@@ -103,6 +105,8 @@ export default function AdminConferenceSettingsPage() {
       if (s) {
         setTitle(s.title ?? "");
         setTitleUa(s.title_ua ?? "");
+        setHeroSubtitle(s.hero_subtitle ?? "");
+        setHeroSubtitleUa(s.hero_subtitle_ua ?? "");
         setEventDate(s.date ?? "");
         setDeadline(s.deadline ?? "");
         setLocation(s.location ?? "");
@@ -140,6 +144,8 @@ export default function AdminConferenceSettingsPage() {
         body: JSON.stringify({
           title: title.trim(),
           title_ua: titleUa.trim() || null,
+          hero_subtitle: heroSubtitle.trim() || null,
+          hero_subtitle_ua: heroSubtitleUa.trim() || null,
           date: eventDate || null,
           deadline: deadline || null,
           location: location.trim() || null,
@@ -168,6 +174,8 @@ export default function AdminConferenceSettingsPage() {
         const s = saved.settings;
         setTitle(s.title ?? "");
         setTitleUa(s.title_ua ?? "");
+        setHeroSubtitle(s.hero_subtitle ?? "");
+        setHeroSubtitleUa(s.hero_subtitle_ua ?? "");
         setEventDate(s.date ?? "");
         setDeadline(s.deadline ?? "");
         setLocation(s.location ?? "");
@@ -586,6 +594,30 @@ export default function AdminConferenceSettingsPage() {
                   value={titleUa}
                   onChange={(e) => setTitleUa(e.target.value)}
                   className={`${inputClass} min-h-[5rem]`}
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="cs-hero-subtitle-en">
+                  {t("adminConferenceFieldHeroSubtitleEn")}
+                </label>
+                <textarea
+                  id="cs-hero-subtitle-en"
+                  rows={2}
+                  value={heroSubtitle}
+                  onChange={(e) => setHeroSubtitle(e.target.value)}
+                  className={`${inputClass} min-h-[4rem]`}
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="cs-hero-subtitle-ua">
+                  {t("adminConferenceFieldHeroSubtitleUa")}
+                </label>
+                <textarea
+                  id="cs-hero-subtitle-ua"
+                  rows={2}
+                  value={heroSubtitleUa}
+                  onChange={(e) => setHeroSubtitleUa(e.target.value)}
+                  className={`${inputClass} min-h-[4rem]`}
                 />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">

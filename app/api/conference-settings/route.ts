@@ -29,7 +29,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("conference_settings")
     .select(
-      "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, updated_at"
+      "id, title, title_ua, hero_subtitle, hero_subtitle_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, updated_at"
     )
     .eq("id", 1)
     .maybeSingle();

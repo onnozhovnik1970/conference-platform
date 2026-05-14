@@ -118,7 +118,7 @@ function FloatingEmoji({ emoji, positionStyle, floatDuration, reducedMotion, siz
 }
 
 /**
- * Full-width hero: `hero_image_url` as cover, `bg-black/50` overlay, title + CTAs only (no body copy — that lives in About Conference).
+ * Full-width hero: `hero_image_url` cover, overlay, H1 (`title`/`title_ua`) + optional H2 (`hero_subtitle`/`hero_subtitle_ua`) + CTAs.
  * Dark blue gradient fallback when URL is missing or the image fails. Six floating emojis in corner bands only (below copy).
  */
 export function ConferenceHeroEdtech() {
@@ -142,8 +142,8 @@ export function ConferenceHeroEdtech() {
 
   const showPhotoBg = Boolean(heroImageSrc) && !bgFailed;
 
-  /** Full `title` / `title_ua` from settings — never split into “headline vs subtitle” (DB often uses multiple lines for one official title). */
-  const conferenceTitle = useMemo(() => {
+  /** Hero H1: `title` / `title_ua` (main conference name). */
+  const heroH1 = useMemo(() => {
     const ua = settings.title_ua?.trim();
     const en = settings.title?.trim();
     if (loc === "ua") {
@@ -151,6 +151,16 @@ export function ConferenceHeroEdtech() {
     }
     return en || ua || t("heroTitle");
   }, [loc, settings.title, settings.title_ua, t]);
+
+  /** Hero H2: `hero_subtitle` / `hero_subtitle_ua`; hidden when both empty. */
+  const heroH2 = useMemo(() => {
+    const ua = settings.hero_subtitle_ua?.trim();
+    const en = settings.hero_subtitle?.trim();
+    if (loc === "ua") {
+      return ua || en || "";
+    }
+    return en || ua || "";
+  }, [loc, settings.hero_subtitle, settings.hero_subtitle_ua]);
 
   const dateLabel = formatConferenceIsoDate(settings.date, loc) || t("heroDate");
   const badgeCityLine = useMemo(() => {
@@ -279,9 +289,14 @@ export function ConferenceHeroEdtech() {
             </span>
           </div>
 
-          <h1 className="mx-auto w-full max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-3xl font-bold leading-[1.12] tracking-tight text-white md:text-5xl md:leading-[1.12] lg:text-6xl lg:leading-[1.1]">
-            {conferenceTitle}
+          <h1 className="mx-auto w-full max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-4xl font-bold leading-[1.1] tracking-tight text-white md:text-6xl md:leading-[1.08]">
+            {heroH1}
           </h1>
+          {heroH2 ? (
+            <h2 className="mx-auto mt-5 max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-xl font-normal leading-snug text-white/95 md:mt-6 md:text-2xl md:leading-relaxed">
+              {heroH2}
+            </h2>
+          ) : null}
 
           <div className="mt-10 flex w-full max-w-full flex-col gap-3 sm:flex sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center">
             <Button

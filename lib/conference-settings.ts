@@ -2,6 +2,10 @@ export type ConferenceSettingsRow = {
   id: number;
   title: string;
   title_ua: string | null;
+  /** Secondary hero line (English), shown as H2 under the main hero title. */
+  hero_subtitle: string | null;
+  /** Secondary hero line (Ukrainian). */
+  hero_subtitle_ua: string | null;
   /** ISO date string (YYYY-MM-DD); DB column is `"date"` */
   date: string | null;
   /** Plenary session start instant (timestamptz ISO from API). */
@@ -25,10 +29,10 @@ export type ConferenceSettingsRow = {
 
 export const DEFAULT_CONFERENCE_SETTINGS: Omit<ConferenceSettingsRow, "updated_at"> = {
   id: 1,
-  title:
-    'IX All-Ukrainian Student Scientific-Practical Conference in Foreign Languages "SCIENCE OF THE 21st CENTURY: CHALLENGES OF TODAY"',
-  title_ua:
-    "ІХ Всеукраїнська студентська науково-практична конференція іноземними мовами «НАУКА ХХІ СТОЛІТТЯ: ВИКЛИКИ СЬОГОДЕННЯ»",
+  title: "SCIENCE OF THE 21st CENTURY: CHALLENGES OF TODAY",
+  title_ua: "НАУКА ХХІ СТОЛІТТЯ: ВИКЛИКИ СЬОГОДЕННЯ",
+  hero_subtitle: "IX All-Ukrainian Student Scientific-Practical Conference in Foreign Languages",
+  hero_subtitle_ua: "ІХ Всеукраїнська студентська науково-практична конференція іноземними мовами",
   date: "2026-05-14",
   plenary_start_time: null,
   deadline: "2026-04-26",
