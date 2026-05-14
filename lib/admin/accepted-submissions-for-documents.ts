@@ -14,7 +14,10 @@ export type AcceptedSubmissionExportRow = {
   user_id: string;
   abstract_title: string | null;
   file_path: string | null;
+  /** Optional legacy / alternate column; omitted if not present in DB. */
+  file_url?: string | null;
   country: string | null;
+  status?: string | null;
 };
 
 export function authorDisplayNameFromProfile(profile: ProfileExportMini | undefined): string {
@@ -27,18 +30,39 @@ export function authorDisplayNameFromProfile(profile: ProfileExportMini | undefi
   return parts.join(" ").trim() || "—";
 }
 
+const SUBMISSION_SELECT_BASE =
+  "id, user_id, abstract_title, file_path, country, status, archived_at";
+
 export async function loadAcceptedSubmissionsForDocuments(
   supabase: SupabaseClient
 ): Promise<{ submissions: AcceptedSubmissionExportRow[]; profilesById: Record<string, ProfileExportMini> } | { error: string }> {
-  const { data: submissionRows, error: submissionsError } = await supabase
+  let submissionRows: Record<string, unknown>[] | null = null;
+  let submissionsError: { message?: string } | null = null;
+
+  const withUrl = await supabase
     .from("submissions")
-    .select("id, user_id, abstract_title, file_path, country, status, archived_at")
-    .eq("status", "accepted")
+    .select(`${SUBMISSION_SELECT_BASE}, file_url`)
+    .ilike("status", "accepted")
     .is("archived_at", null)
     .order("created_at", { ascending: false });
 
+  const msg = (withUrl.error?.message ?? "").toLowerCase();
+  if (withUrl.error && (msg.includes("file_url") || (withUrl.error as { code?: string }).code === "42703")) {
+    const noUrl = await supabase
+      .from("submissions")
+      .select(SUBMISSION_SELECT_BASE)
+      .ilike("status", "accepted")
+      .is("archived_at", null)
+      .order("created_at", { ascending: false });
+    submissionRows = noUrl.data ?? null;
+    submissionsError = noUrl.error;
+  } else {
+    submissionRows = withUrl.data ?? null;
+    submissionsError = withUrl.error;
+  }
+
   if (submissionsError) {
-    return { error: submissionsError.message };
+    return { error: submissionsError.message ?? "Submissions query failed" };
   }
 
   const submissions = (submissionRows ?? []) as AcceptedSubmissionExportRow[];

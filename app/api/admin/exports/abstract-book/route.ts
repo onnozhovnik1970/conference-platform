@@ -6,6 +6,7 @@ import {
 } from "@/lib/admin/accepted-submissions-for-documents";
 import { extractTextFromSubmissionFile } from "@/lib/admin/extract-submission-file-text";
 import { fileExtensionFromPath } from "@/lib/admin/export-filename";
+import { submissionStorageObjectPath } from "@/lib/admin/submission-storage-path";
 import { renderAbstractBookPdfBuffer } from "@/lib/admin/render-abstract-book-pdf";
 import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server";
 import { formatConferenceIsoDate } from "@/lib/conference-dates";
@@ -67,7 +68,7 @@ export async function GET(request: Request) {
       const slice = sorted.slice(i, i + batchSize);
       const texts = await Promise.all(
         slice.map(async (sub) => {
-          const path = typeof sub.file_path === "string" ? sub.file_path.trim() : "";
+          const path = submissionStorageObjectPath(sub);
           if (!path) {
             return "[No thesis file was uploaded for this abstract.]";
           }
