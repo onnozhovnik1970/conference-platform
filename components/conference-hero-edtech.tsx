@@ -279,7 +279,7 @@ export function ConferenceHeroEdtech() {
             </span>
           </div>
 
-          <h1 className="mx-auto w-full max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-3xl font-bold leading-[1.12] tracking-tight text-white sm:text-4xl md:text-[1.7rem] md:leading-[1.14] lg:text-[1.82rem] xl:text-[1.95rem] 2xl:text-[2rem]">
+          <h1 className="mx-auto w-full max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-3xl font-bold leading-[1.12] tracking-tight text-white md:text-5xl md:leading-[1.12] lg:text-6xl lg:leading-[1.1]">
             {conferenceTitle}
           </h1>
 
