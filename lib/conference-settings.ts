@@ -19,6 +19,7 @@ export type ConferenceSettingsRow = {
   facebook_url: string | null;
   instagram_url: string | null;
   telegram_url: string | null;
+  hero_image_url: string | null;
   updated_at: string;
 };
 
@@ -44,5 +45,6 @@ export const DEFAULT_CONFERENCE_SETTINGS: Omit<ConferenceSettingsRow, "updated_a
   support_email: null,
   facebook_url: null,
   instagram_url: null,
-  telegram_url: null
+  telegram_url: null,
+  hero_image_url: null
 };

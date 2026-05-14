@@ -1,3 +1,7 @@
+/** Default support line when conference settings omit `support_phone`. */
+export const supportPhoneDisplay = "+38 098 724 36 74";
+export const supportPhoneTel = "+380987243674";
+
 /** Build tel: href from stored support phone (spaces allowed). */
 export function telHrefFromSupportPhone(raw: string | null | undefined): string {
   const t = typeof raw === "string" ? raw.trim() : "";
@@ -11,8 +15,18 @@ export function telHrefFromSupportPhone(raw: string | null | undefined): string 
   return compact.startsWith("tel:") ? compact : `tel:${compact}`;
 }
 
-export function supportPhoneDisplay(raw: string | null | undefined): string {
+export function trimmedSupportPhoneDisplay(raw: string | null | undefined): string {
   return typeof raw === "string" ? raw.trim() : "";
+}
+
+/** Display string: settings value if set, otherwise {@link supportPhoneDisplay}. */
+export function resolvedSupportPhoneDisplay(raw: string | null | undefined): string {
+  return trimmedSupportPhoneDisplay(raw) || supportPhoneDisplay;
+}
+
+/** `tel:` href: from settings if set, otherwise {@link supportPhoneTel}. */
+export function resolvedSupportPhoneTelHref(raw: string | null | undefined): string {
+  return telHrefFromSupportPhone(raw) || `tel:${supportPhoneTel}`;
 }
 
 export function supportEmailTrimmed(raw: string | null | undefined): string {

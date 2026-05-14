@@ -10,7 +10,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { SiteTextLogo } from "@/components/site-text-logo";
 import { Button } from "@/components/ui/button";
-import { supportEmailTrimmed, supportPhoneDisplay, telHrefFromSupportPhone } from "@/lib/conference-contact-urls";
+import { resolvedSupportPhoneDisplay, resolvedSupportPhoneTelHref, supportEmailTrimmed } from "@/lib/conference-contact-urls";
 import "@/lib/i18n/config";
 
 const PRIMARY_NAV = [
@@ -72,8 +72,8 @@ export function SiteHeader() {
     return () => window.removeEventListener("keydown", onKey);
   }, [mobileOpen, closeMobile]);
 
-  const phoneDisplay = supportPhoneDisplay(settings.support_phone);
-  const phoneTelHref = telHrefFromSupportPhone(settings.support_phone);
+  const phoneDisplay = resolvedSupportPhoneDisplay(settings.support_phone);
+  const phoneTelHref = resolvedSupportPhoneTelHref(settings.support_phone);
   const supportEmail = supportEmailTrimmed(settings.support_email);
 
   return (
@@ -94,11 +94,9 @@ export function SiteHeader() {
               <Link href="/support" className="text-sm font-semibold text-white hover:underline">
                 {t("siteNavSupport")}
               </Link>
-              {phoneTelHref ? (
-                <a href={phoneTelHref} className="truncate text-xs text-slate-300 hover:text-white">
-                  {phoneDisplay || settings.support_phone?.trim()}
-                </a>
-              ) : null}
+              <a href={phoneTelHref} className="truncate text-xs text-slate-300 hover:text-white">
+                {phoneDisplay}
+              </a>
               {supportEmail ? (
                 <a href={`mailto:${supportEmail}`} className="truncate text-xs text-sky-200/90 hover:text-white">
                   {supportEmail}
@@ -162,22 +160,9 @@ export function SiteHeader() {
             </nav>
 
             <div className="shrink-0 border-t border-white/10 bg-[#0c1d38]/90 px-4 py-4">
-              <Link
-                href="/support"
-                className={mobileNavLinkClass(pathname === "/support")}
-                onClick={closeMobile}
-              >
-                {t("siteNavSupport")}
-              </Link>
-              {phoneTelHref ? (
-                <a
-                  className="mt-2 block py-2 text-sm text-sky-200/90 hover:text-white"
-                  href={phoneTelHref}
-                  onClick={closeMobile}
-                >
-                  {phoneDisplay || settings.support_phone?.trim()}
-                </a>
-              ) : null}
+              <a href={phoneTelHref} className={mobileNavLinkClass(false)} onClick={closeMobile}>
+                {phoneDisplay}
+              </a>
               {supportEmail ? (
                 <a
                   className="mt-1 block break-all py-2 text-sm text-sky-200/90 hover:text-white"

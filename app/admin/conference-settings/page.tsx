@@ -36,6 +36,7 @@ export default function AdminConferenceSettingsPage() {
   const [facebookUrl, setFacebookUrl] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("");
   const [telegramUrl, setTelegramUrl] = useState("");
+  const [heroImageUrl, setHeroImageUrl] = useState("");
 
   const [sections, setSections] = useState<ConferenceSectionRow[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
@@ -117,6 +118,7 @@ export default function AdminConferenceSettingsPage() {
         setFacebookUrl(s.facebook_url ?? "");
         setInstagramUrl(s.instagram_url ?? "");
         setTelegramUrl(s.telegram_url ?? "");
+        setHeroImageUrl(s.hero_image_url ?? "");
       }
       setLoading(false);
     };
@@ -152,7 +154,8 @@ export default function AdminConferenceSettingsPage() {
           support_email: supportEmail.trim() || null,
           facebook_url: facebookUrl.trim() || null,
           instagram_url: instagramUrl.trim() || null,
-          telegram_url: telegramUrl.trim() || null
+          telegram_url: telegramUrl.trim() || null,
+          hero_image_url: heroImageUrl.trim() || null
         })
       });
       if (missingSession || !response?.ok) {
@@ -180,6 +183,7 @@ export default function AdminConferenceSettingsPage() {
         setFacebookUrl(s.facebook_url ?? "");
         setInstagramUrl(s.instagram_url ?? "");
         setTelegramUrl(s.telegram_url ?? "");
+        setHeroImageUrl(s.hero_image_url ?? "");
       }
       setSuccess(t("adminConferenceSettingsSaveSuccess"));
       await refresh();
@@ -540,6 +544,23 @@ export default function AdminConferenceSettingsPage() {
                       placeholder={t("adminConferenceFieldMetaDescriptionPlaceholder")}
                       className={`${inputClass} min-h-[5rem]`}
                     />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="cs-hero-image-url">
+                      {t("adminConferenceFieldHeroImageUrl")}
+                    </label>
+                    <p className="mt-1 text-xs text-slate-400">{t("adminConferenceFieldHeroImageUrlHint")}</p>
+                    <input
+                      id="cs-hero-image-url"
+                      type="url"
+                      inputMode="url"
+                      autoComplete="off"
+                      value={heroImageUrl}
+                      onChange={(e) => setHeroImageUrl(e.target.value)}
+                      placeholder={t("adminConferenceFieldHeroImageUrlPlaceholder")}
+                      className={inputClass}
+                    />
+                    <p className="mt-2 text-xs leading-relaxed text-slate-400">{t("adminConferenceFieldHeroImageUrlRecommendNote")}</p>
                   </div>
                 </div>
               </div>

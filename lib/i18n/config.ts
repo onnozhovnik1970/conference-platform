@@ -287,11 +287,17 @@ const resources = {
       adminCertificatesSendAllError: "Could not complete bulk certificate emails.",
       adminCertificatesRowError: "Could not download certificate.",
       adminConferenceMetaHint:
-        "Site-wide HTML title and meta description (browser tab and search snippets). Leave both empty to use the default SYConf text.",
+        "Site-wide HTML title and meta description (browser tab and search snippets), plus optional home hero background image. Leave meta fields empty to use the default SYConf text; leave the hero URL empty for the soft gradient.",
       adminConferenceFieldMetaTitle: "Meta title",
       adminConferenceFieldMetaDescription: "Meta description",
       adminConferenceFieldMetaTitlePlaceholder: "Optional — overrides default tab title",
       adminConferenceFieldMetaDescriptionPlaceholder: "Optional — overrides default search snippet",
+      adminConferenceFieldHeroImageUrl: "Hero background image URL",
+      adminConferenceFieldHeroImageUrlPlaceholder: "https://…",
+      adminConferenceFieldHeroImageUrlHint:
+        "Direct image URL (JPG/PNG/WebP). Full-width on the home hero; leave empty for the soft gradient.",
+      adminConferenceFieldHeroImageUrlRecommendNote:
+        "Recommended image: JPEG or WebP format, 1920×600px, max 300KB. Avoid PNG for photos. Use https://squoosh.app to compress before uploading.",
       adminConferenceContactSocialHint:
         "Used in the site header (support block), Support and Contact pages, and footer social icons. Leave URLs empty to hide an icon.",
       adminConferenceFieldSupportPhone: "Support phone",
@@ -337,6 +343,8 @@ const resources = {
         'IX All-Ukrainian Student Scientific-Practical Conference in Foreign Languages "SCIENCE OF THE 21st CENTURY: CHALLENGES OF TODAY"',
       heroDate: "May 14, 2026",
       heroFormat: "Online via Zoom",
+      heroDeckSubtitle:
+        "IX All-Ukrainian Student Scientific and Practical Conference in Foreign Languages",
       heroImageParticipantAlt: "Student conference participant",
       heroImagePlaceholderAria: "Participant photo unavailable",
       heroImagePlaceholderHint: "Image unavailable",
@@ -753,11 +761,17 @@ const resources = {
       adminCertificatesSendAllError: "Не вдалося надіслати сертифікати масово.",
       adminCertificatesRowError: "Не вдалося завантажити грамоту.",
       adminConferenceMetaHint:
-        "Заголовок HTML-документа (title) та meta description — для вкладки браузера та сніпета в пошуку. Залиште обидва поля порожніми, щоб використовувати стандартний текст SYConf.",
+        "Заголовок HTML (title) та meta description для вкладки й пошуку, а також необов'язкове фонове зображення головного банера. Порожні meta — стандартний текст SYConf; порожній URL героя — м'який градієнт.",
       adminConferenceFieldMetaTitle: "Meta title",
       adminConferenceFieldMetaDescription: "Meta description",
       adminConferenceFieldMetaTitlePlaceholder: "Необов'язково — замінює стандартний заголовок вкладки",
       adminConferenceFieldMetaDescriptionPlaceholder: "Необов'язково — замінює стандартний опис для пошуку",
+      adminConferenceFieldHeroImageUrl: "URL фонового зображення героя",
+      adminConferenceFieldHeroImageUrlPlaceholder: "https://…",
+      adminConferenceFieldHeroImageUrlHint:
+        "Пряме посилання на зображення (JPG/PNG/WebP). На всю ширину головного банера; залиште порожнім для градієнта.",
+      adminConferenceFieldHeroImageUrlRecommendNote:
+        "Рекомендовано: JPEG або WebP, 1920×600 px, до 300 КБ. Для фото уникайте PNG. Стисніть зображення перед завантаженням: https://squoosh.app",
       adminConferenceContactSocialHint:
         "Використовується в шапці сайту (блок підтримки), на сторінках «Підтримка» та «Контакти», а також для іконок у підвалі. Порожній URL — іконку приховано.",
       adminConferenceFieldSupportPhone: "Телефон підтримки",
@@ -803,6 +817,7 @@ const resources = {
         "ІХ Всеукраїнська студентська науково-практична конференція іноземними мовами «НАУКА ХХІ СТОЛІТТЯ: ВИКЛИКИ СЬОГОДЕННЯ»",
       heroDate: "14 травня 2026",
       heroFormat: "Онлайн у Zoom",
+      heroDeckSubtitle: "ІХ Всеукраїнська студентська науково-практична конференція іноземними мовами",
       heroImageParticipantAlt: "Учасник студентської конференції",
       heroImagePlaceholderAria: "Фото учасника недоступне",
       heroImagePlaceholderHint: "Зображення недоступне",
