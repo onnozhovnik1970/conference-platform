@@ -138,40 +138,64 @@ export function SiteHeader() {
             aria-label={t("siteMobileNavDialogLabel")}
             className="fixed bottom-0 right-0 top-16 z-[65] flex w-[min(100%,22rem)] max-w-[100vw] flex-col border-l border-white/15 bg-[#0f2347] shadow-[-8px_0_24px_rgba(0,0,0,0.35)] animate-in slide-in-from-right duration-300 md:top-[4.25rem]"
           >
-            <div className="flex h-14 shrink-0 items-center justify-end border-b border-white/10 bg-[#0c1d38] px-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-12 w-12 shrink-0 border-white/20 bg-white/10 p-0 text-white hover:bg-white/20 hover:text-white"
-                aria-label={t("siteNavCloseMenu")}
-                onClick={closeMobile}
-              >
-                <X className="h-7 w-7" strokeWidth={2.25} />
-              </Button>
-            </div>
-
-            <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4" aria-label="Primary mobile">
-              {PRIMARY_NAV.map(({ href, labelKey }) => (
-                <Link key={href} href={href} className={mobileNavLinkClass(pathname === href)} onClick={closeMobile}>
-                  {t(labelKey)}
-                </Link>
-              ))}
-            </nav>
-
-            <div className="shrink-0 border-t border-white/10 bg-[#0c1d38]/90 px-4 py-4">
-              <a href={phoneTelHref} className={mobileNavLinkClass(false)} onClick={closeMobile}>
-                {phoneDisplay}
-              </a>
-              {supportEmail ? (
-                <a
-                  className="mt-1 block break-all py-2 text-sm text-sky-200/90 hover:text-white"
-                  href={`mailto:${supportEmail}`}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="flex shrink-0 items-center justify-end border-b border-white/10 px-2 py-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-11 w-11 shrink-0 border-white/20 bg-white/5 p-0 text-white hover:bg-white/15 hover:text-white"
+                  aria-label={t("siteNavCloseMenu")}
                   onClick={closeMobile}
                 >
-                  {supportEmail}
-                </a>
-              ) : null}
+                  <X className="h-6 w-6" strokeWidth={2.25} />
+                </Button>
+              </div>
+
+              <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3">
+                <div className="flex flex-col gap-1">
+                  {PRIMARY_NAV.map(({ href, labelKey }) => (
+                    <Link key={href} href={href} className={mobileNavLinkClass(pathname === href)} onClick={closeMobile}>
+                      {t(labelKey)}
+                    </Link>
+                  ))}
+                  <Link
+                    href="/support"
+                    className={mobileNavLinkClass(pathname === "/support")}
+                    onClick={closeMobile}
+                  >
+                    {t("siteNavSupport")}
+                  </Link>
+                  <a href={phoneTelHref} className={mobileNavLinkClass(false)} onClick={closeMobile}>
+                    {phoneDisplay}
+                  </a>
+                  {supportEmail ? (
+                    <a
+                      href={`mailto:${supportEmail}`}
+                      className={`${mobileNavLinkClass(false)} break-all text-sky-200/95 hover:text-white`}
+                      onClick={closeMobile}
+                    >
+                      {supportEmail}
+                    </a>
+                  ) : null}
+                  <div className="mt-2 flex flex-col gap-2">
+                    <Button asChild className="h-12 w-full border-0 bg-white font-semibold text-[#0f2347] hover:bg-white/90">
+                      <Link href="/register" onClick={closeMobile}>
+                        {t("navRegister")}
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="h-12 w-full border-white/30 bg-transparent font-semibold text-white hover:bg-white/10"
+                    >
+                      <Link href="/login" onClick={closeMobile}>
+                        {t("navLogin")}
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </nav>
             </div>
           </aside>
         </div>

@@ -340,7 +340,7 @@ const resources = {
       heroTitle:
         'IX All-Ukrainian Student Scientific-Practical Conference in Foreign Languages "SCIENCE OF THE 21st CENTURY: CHALLENGES OF TODAY"',
       heroDate: "May 14, 2026",
-      heroFormat: "Online via Zoom",
+      heroFormat: "Online (ZOOM)",
       heroDeckSubtitle:
         "IX All-Ukrainian Student Scientific and Practical Conference in Foreign Languages",
       heroRegisterNow: "Register Now",
@@ -813,7 +813,7 @@ const resources = {
       heroTitle:
         "ІХ Всеукраїнська студентська науково-практична конференція іноземними мовами «НАУКА ХХІ СТОЛІТТЯ: ВИКЛИКИ СЬОГОДЕННЯ»",
       heroDate: "14 травня 2026",
-      heroFormat: "Онлайн у Zoom",
+      heroFormat: "Онлайн (ZOOM)",
       heroDeckSubtitle: "ІХ Всеукраїнська студентська науково-практична конференція іноземними мовами",
       heroRegisterNow: "Зареєструватися зараз",
       heroImageParticipantAlt: "Учасник студентської конференції",
