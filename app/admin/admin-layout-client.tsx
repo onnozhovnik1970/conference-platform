@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { href: "/admin/submissions", labelKey: "adminNavSubmissions" as const },
   { href: "/admin/statistics", labelKey: "adminNavStatistics" as const },
+  { href: "/admin/documents", labelKey: "adminNavDocuments" as const },
   { href: "/admin/accepted", labelKey: "adminNavAccepted" as const },
   { href: "/admin/needs-revision", labelKey: "adminNavNeedsRevision" as const },
   { href: "/admin/rejected", labelKey: "adminNavRejected" as const },
