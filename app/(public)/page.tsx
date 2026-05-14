@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { SiteTextLogo } from "@/components/site-text-logo";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -85,12 +83,7 @@ export default function HomePage() {
             {registrationBannerText}
           </div>
 
-          <header className="flex items-center justify-between gap-4">
-            <SiteTextLogo />
-            <LanguageSwitcher />
-          </header>
-
-          <div className="mx-auto max-w-4xl py-20 text-center md:py-28">
+          <div className="mx-auto max-w-4xl py-16 text-center md:py-24">
             <h1 className="mx-auto max-w-4xl text-balance tracking-tight text-white">
               <span className="block text-2xl font-extrabold md:text-4xl">{heroTitlePrimary}</span>
               {heroTitleSecondary ? (
@@ -228,12 +221,6 @@ export default function HomePage() {
         </section>
       )}
 
-      <footer className="border-t border-white/10 bg-black/30 py-8">
-        <div className="container flex flex-col items-center justify-between gap-3 text-sm text-slate-300 sm:flex-row">
-          <p>{t("footer")}</p>
-          <p>{new Date().getFullYear()} Conference Platform</p>
-        </div>
-      </footer>
     </main>
   );
 }

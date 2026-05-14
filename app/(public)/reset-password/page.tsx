@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { SiteTextLogo } from "@/components/site-text-logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import "@/lib/i18n/config";
@@ -133,17 +131,13 @@ export default function ResetPasswordPage() {
         <div className="absolute inset-0 bg-[#0c1929]/40" />
 
         <div className="container relative z-10">
-          <header className="flex items-center justify-between gap-4">
-            <SiteTextLogo />
-            <div className="flex items-center gap-3">
-              <Button asChild size="sm" variant="secondary">
-                <Link href="/login">{t("navLogin")}</Link>
-              </Button>
-              <LanguageSwitcher />
-            </div>
-          </header>
+          <div className="mx-auto mt-6 flex max-w-xl justify-end pb-2 md:mt-8">
+            <Button asChild size="sm" variant="secondary">
+              <Link href="/login">{t("navLogin")}</Link>
+            </Button>
+          </div>
 
-          <div className="mx-auto mt-10 max-w-xl pb-10">
+          <div className="mx-auto max-w-xl pb-10">
             <Card className="border-blue-950/60 bg-[#0f2744]/85 shadow-xl shadow-black/20 backdrop-blur-md">
               <CardHeader>
                 <CardTitle className="text-3xl text-white">{t("resetPasswordTitle")}</CardTitle>

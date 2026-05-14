@@ -29,6 +29,8 @@ type PatchBody = {
   zoom_link?: unknown;
   zoom_details?: unknown;
   plenary_start_time?: unknown;
+  meta_title?: unknown;
+  meta_description?: unknown;
 };
 
 function asOptionalDate(value: unknown): string | null {
@@ -90,7 +92,9 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("conference_settings")
-    .select("id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, updated_at")
+    .select(
+      "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, updated_at"
+    )
     .eq("id", 1)
     .maybeSingle();
 
@@ -135,6 +139,9 @@ export async function PATCH(request: Request) {
   const zoom_link = asOptionalText(body.zoom_link);
   const zoom_details = asOptionalText(body.zoom_details);
 
+  const meta_title_in = "meta_title" in body ? asOptionalText(body.meta_title) : undefined;
+  const meta_description_in = "meta_description" in body ? asOptionalText(body.meta_description) : undefined;
+
   const plenary_start_time_parsed = readOptionalPlenaryStartTime(body);
   if (plenary_start_time_parsed === "invalid") {
     return NextResponse.json({ error: "plenary_start_time must be an ISO date string or null" }, { status: 400 });
@@ -146,7 +153,7 @@ export async function PATCH(request: Request) {
   }
 
   const selectCols =
-    "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, updated_at";
+    "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, updated_at";
 
   const values = {
     title: titleRaw.trim(),
@@ -158,7 +165,11 @@ export async function PATCH(request: Request) {
     description_ua: description_ua?.trim() ?? null,
     zoom_link: zoom_link?.trim() ?? null,
     zoom_details: zoom_details?.trim() ?? null,
-    ...(plenary_start_time_parsed !== undefined ? { plenary_start_time: plenary_start_time_parsed } : {})
+    ...(plenary_start_time_parsed !== undefined ? { plenary_start_time: plenary_start_time_parsed } : {}),
+    ...(meta_title_in !== undefined ? { meta_title: meta_title_in?.trim() ? meta_title_in.trim() : null } : {}),
+    ...(meta_description_in !== undefined
+      ? { meta_description: meta_description_in?.trim() ? meta_description_in.trim() : null }
+      : {})
   };
 
   const { data: updated, error: updateErr } = await supabase

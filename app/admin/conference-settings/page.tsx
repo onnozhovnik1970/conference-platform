@@ -29,6 +29,8 @@ export default function AdminConferenceSettingsPage() {
   const [descriptionUa, setDescriptionUa] = useState("");
   const [zoomLink, setZoomLink] = useState("");
   const [zoomDetails, setZoomDetails] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
 
   const [sections, setSections] = useState<ConferenceSectionRow[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
@@ -103,6 +105,8 @@ export default function AdminConferenceSettingsPage() {
         setDescriptionUa(s.description_ua ?? "");
         setZoomLink(s.zoom_link ?? "");
         setZoomDetails(s.zoom_details ?? "");
+        setMetaTitle(s.meta_title ?? "");
+        setMetaDescription(s.meta_description ?? "");
       }
       setLoading(false);
     };
@@ -131,7 +135,9 @@ export default function AdminConferenceSettingsPage() {
           description: description.trim() || null,
           description_ua: descriptionUa.trim() || null,
           zoom_link: zoomLink.trim() || null,
-          zoom_details: zoomDetails.trim() || null
+          zoom_details: zoomDetails.trim() || null,
+          meta_title: metaTitle.trim() || null,
+          meta_description: metaDescription.trim() || null
         })
       });
       if (missingSession || !response?.ok) {
@@ -152,6 +158,8 @@ export default function AdminConferenceSettingsPage() {
         setDescriptionUa(s.description_ua ?? "");
         setZoomLink(s.zoom_link ?? "");
         setZoomDetails(s.zoom_details ?? "");
+        setMetaTitle(s.meta_title ?? "");
+        setMetaDescription(s.meta_description ?? "");
       }
       setSuccess(t("adminConferenceSettingsSaveSuccess"));
       await refresh();
@@ -483,6 +491,38 @@ export default function AdminConferenceSettingsPage() {
               {success && (
                 <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{success}</div>
               )}
+              <div className="rounded-lg border border-sky-500/20 bg-sky-500/[0.07] p-4">
+                <p className="text-sm text-slate-300">{t("adminConferenceMetaHint")}</p>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label className={labelClass} htmlFor="cs-meta-title">
+                      {t("adminConferenceFieldMetaTitle")}
+                    </label>
+                    <input
+                      id="cs-meta-title"
+                      type="text"
+                      autoComplete="off"
+                      value={metaTitle}
+                      onChange={(e) => setMetaTitle(e.target.value)}
+                      placeholder={t("adminConferenceFieldMetaTitlePlaceholder")}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="cs-meta-description">
+                      {t("adminConferenceFieldMetaDescription")}
+                    </label>
+                    <textarea
+                      id="cs-meta-description"
+                      rows={3}
+                      value={metaDescription}
+                      onChange={(e) => setMetaDescription(e.target.value)}
+                      placeholder={t("adminConferenceFieldMetaDescriptionPlaceholder")}
+                      className={`${inputClass} min-h-[5rem]`}
+                    />
+                  </div>
+                </div>
+              </div>
               <div>
                 <label className={labelClass} htmlFor="cs-title-en">
                   {t("adminConferenceFieldTitleEn")}

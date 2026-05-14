@@ -28,7 +28,9 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("conference_settings")
-    .select("id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, updated_at")
+    .select(
+      "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, updated_at"
+    )
     .eq("id", 1)
     .maybeSingle();
 

@@ -12,6 +12,8 @@ export type ConferenceSettingsRow = {
   description_ua: string | null;
   zoom_link: string | null;
   zoom_details: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
   updated_at: string;
 };
 
@@ -30,5 +32,7 @@ export const DEFAULT_CONFERENCE_SETTINGS: Omit<ConferenceSettingsRow, "updated_a
   description_ua:
     "Обговорення студентських досліджень сучасних тенденцій науки та вдосконалення навичок володіння іноземними мовами.",
   zoom_link: null,
-  zoom_details: "341 095 4568\n166231"
+  zoom_details: "341 095 4568\n166231",
+  meta_title: null,
+  meta_description: null
 };

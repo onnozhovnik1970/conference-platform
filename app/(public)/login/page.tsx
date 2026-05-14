@@ -1,12 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { SiteTextLogo } from "@/components/site-text-logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import "@/lib/i18n/config";
@@ -87,17 +84,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.25),_transparent_45%)]" />
 
         <div className="container relative z-10">
-          <header className="flex items-center justify-between gap-4">
-            <SiteTextLogo />
-            <div className="flex items-center gap-3">
-              <Button asChild size="sm">
-                <Link href="/">{t("navHome")}</Link>
-              </Button>
-              <LanguageSwitcher />
-            </div>
-          </header>
-
-          <div className="mx-auto mt-10 max-w-xl pb-10">
+          <div className="mx-auto mt-6 max-w-xl pb-10 md:mt-10">
             <Card className="border-white/10 bg-black/35 backdrop-blur">
               <CardHeader>
                 <CardTitle className="text-3xl text-white">{t("loginTitle")}</CardTitle>
