@@ -14,6 +14,7 @@ const resources = {
       siteNavSupport: "Support",
       siteNavOpenMenu: "Open menu",
       siteNavCloseMenu: "Close menu",
+      siteMobileNavDialogLabel: "Site navigation",
       siteFooterCredits:
         "This website was developed by Oleh Nozhovnyk, PhD in Pedagogy, Associate Professor, Associate Professor of the Department of Modern European Languages at State University of Trade and Economics, as a volunteer project to optimise the department's organisational processes.",
       siteFooterPrivacy: "Privacy Policy",
@@ -452,6 +453,7 @@ const resources = {
       siteNavSupport: "Підтримка",
       siteNavOpenMenu: "Відкрити меню",
       siteNavCloseMenu: "Закрити меню",
+      siteMobileNavDialogLabel: "Навігація по сайту",
       siteFooterCredits:
         "Цей сайт розроблено Ножовніком Олегом Миколайовичем, кандидатом педагогічних наук, доцентом, доцентом кафедри сучасних європейських мов Державного торговельно-економічного університету, як волонтерський проєкт для оптимізації організаційних процесів кафедри.",
       siteFooterPrivacy: "Політика конфіденційності",
