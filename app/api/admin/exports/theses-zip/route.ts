@@ -33,7 +33,13 @@ export async function GET(request: Request) {
     statusFilter: "status ILIKE 'accepted' AND archived_at IS NULL",
     totalRows: submissions.length,
     rowsWithStoragePath: withPath.length,
-    sampleStatuses: [...new Set(submissions.map((s) => (s.status ?? "").trim()).filter(Boolean))].slice(0, 12)
+    sampleStatuses: [...new Set(submissions.map((s) => (s.status ?? "").trim()).filter(Boolean))].slice(0, 12),
+    sampleFileFields: submissions.slice(0, 8).map((s) => ({
+      id: s.id,
+      file_path: s.file_path ?? null,
+      file_url: s.file_url ?? null,
+      resolvedKey: submissionStorageObjectPath(s) || null
+    }))
   });
 
   const zip = new JSZip();
@@ -43,7 +49,12 @@ export async function GET(request: Request) {
   for (const sub of submissions) {
     const path = submissionStorageObjectPath(sub);
     if (!path) {
-      console.warn("[admin export theses-zip] skip — no file_path / resolvable file_url", { id: sub.id });
+      console.warn("[admin export theses-zip] skip — no resolvable storage key", {
+        id: sub.id,
+        user_id: sub.user_id,
+        file_path: sub.file_path ?? null,
+        file_url: sub.file_url ?? null
+      });
       continue;
     }
 

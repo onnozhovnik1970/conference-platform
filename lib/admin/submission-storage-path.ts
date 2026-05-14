@@ -1,41 +1,77 @@
+const DEFAULT_BUCKET = "abstracts";
+
 /**
- * Path inside the `abstracts` storage bucket for a submission file.
- * Prefer `file_path` (object key). If empty, try `file_url` when it is a Supabase public object URL.
+ * Turn a `file_path` or `file_url` value into the object key used by
+ * `supabase.storage.from(bucket).download(key)` (no leading slash, no bucket prefix).
  */
-export function submissionStorageObjectPath(row: {
-  file_path?: string | null;
-  file_url?: string | null;
-}): string {
-  const fp = typeof row.file_path === "string" ? row.file_path.trim() : "";
-  if (fp) {
-    return fp;
-  }
-  const rawUrl = typeof row.file_url === "string" ? row.file_url.trim() : "";
-  if (!rawUrl) {
+function normalizeSupabaseStorageObjectKey(raw: string, bucket: string): string {
+  let t = raw.trim();
+  if (!t) {
     return "";
   }
-  if (!rawUrl.includes("://")) {
-    return rawUrl.replace(/^\/+/, "");
+
+  const bucketPrefix = `${bucket}/`;
+  if (t.startsWith(bucketPrefix)) {
+    t = t.slice(bucketPrefix.length);
   }
-  const bucket = "abstracts";
-  const pub = `/object/public/${bucket}/`;
-  const idx = rawUrl.indexOf(pub);
-  if (idx !== -1) {
-    const tail = rawUrl.slice(idx + pub.length).split("?")[0] ?? "";
+
+  const publicPrefix = `public/${bucket}/`;
+  if (t.startsWith(publicPrefix)) {
+    t = t.slice(publicPrefix.length);
+  }
+
+  if (!t.includes("://")) {
+    return t.replace(/^\/+/, "");
+  }
+
+  const markers = [
+    `/storage/v1/object/public/${bucket}/`,
+    `/storage/v1/object/sign/${bucket}/`,
+    `/storage/v1/object/authenticated/${bucket}/`,
+    `/object/public/${bucket}/`,
+    `/object/sign/${bucket}/`,
+    `/object/authenticated/${bucket}/`
+  ];
+
+  for (const marker of markers) {
+    const idx = t.indexOf(marker);
+    if (idx === -1) {
+      continue;
+    }
+    let tail = t.slice(idx + marker.length);
+    tail = tail.split("?")[0] ?? "";
+    tail = tail.split("#")[0] ?? "";
     try {
-      return decodeURIComponent(tail);
+      return decodeURIComponent(tail).replace(/^\/+/, "");
     } catch {
-      return tail;
+      return tail.replace(/^\/+/, "");
     }
   }
-  const auth = `/object/authenticated/${bucket}/`;
-  const j = rawUrl.indexOf(auth);
-  if (j !== -1) {
-    const tail = rawUrl.slice(j + auth.length).split("?")[0] ?? "";
-    try {
-      return decodeURIComponent(tail);
-    } catch {
-      return tail;
+
+  return "";
+}
+
+/**
+ * Path inside the `abstracts` storage bucket for a submission file.
+ * Handles plain keys (`userId/timestamp.pdf`), full Supabase Storage URLs, and `abstracts/...` prefixes.
+ */
+export function submissionStorageObjectPath(
+  row: {
+    file_path?: string | null;
+    file_url?: string | null;
+  },
+  bucket: string = DEFAULT_BUCKET
+): string {
+  const fp = typeof row.file_path === "string" ? row.file_path.trim() : "";
+  const fu = typeof row.file_url === "string" ? row.file_url.trim() : "";
+
+  for (const raw of [fp, fu]) {
+    if (!raw) {
+      continue;
+    }
+    const key = normalizeSupabaseStorageObjectKey(raw, bucket);
+    if (key) {
+      return key;
     }
   }
   return "";

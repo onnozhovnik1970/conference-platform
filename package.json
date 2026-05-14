@@ -24,7 +24,6 @@
     "mammoth": "^1.12.0",
     "next": "^14.2.33",
     "pdf-lib": "^1.17.1",
-    "pdf-parse": "^2.4.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^16.0.1",
@@ -33,6 +32,7 @@
     "sharp": "^0.34.5",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
+    "unpdf": "^1.6.2",
     "unzipper": "^0.12.3",
     "yauzl": "^3.3.0"
   },
