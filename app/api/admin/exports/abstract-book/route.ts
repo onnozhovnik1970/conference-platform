@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 
 import {
   authorDisplayNameFromProfile,
-  loadAcceptedSubmissionsForDocuments
+  loadAcceptedSubmissionsForDocuments,
+  type AcceptedSubmissionExportRow,
+  type ProfileExportMini
 } from "@/lib/admin/accepted-submissions-for-documents";
 import { renderAbstractBookPdfBuffer } from "@/lib/admin/render-abstract-book-pdf";
 import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server";
@@ -13,6 +15,64 @@ export const dynamic = "force-dynamic";
 
 /** No server-side PDF text extraction (avoids pdfjs / canvas on Vercel). */
 const ABSTRACT_BOOK_BODY_NOTE = "Full text: see uploaded file";
+
+function submissionRecencyMs(row: Record<string, unknown>): number {
+  let best = 0;
+  for (const key of ["updated_at", "created_at", "status_updated_at"] as const) {
+    const v = row[key];
+    if (typeof v === "string" && v.trim()) {
+      const t = Date.parse(v);
+      if (!Number.isNaN(t)) {
+        best = Math.max(best, t);
+      }
+    }
+  }
+  return best;
+}
+
+/** One row per user: the accepted submission with the latest activity timestamps. */
+function pickLatestSubmissionPerUser(rows: AcceptedSubmissionExportRow[]): AcceptedSubmissionExportRow[] {
+  const sorted = [...rows].sort((a, b) => {
+    const diff = submissionRecencyMs(b) - submissionRecencyMs(a);
+    if (diff !== 0) {
+      return diff;
+    }
+    return String(b.id ?? "").localeCompare(String(a.id ?? ""));
+  });
+  const seen = new Set<string>();
+  const out: AcceptedSubmissionExportRow[] = [];
+  for (const row of sorted) {
+    const uid = String(row.user_id);
+    if (!uid || seen.has(uid)) {
+      continue;
+    }
+    seen.add(uid);
+    out.push(row);
+  }
+  return out;
+}
+
+function isPlaceholderDisplayText(s: string): boolean {
+  const t = s.trim();
+  if (!t) {
+    return true;
+  }
+  return t === "—" || t === "–" || t === "-";
+}
+
+function rawAbstractTitle(sub: AcceptedSubmissionExportRow): string {
+  return typeof sub.abstract_title === "string" ? sub.abstract_title : "";
+}
+
+/** Drop rows that look like empty test stubs (no real title and no real author name). */
+function shouldSkipTestLikeAbstractBookEntry(
+  sub: AcceptedSubmissionExportRow,
+  prof: ProfileExportMini | undefined
+): boolean {
+  const titleBad = isPlaceholderDisplayText(rawAbstractTitle(sub));
+  const authorBad = isPlaceholderDisplayText(authorDisplayNameFromProfile(prof));
+  return titleBad && authorBad;
+}
 
 function logAbstractBookFatal(context: string, e: unknown) {
   if (e instanceof Error) {
@@ -46,7 +106,11 @@ export async function GET(request: Request) {
     }
 
     const { submissions, profilesById } = loaded;
-    const sorted = [...submissions].sort((a, b) => {
+    const onePerUser = pickLatestSubmissionPerUser(submissions);
+    const forBook = onePerUser.filter(
+      (sub) => !shouldSkipTestLikeAbstractBookEntry(sub, profilesById[String(sub.user_id)])
+    );
+    const sorted = [...forBook].sort((a, b) => {
       const pa = profilesById[String(a.user_id)];
       const pb = profilesById[String(b.user_id)];
       const la = (pa?.last_name ?? "").trim().toLowerCase();
