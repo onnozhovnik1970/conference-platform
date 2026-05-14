@@ -3,12 +3,47 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
 
 import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Button } from "@/components/ui/button";
 import { supportEmailTrimmed, supportPhoneDisplay, telHrefFromSupportPhone } from "@/lib/conference-contact-urls";
 import { EDITABLE_PAGES_META, type EditablePageSlug, type PageContentRow } from "@/lib/editable-pages";
 import "@/lib/i18n/config";
+
+const staticPageMarkdownComponents: Partial<Components> = {
+  p: ({ children }) => <p className="mb-4 text-sm leading-relaxed text-slate-200 last:mb-0 md:text-base">{children}</p>,
+  strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+  em: ({ children }) => <em className="italic text-slate-100">{children}</em>,
+  h1: ({ children }) => (
+    <h2 className="mb-3 mt-8 scroll-mt-20 text-2xl font-bold tracking-tight text-white first:mt-0">{children}</h2>
+  ),
+  h2: ({ children }) => (
+    <h3 className="mb-2 mt-6 scroll-mt-20 text-xl font-semibold tracking-tight text-white first:mt-0">{children}</h3>
+  ),
+  h3: ({ children }) => (
+    <h4 className="mb-2 mt-5 scroll-mt-20 text-lg font-semibold text-white first:mt-0">{children}</h4>
+  ),
+  h4: ({ children }) => (
+    <h5 className="mb-2 mt-4 text-base font-semibold text-slate-100 first:mt-0">{children}</h5>
+  ),
+  ul: ({ children }) => <ul className="mb-4 ml-6 list-disc space-y-2 text-slate-200 marker:text-slate-400">{children}</ul>,
+  ol: ({ children }) => (
+    <ol className="mb-4 ml-6 list-decimal space-y-2 text-slate-200 marker:text-slate-400">{children}</ol>
+  ),
+  li: ({ children }) => <li className="pl-1 text-sm leading-relaxed md:text-base [&>p]:mb-2 [&>p:last-child]:mb-0">{children}</li>,
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      className="font-medium text-sky-200/90 underline decoration-sky-200/40 underline-offset-2 transition-colors hover:text-sky-100 hover:decoration-sky-100/60"
+      target={href?.startsWith("/") ? undefined : "_blank"}
+      rel={href?.startsWith("/") ? undefined : "noopener noreferrer"}
+    >
+      {children}
+    </a>
+  )
+};
 
 function ConferenceContactChannels() {
   const { t } = useTranslation();
@@ -95,7 +130,9 @@ export function PublicStaticPage({ slug }: { slug: EditablePageSlug }) {
       {showPlaceholder ? (
         <p className="mt-6 text-slate-300">{t("infoPlaceholderBody")}</p>
       ) : (
-        <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-slate-200 md:text-base">{rawContent}</div>
+        <div className="static-page-markdown mt-6 text-sm md:text-base [&_a]:break-words">
+          <ReactMarkdown components={staticPageMarkdownComponents}>{rawContent}</ReactMarkdown>
+        </div>
       )}
       {slug === "contact" ? <ConferenceContactChannels /> : null}
       <Button asChild className="mt-8 border-white/25 bg-white/10 text-white hover:bg-white/15" variant="outline">
