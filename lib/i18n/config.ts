@@ -292,12 +292,9 @@ const resources = {
       adminConferenceFieldMetaDescription: "Meta description",
       adminConferenceFieldMetaTitlePlaceholder: "Optional — overrides default tab title",
       adminConferenceFieldMetaDescriptionPlaceholder: "Optional — overrides default search snippet",
-      adminConferenceFieldHeroImageUrl: "Hero background image URL",
+      adminConferenceFieldHeroImageUrl: "Hero Image URL",
       adminConferenceFieldHeroImageUrlPlaceholder: "https://…",
-      adminConferenceFieldHeroImageUrlHint:
-        "Direct image URL (JPG/PNG/WebP). Full-width on the home hero; leave empty for the soft gradient.",
-      adminConferenceFieldHeroImageUrlRecommendNote:
-        "Recommended image: JPEG or WebP format, 1920×600px, max 300KB. Avoid PNG for photos. Use https://squoosh.app to compress before uploading.",
+      adminConferenceFieldHeroImageUrlHint: "JPEG/WebP, 1920×600px, max 300KB",
       adminConferenceContactSocialHint:
         "Used in the site header (support block), Support and Contact pages, and footer social icons. Leave URLs empty to hide an icon.",
       adminConferenceFieldSupportPhone: "Support phone",
@@ -345,6 +342,7 @@ const resources = {
       heroFormat: "Online via Zoom",
       heroDeckSubtitle:
         "IX All-Ukrainian Student Scientific and Practical Conference in Foreign Languages",
+      heroRegisterNow: "Register Now",
       heroImageParticipantAlt: "Student conference participant",
       heroImagePlaceholderAria: "Participant photo unavailable",
       heroImagePlaceholderHint: "Image unavailable",
@@ -766,12 +764,9 @@ const resources = {
       adminConferenceFieldMetaDescription: "Meta description",
       adminConferenceFieldMetaTitlePlaceholder: "Необов'язково — замінює стандартний заголовок вкладки",
       adminConferenceFieldMetaDescriptionPlaceholder: "Необов'язково — замінює стандартний опис для пошуку",
-      adminConferenceFieldHeroImageUrl: "URL фонового зображення героя",
+      adminConferenceFieldHeroImageUrl: "URL зображення героя",
       adminConferenceFieldHeroImageUrlPlaceholder: "https://…",
-      adminConferenceFieldHeroImageUrlHint:
-        "Пряме посилання на зображення (JPG/PNG/WebP). На всю ширину головного банера; залиште порожнім для градієнта.",
-      adminConferenceFieldHeroImageUrlRecommendNote:
-        "Рекомендовано: JPEG або WebP, 1920×600 px, до 300 КБ. Для фото уникайте PNG. Стисніть зображення перед завантаженням: https://squoosh.app",
+      adminConferenceFieldHeroImageUrlHint: "JPEG/WebP, 1920×600px, до 300 КБ",
       adminConferenceContactSocialHint:
         "Використовується в шапці сайту (блок підтримки), на сторінках «Підтримка» та «Контакти», а також для іконок у підвалі. Порожній URL — іконку приховано.",
       adminConferenceFieldSupportPhone: "Телефон підтримки",
@@ -818,6 +813,7 @@ const resources = {
       heroDate: "14 травня 2026",
       heroFormat: "Онлайн у Zoom",
       heroDeckSubtitle: "ІХ Всеукраїнська студентська науково-практична конференція іноземними мовами",
+      heroRegisterNow: "Зареєструватися зараз",
       heroImageParticipantAlt: "Учасник студентської конференції",
       heroImagePlaceholderAria: "Фото учасника недоступне",
       heroImagePlaceholderHint: "Зображення недоступне",

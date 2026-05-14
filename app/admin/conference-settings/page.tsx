@@ -552,7 +552,7 @@ export default function AdminConferenceSettingsPage() {
                     <p className="mt-1 text-xs text-slate-400">{t("adminConferenceFieldHeroImageUrlHint")}</p>
                     <input
                       id="cs-hero-image-url"
-                      type="url"
+                      type="text"
                       inputMode="url"
                       autoComplete="off"
                       value={heroImageUrl}
@@ -560,7 +560,6 @@ export default function AdminConferenceSettingsPage() {
                       placeholder={t("adminConferenceFieldHeroImageUrlPlaceholder")}
                       className={inputClass}
                     />
-                    <p className="mt-2 text-xs leading-relaxed text-slate-400">{t("adminConferenceFieldHeroImageUrlRecommendNote")}</p>
                   </div>
                 </div>
               </div>

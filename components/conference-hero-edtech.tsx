@@ -5,7 +5,7 @@ import { Calendar, MapPin, Video } from "lucide-react";
 import { Inter } from "next/font/google";
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -35,36 +35,34 @@ function splitTitleLines(raw: string): { headline: string; subtitle: string | nu
 }
 
 const fadeUp = {
-  initial: { opacity: 0, y: 20 },
+  initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }
 };
 
-/** Random value in [min, max) — client-only usage after mount. */
+/** Random value in [min, max). Used only after mount (client). */
 function rand(min: number, max: number): number {
   return min + Math.random() * (max - min);
 }
 
-type EmojiSlots = {
-  mobile: { mic: CSSProperties; cam: CSSProperties };
-  desktop: { mic: CSSProperties; cam: CSSProperties; books: CSSProperties; star: CSSProperties };
+type CornerEmojiSlots = {
+  mic: CSSProperties;
+  cam: CSSProperties;
+  books: CSSProperties;
+  star: CSSProperties;
 };
 
-function buildEmojiSlots(): EmojiSlots {
-  const jitter = () => rand(-1.25, 1.25);
-  const pct = (min: number, max: number) => Math.min(max + 1.5, Math.max(min - 0.5, rand(min, max) + jitter()));
+/** Four corners of the hero — small jitter on each load, clamped inside safe bands. */
+function buildCornerEmojiSlots(): CornerEmojiSlots {
+  const jitter = () => rand(-1.1, 1.1);
+  const pct = (min: number, max: number) =>
+    Math.min(max + 1.25, Math.max(min - 0.35, rand(min, max) + jitter()));
 
   return {
-    mobile: {
-      mic: { top: `${pct(2, 5)}%`, left: `${pct(0.75, 3.5)}%` },
-      cam: { top: `${pct(2, 5)}%`, right: `${pct(0.75, 3.5)}%` }
-    },
-    desktop: {
-      mic: { top: `${pct(5, 10)}%`, right: `${pct(2, 6)}%` },
-      cam: { top: `${pct(14, 22)}%`, right: `${pct(3, 8)}%` },
-      books: { bottom: `${pct(10, 18)}%`, right: `${pct(2, 7)}%` },
-      star: { top: `${pct(50, 58)}%`, right: `${pct(4, 11)}%` }
-    }
+    mic: { top: `${pct(1.25, 4)}%`, left: `${pct(1.25, 4)}%` },
+    cam: { top: `${pct(1.25, 4)}%`, right: `${pct(1.25, 4)}%` },
+    books: { bottom: `${pct(1.25, 4)}%`, left: `${pct(1.25, 4)}%` },
+    star: { bottom: `${pct(1.25, 4)}%`, right: `${pct(1.25, 4)}%` }
   };
 }
 
@@ -74,32 +72,18 @@ type FloatingEmojiProps = {
   floatDuration: number;
   reducedMotion: boolean | null;
   sizeClass: string;
-  wrapperClassName: string;
 };
 
-/** Emoji only — no card; `positionStyle` uses % from hero edges (right-side / corners). */
-function FloatingEmoji({
-  emoji,
-  positionStyle,
-  floatDuration,
-  reducedMotion,
-  sizeClass,
-  wrapperClassName
-}: FloatingEmojiProps) {
+/** Bare emoji in a corner — no card or background. */
+function FloatingEmoji({ emoji, positionStyle, floatDuration, reducedMotion, sizeClass }: FloatingEmojiProps) {
   return (
-    <div
-      className={`pointer-events-none absolute z-[9] ${wrapperClassName}`}
-      style={positionStyle}
-      aria-hidden
-    >
+    <div className="pointer-events-none absolute z-[3]" style={positionStyle} aria-hidden>
       <motion.div
-        animate={reducedMotion ? undefined : { y: [0, -10, 0] }}
+        animate={reducedMotion ? undefined : { y: [0, -8, 0] }}
         transition={
-          reducedMotion
-            ? undefined
-            : { duration: floatDuration, repeat: Infinity, ease: "easeInOut" as const }
+          reducedMotion ? undefined : { duration: floatDuration, repeat: Infinity, ease: "easeInOut" as const }
         }
-        className={`select-none bg-transparent leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] ${sizeClass}`}
+        className={`select-none bg-transparent leading-none ${sizeClass}`}
         role="presentation"
       >
         <span aria-hidden>{emoji}</span>
@@ -109,8 +93,8 @@ function FloatingEmoji({
 }
 
 /**
- * Full-width hero: optional `hero_image_url` background, dark overlay, transparent floating emojis, copy + CTAs.
- * Falls back to soft gradient + blobs when URL is empty or fails to load.
+ * Full-width hero: `hero_image_url` as cover background, `bg-black/50` overlay, centered copy + single CTA.
+ * Gradient fallback when URL is missing or the image fails. Corner floating emojis only.
  */
 export function ConferenceHeroEdtech() {
   const { t, i18n } = useTranslation();
@@ -121,30 +105,17 @@ export function ConferenceHeroEdtech() {
   const heroUrlRaw = settings.hero_image_url?.trim() ?? "";
   const isHttpImage = /^https?:\/\//i.test(heroUrlRaw);
   const [bgFailed, setBgFailed] = useState(false);
-  const [heroImgLoaded, setHeroImgLoaded] = useState(false);
-  const heroImgRef = useRef<HTMLImageElement | null>(null);
-  const [emojiSlots, setEmojiSlots] = useState<EmojiSlots | null>(null);
+  const [emojiSlots, setEmojiSlots] = useState<CornerEmojiSlots | null>(null);
 
   useEffect(() => {
-    setEmojiSlots(buildEmojiSlots());
+    setEmojiSlots(buildCornerEmojiSlots());
   }, []);
 
   useEffect(() => {
     setBgFailed(false);
-    setHeroImgLoaded(false);
   }, [heroUrlRaw]);
 
   const showPhotoBg = !loading && isHttpImage && !bgFailed;
-
-  useEffect(() => {
-    if (!showPhotoBg) {
-      return;
-    }
-    const el = heroImgRef.current;
-    if (el?.complete && el.naturalWidth > 0) {
-      setHeroImgLoaded(true);
-    }
-  }, [showPhotoBg, heroUrlRaw]);
 
   const titleSource = useMemo(() => {
     const ua = settings.title_ua?.trim();
@@ -161,37 +132,22 @@ export function ConferenceHeroEdtech() {
   const dateLabel = formatConferenceIsoDate(settings.date, loc) || t("heroDate");
   const locationText = settings.location?.trim() || t("heroFormat");
 
-  const mobileEmojiClass = "text-[40px]";
-  const desktopEmojiClass = "text-4xl lg:text-[2.75rem]";
+  const emojiSizeClass = "text-[40px] sm:text-4xl md:text-5xl";
 
   return (
     <section
-      className={`relative isolate flex min-h-[min(88svh,920px)] w-full flex-col justify-center overflow-hidden ${interHero.className}`}
+      className={`relative box-border flex min-h-[min(85svh,880px)] w-full max-w-full flex-col justify-center overflow-hidden ${interHero.className}`}
     >
-      {/* Fallback: Educate-style gradient + blobs */}
+      {/* Fallback fill — no negative offsets (mobile-safe) */}
       <div
-        className={`pointer-events-none absolute inset-0 bg-gradient-to-br from-[#e8f4fd] to-[#f0e8ff] transition-opacity duration-500 ${showPhotoBg ? "opacity-0" : "opacity-100"}`}
-        aria-hidden
-      />
-      <div
-        className={`pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl transition-opacity duration-500 md:h-80 md:w-80 ${showPhotoBg ? "opacity-0" : "opacity-100"}`}
-        aria-hidden
-      />
-      <div
-        className={`pointer-events-none absolute -right-20 bottom-16 h-72 w-72 rounded-full bg-violet-200/35 blur-3xl transition-opacity duration-500 md:h-96 md:w-96 ${showPhotoBg ? "opacity-0" : "opacity-100"}`}
+        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950"
         aria-hidden
       />
 
-      {/* Full-bleed background photo */}
       {showPhotoBg ? (
         <>
-          <div
-            className={`pointer-events-none absolute inset-0 z-[1] bg-gradient-to-br from-slate-800/90 via-slate-900/80 to-slate-800/90 backdrop-blur-2xl transition-opacity duration-500 ease-out motion-reduce:transition-none ${heroImgLoaded ? "opacity-0" : "opacity-100"}`}
-            aria-hidden
-          />
           {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary HTTPS URLs from admin */}
           <img
-            ref={heroImgRef}
             src={heroUrlRaw}
             alt=""
             width={1920}
@@ -200,129 +156,93 @@ export function ConferenceHeroEdtech() {
             decoding="async"
             sizes="100vw"
             fetchPriority="high"
-            className={`absolute inset-0 z-[2] h-full w-full object-cover transition-opacity duration-500 ease-out motion-reduce:transition-none ${heroImgLoaded ? "opacity-100" : "opacity-0"}`}
-            onLoad={() => setHeroImgLoaded(true)}
-            onError={() => {
-              setHeroImgLoaded(false);
-              setBgFailed(true);
-            }}
+            className="absolute inset-0 z-[1] h-full w-full max-w-none object-cover"
+            onError={() => setBgFailed(true)}
             referrerPolicy="no-referrer"
           />
-          <div
-            className={`pointer-events-none absolute inset-0 z-[3] bg-black/40 transition-opacity duration-500 ease-out motion-reduce:transition-none ${heroImgLoaded ? "opacity-100" : "opacity-0"}`}
-            aria-hidden
-          />
+          <div className="pointer-events-none absolute inset-0 z-[2] bg-black/50" aria-hidden />
         </>
       ) : null}
 
       {emojiSlots ? (
-        <div className="pointer-events-none absolute inset-0" aria-hidden>
-          {/* Mobile: top corners only, 40px — keeps center clear for title / CTAs */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
           <FloatingEmoji
             emoji="🎤"
-            positionStyle={emojiSlots.mobile.mic}
+            positionStyle={emojiSlots.mic}
             floatDuration={3.5}
             reducedMotion={reducedMotion}
-            sizeClass={mobileEmojiClass}
-            wrapperClassName="md:hidden"
+            sizeClass={emojiSizeClass}
           />
           <FloatingEmoji
             emoji="📷"
-            positionStyle={emojiSlots.mobile.cam}
+            positionStyle={emojiSlots.cam}
             floatDuration={4}
             reducedMotion={reducedMotion}
-            sizeClass={mobileEmojiClass}
-            wrapperClassName="md:hidden"
-          />
-          {/* md+: right side / corners only — away from left-aligned copy */}
-          <FloatingEmoji
-            emoji="🎤"
-            positionStyle={emojiSlots.desktop.mic}
-            floatDuration={3.5}
-            reducedMotion={reducedMotion}
-            sizeClass={desktopEmojiClass}
-            wrapperClassName="hidden md:block"
-          />
-          <FloatingEmoji
-            emoji="📷"
-            positionStyle={emojiSlots.desktop.cam}
-            floatDuration={4}
-            reducedMotion={reducedMotion}
-            sizeClass={desktopEmojiClass}
-            wrapperClassName="hidden md:block"
+            sizeClass={emojiSizeClass}
           />
           <FloatingEmoji
             emoji="📚"
-            positionStyle={emojiSlots.desktop.books}
+            positionStyle={emojiSlots.books}
             floatDuration={3.2}
             reducedMotion={reducedMotion}
-            sizeClass={desktopEmojiClass}
-            wrapperClassName="hidden md:block"
+            sizeClass={emojiSizeClass}
           />
           <FloatingEmoji
             emoji="⭐"
-            positionStyle={emojiSlots.desktop.star}
+            positionStyle={emojiSlots.star}
             floatDuration={3.8}
             reducedMotion={reducedMotion}
-            sizeClass={desktopEmojiClass}
-            wrapperClassName="hidden md:block"
+            sizeClass={emojiSizeClass}
           />
         </div>
       ) : null}
 
-      <div className="container relative z-10 flex flex-1 flex-col justify-center px-4 py-16 sm:px-6 md:py-20 lg:py-24">
+      <div className="relative z-10 mx-auto box-border flex w-full max-w-full flex-1 flex-col justify-center px-4 py-14 sm:px-6 sm:py-16 md:py-20">
         <motion.div
           initial={fadeUp.initial}
           whileInView={fadeUp.animate}
-          viewport={{ once: true, margin: "-80px" }}
+          viewport={{ once: true, margin: "-60px" }}
           transition={{ ...fadeUp.transition, delay: 0.04 }}
-          className="mx-auto flex w-full max-w-4xl flex-col items-center text-center md:mx-0 md:max-w-3xl md:items-start md:text-left"
+          className="mx-auto flex w-full max-w-full flex-col items-center text-center"
         >
-          <div className="mb-6 flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs font-bold text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.75)] sm:text-sm md:justify-start">
-            <span className="inline-flex items-center gap-1.5">
+          <div className="mb-6 flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:gap-x-3 sm:px-4 sm:text-sm">
+            <span className="inline-flex max-w-full items-center gap-1.5 break-words">
               <Calendar className="h-3.5 w-3.5 shrink-0 opacity-95 sm:h-4 sm:w-4" aria-hidden />
               {dateLabel}
             </span>
-            <span className="hidden text-white/50 sm:inline" aria-hidden>
+            <span className="text-white/45" aria-hidden>
               ·
             </span>
-            <span className="inline-flex items-center gap-1.5">
+            <span className="inline-flex max-w-full items-center gap-1.5 break-words">
               <MapPin className="h-3.5 w-3.5 shrink-0 opacity-90 sm:h-4 sm:w-4" aria-hidden />
               {locationText}
             </span>
-            <span className="hidden text-white/50 sm:inline" aria-hidden>
+            <span className="text-white/45" aria-hidden>
               ·
             </span>
-            <span className="inline-flex items-center gap-1.5">
+            <span className="inline-flex max-w-full items-center gap-1.5 break-words">
               <Video className="h-3.5 w-3.5 shrink-0 opacity-90 sm:h-4 sm:w-4" aria-hidden />
-              Online (ZOOM)
+              {t("heroFormat")}
             </span>
           </div>
 
-          <h1 className="text-balance text-3xl font-extrabold leading-[1.1] tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl lg:text-[2.75rem] xl:text-6xl">
+          <h1 className="max-w-full text-balance text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
             {headline}
           </h1>
+
           {subtitleText ? (
-            <p className="mt-5 max-w-3xl text-pretty text-base font-bold leading-relaxed text-white/95 sm:text-lg md:text-xl">
+            <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-white/80 sm:text-lg md:text-xl">
               {subtitleText}
             </p>
           ) : null}
 
-          <div className="mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center md:justify-start">
+          <div className="mt-10 w-full max-w-full sm:flex sm:justify-center">
             <Button
               asChild
               size="lg"
-              className="min-h-12 min-w-[10rem] flex-1 border-0 bg-white text-base font-bold text-[#0f2347] shadow-lg shadow-black/20 transition-transform duration-200 hover:scale-[1.03] hover:bg-white/95 sm:min-h-14 sm:flex-initial"
+              className="h-12 w-full max-w-xs border-0 bg-white text-base font-semibold text-slate-900 shadow-md shadow-black/25 sm:h-14 sm:max-w-none sm:min-w-[12rem] sm:w-auto"
             >
-              <Link href="/register">{t("navRegister")}</Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="min-h-12 min-w-[10rem] flex-1 border-2 border-white bg-transparent text-base font-bold text-white transition-transform duration-200 hover:scale-[1.03] hover:bg-white/10 sm:min-h-14 sm:flex-initial"
-            >
-              <Link href="/login">{t("navLogin")}</Link>
+              <Link href="/register">{t("heroRegisterNow")}</Link>
             </Button>
           </div>
         </motion.div>
