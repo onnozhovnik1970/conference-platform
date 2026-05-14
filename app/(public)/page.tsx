@@ -1,10 +1,11 @@
 ﻿"use client";
 
-import { Atom, BookOpen, CalendarDays, Sparkles, Video } from "lucide-react";
+import { Atom, BookOpen, Sparkles, Video } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { ConferenceHeroEdtech } from "@/components/conference-hero-edtech";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,19 +19,6 @@ const steps = [
   { icon: Atom, titleKey: "step2Title", descriptionKey: "step2Description" },
   { icon: Sparkles, titleKey: "step3Title", descriptionKey: "step3Description" }
 ] as const;
-
-/** First line = short title (hero); further lines joined as subtitle (full name). */
-function splitHeroTitleLines(raw: string): { primary: string; secondary: string | null } {
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return { primary: "", secondary: null };
-  }
-  const lines = trimmed.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
-  if (lines.length <= 1) {
-    return { primary: lines[0] ?? trimmed, secondary: null };
-  }
-  return { primary: lines[0], secondary: lines.slice(1).join(" ") };
-}
 
 export default function HomePage() {
   const { t, i18n } = useTranslation();
@@ -54,11 +42,6 @@ export default function HomePage() {
   const heroDateLabel = formatConferenceIsoDate(settings.date, loc) || t("heroDate");
   const deadlineLabel = settings.deadline ? formatConferenceIsoDate(settings.deadline, loc) : "";
   const registrationBannerText = deadlineLabel ? t("registrationUntil", { date: deadlineLabel }) : t("registrationBanner");
-  const heroTitleText =
-    loc === "ua"
-      ? settings.title_ua?.trim() || t("heroTitle")
-      : settings.title?.trim() || t("heroTitle");
-  const { primary: heroTitlePrimary, secondary: heroTitleSecondary } = splitHeroTitleLines(heroTitleText);
   const locationText = settings.location?.trim() || t("heroFormat");
   const aboutDescription =
     loc === "ua"
@@ -83,28 +66,18 @@ export default function HomePage() {
             {registrationBannerText}
           </div>
 
-          <div className="mx-auto max-w-4xl py-16 text-center md:py-24">
-            <h1 className="mx-auto max-w-4xl text-balance tracking-tight text-white">
-              <span className="block text-2xl font-extrabold md:text-4xl">{heroTitlePrimary}</span>
-              {heroTitleSecondary ? (
-                <span className="mt-3 block text-base font-medium leading-snug text-white/85 md:text-lg">
-                  {heroTitleSecondary}
-                </span>
-              ) : null}
-            </h1>
-            <p className="mx-auto mt-5 flex items-center justify-center gap-2 text-base text-white/90 sm:text-xl">
-              <CalendarDays className="h-5 w-5" /> {heroDateLabel}
-            </p>
-            <p className="mx-auto mt-3 flex items-center justify-center gap-2 text-base text-white/90 sm:text-xl">
-              <Video className="h-5 w-5" /> {locationText}
-            </p>
-
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg" className="min-w-44"><Link href="/register">{t("navRegister")}</Link></Button><Button asChild size="lg" variant="outline" className="min-w-44 border-white text-white hover:bg-white/10"><Link href="/login">{t("navLogin")}</Link></Button>
-            </div>
+          <div className="flex flex-col items-center justify-center gap-3 pb-2 sm:flex-row">
+            <Button asChild size="lg" className="min-w-44">
+              <Link href="/register">{t("navRegister")}</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="min-w-44 border-white text-white hover:bg-white/10">
+              <Link href="/login">{t("navLogin")}</Link>
+            </Button>
           </div>
         </div>
       </section>
+
+      <ConferenceHeroEdtech />
 
       <section className="container py-14 md:py-20">
         <h2 className="mb-3 text-center text-3xl font-bold md:mb-4">{t("aboutConference")}</h2>
