@@ -176,7 +176,7 @@ const resources = {
         "Download participant lists, bulk thesis files, and a compiled abstract book. Exports use live data from accounts and accepted submissions.",
       adminDocumentsParticipantsTitle: "Participant list (CSV)",
       adminDocumentsParticipantsDesc:
-        "All registered accounts: full name, email, role (user or admin), affiliation, and registration date (ISO). Opens in Excel or any spreadsheet app.",
+        "All registered accounts: full name, email, role (user or admin), affiliation, registration date (ISO), plus section and paper title from their latest submission (blank if none). Opens in Excel or any spreadsheet app.",
       adminDocumentsParticipantsButton: "Download Participants List",
       adminDocumentsThesesTitle: "Bulk thesis export (ZIP)",
       adminDocumentsThesesDesc:
@@ -580,7 +580,7 @@ const resources = {
         "Завантаження списків учасників, архіву тез і PDF-книги тез. Дані беруться з облікових записів і прийнятих подань.",
       adminDocumentsParticipantsTitle: "Список учасників (CSV)",
       adminDocumentsParticipantsDesc:
-        "Усі зареєстровані облікові записи: повне ім'я, email, роль (користувач або адміністратор), заклад, дата реєстрації (ISO). Відкривається в Excel або іншій таблиці.",
+        "Усі зареєстровані облікові записи: повне ім'я, email, роль, заклад, дата реєстрації (ISO), а також секція та назва тези з останнього подання (порожньо, якщо подань немає). Відкривається в Excel або іншій таблиці.",
       adminDocumentsParticipantsButton: "Завантажити список учасників",
       adminDocumentsThesesTitle: "Масовий експорт тез (ZIP)",
       adminDocumentsThesesDesc:

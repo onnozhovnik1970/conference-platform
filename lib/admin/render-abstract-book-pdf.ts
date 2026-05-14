@@ -162,12 +162,14 @@ export async function renderAbstractBookPdfBuffer(
   conferenceCityLine: string,
   entries: AbstractBookEntry[]
 ): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  /** Required before embedding custom TTF/OTF (same as certificates). */
+  doc.registerFontkit(fontkit);
+
   const regularBytes = readFileSync(join(FONTS_DIR, "Roboto-Regular.ttf"));
   const mediumBytes = readFileSync(join(FONTS_DIR, "Roboto-Medium.ttf"));
   const italicBytes = readFileSync(join(FONTS_DIR, "Roboto-Italic.ttf"));
 
-  const doc = await PDFDocument.create();
-  doc.registerFontkit(fontkit);
   const regular = await doc.embedFont(regularBytes);
   const medium = await doc.embedFont(mediumBytes);
   const italic = await doc.embedFont(italicBytes);

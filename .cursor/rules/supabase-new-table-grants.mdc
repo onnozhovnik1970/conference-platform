@@ -1,0 +1,19 @@
+---
+description: New Supabase public tables must include grants and RLS in migrations
+globs: supabase/migrations/**/*.sql
+alwaysApply: false
+---
+
+# Supabase new table grants and RLS
+
+Whenever a migration creates a **new** table under `public`, append the following for that table (replace `your_table` with the real table name):
+
+```sql
+grant select, insert, update, delete on public.your_table to authenticated;
+grant select, insert, update, delete on public.your_table to service_role;
+alter table public.your_table enable row level security;
+```
+
+- Apply once per new table in the migration (or in the same change set if split logically).
+- Migrations that only `ALTER` existing tables do not need this block unless they also `CREATE TABLE` a new relation.
+- With RLS enabled, clients still need matching **policies** for `authenticated` (and often explicit rules for `service_role` if bypassing RLS is not desired). Add policies in the same migration or a follow-up when defining access.
