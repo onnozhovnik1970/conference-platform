@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Calendar, MapPin, Video } from "lucide-react";
 import { Inter } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -19,19 +20,31 @@ const interHero = Inter({
   weight: ["400", "600", "700", "800"]
 });
 
-function splitTitleLines(raw: string): { headline: string; subtitle: string | null } {
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return { headline: "", subtitle: null };
+/** Accepts https URLs, protocol-relative `//…`, and `data:image/…` for tests. */
+function normalizeHeroImageUrl(raw: string): string | null {
+  const s = raw.trim();
+  if (!s) {
+    return null;
   }
-  const lines = trimmed
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
-  if (lines.length <= 1) {
-    return { headline: lines[0] ?? trimmed, subtitle: null };
+  if (/^https?:\/\//i.test(s)) {
+    return s;
   }
-  return { headline: lines[0], subtitle: lines.slice(1).join(" ") };
+  if (s.startsWith("//")) {
+    return `https:${s}`;
+  }
+  if (s.startsWith("data:image/")) {
+    return s;
+  }
+  return null;
+}
+
+function firstDescriptionParagraph(raw: string): string {
+  const text = raw.trim();
+  if (!text) {
+    return "";
+  }
+  const firstBlock = text.split(/\n\s*\n+/)[0]?.trim() ?? text;
+  return firstBlock;
 }
 
 const fadeUp = {
@@ -45,24 +58,30 @@ function rand(min: number, max: number): number {
   return min + Math.random() * (max - min);
 }
 
-type CornerEmojiSlots = {
+type HeroEmojiSlots = {
   mic: CSSProperties;
   cam: CSSProperties;
   books: CSSProperties;
-  star: CSSProperties;
+  projector: CSSProperties;
+  podium: CSSProperties;
+  chart: CSSProperties;
 };
 
-/** Four corners of the hero — small jitter on each load, clamped inside safe bands. */
-function buildCornerEmojiSlots(): CornerEmojiSlots {
+/**
+ * Six bare emojis: corners shifted inward (closer to copy), plus upper left/right flanks — avoids center title block.
+ */
+function buildHeroEmojiSlots(): HeroEmojiSlots {
   const jitter = () => rand(-1.1, 1.1);
   const pct = (min: number, max: number) =>
     Math.min(max + 1.25, Math.max(min - 0.35, rand(min, max) + jitter()));
 
   return {
-    mic: { top: `${pct(1.25, 4)}%`, left: `${pct(1.25, 4)}%` },
-    cam: { top: `${pct(1.25, 4)}%`, right: `${pct(1.25, 4)}%` },
-    books: { bottom: `${pct(1.25, 4)}%`, left: `${pct(1.25, 4)}%` },
-    star: { bottom: `${pct(1.25, 4)}%`, right: `${pct(1.25, 4)}%` }
+    mic: { top: `${pct(5.5, 10)}%`, left: `${pct(6, 12)}%` },
+    cam: { top: `${pct(5.5, 10)}%`, right: `${pct(6, 12)}%` },
+    books: { bottom: `${pct(6, 11)}%`, left: `${pct(6, 12)}%` },
+    projector: { bottom: `${pct(6, 11)}%`, right: `${pct(6, 12)}%` },
+    podium: { top: `${pct(22, 30)}%`, left: `${pct(9, 17)}%` },
+    chart: { top: `${pct(22, 30)}%`, right: `${pct(9, 17)}%` }
   };
 }
 
@@ -93,31 +112,32 @@ function FloatingEmoji({ emoji, positionStyle, floatDuration, reducedMotion, siz
 }
 
 /**
- * Full-width hero: `hero_image_url` as cover background, `bg-black/50` overlay, centered copy + single CTA.
- * Gradient fallback when URL is missing or the image fails. Corner floating emojis only.
+ * Full-width hero: `hero_image_url` as cover (`next/image` fill + object-cover), `bg-black/50` overlay, centered copy + single CTA.
+ * Dark blue gradient fallback when URL is missing or the image fails. Six floating emojis (corners + upper flanks).
  */
 export function ConferenceHeroEdtech() {
   const { t, i18n } = useTranslation();
-  const { settings, loading } = useConferenceSettings();
+  const { settings } = useConferenceSettings();
   const reducedMotion = useReducedMotion();
   const loc = i18n.language === "ua" ? "ua" : "en";
 
   const heroUrlRaw = settings.hero_image_url?.trim() ?? "";
-  const isHttpImage = /^https?:\/\//i.test(heroUrlRaw);
+  const heroImageSrc = useMemo(() => normalizeHeroImageUrl(heroUrlRaw), [heroUrlRaw]);
   const [bgFailed, setBgFailed] = useState(false);
-  const [emojiSlots, setEmojiSlots] = useState<CornerEmojiSlots | null>(null);
+  const [emojiSlots, setEmojiSlots] = useState<HeroEmojiSlots | null>(null);
 
   useEffect(() => {
-    setEmojiSlots(buildCornerEmojiSlots());
+    setEmojiSlots(buildHeroEmojiSlots());
   }, []);
 
   useEffect(() => {
     setBgFailed(false);
   }, [heroUrlRaw]);
 
-  const showPhotoBg = !loading && isHttpImage && !bgFailed;
+  const showPhotoBg = Boolean(heroImageSrc) && !bgFailed;
 
-  const titleSource = useMemo(() => {
+  /** Full `title` / `title_ua` from settings — never split into “headline vs subtitle” (DB often uses multiple lines for one official title). */
+  const conferenceTitle = useMemo(() => {
     const ua = settings.title_ua?.trim();
     const en = settings.title?.trim();
     if (loc === "ua") {
@@ -126,8 +146,16 @@ export function ConferenceHeroEdtech() {
     return en || ua || t("heroTitle");
   }, [loc, settings.title, settings.title_ua, t]);
 
-  const { headline, subtitle } = useMemo(() => splitTitleLines(titleSource), [titleSource]);
-  const subtitleText = subtitle != null && subtitle.trim().length > 0 ? subtitle : t("heroDeckSubtitle");
+  const subtitleText = useMemo(() => {
+    const ua = settings.description_ua?.trim();
+    const en = settings.description?.trim();
+    const body = loc === "ua" ? ua || en : en || ua;
+    if (!body) {
+      return t("heroDeckSubtitle");
+    }
+    const first = firstDescriptionParagraph(body);
+    return first.length > 0 ? first : t("heroDeckSubtitle");
+  }, [loc, settings.description, settings.description_ua, t]);
 
   const dateLabel = formatConferenceIsoDate(settings.date, loc) || t("heroDate");
   const locationText = settings.location?.trim() || t("heroFormat");
@@ -138,28 +166,27 @@ export function ConferenceHeroEdtech() {
     <section
       className={`relative box-border flex min-h-[min(85svh,880px)] w-full max-w-full flex-col justify-center overflow-hidden ${interHero.className}`}
     >
-      {/* Fallback fill — no negative offsets (mobile-safe) */}
+      {/* Fallback when no image — solid dark blue gradient (visible on all viewports) */}
       <div
-        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950"
+        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-[#0f2347] to-[#1a3a6b]"
         aria-hidden
       />
 
-      {showPhotoBg ? (
+      {showPhotoBg && heroImageSrc ? (
         <>
-          {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary HTTPS URLs from admin */}
-          <img
-            src={heroUrlRaw}
-            alt=""
-            width={1920}
-            height={600}
-            loading="eager"
-            decoding="async"
-            sizes="100vw"
-            fetchPriority="high"
-            className="absolute inset-0 z-[1] h-full w-full max-w-none object-cover"
-            onError={() => setBgFailed(true)}
-            referrerPolicy="no-referrer"
-          />
+          <div className="pointer-events-none absolute inset-0 z-[1] size-full">
+            <Image
+              src={heroImageSrc}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+              unoptimized
+              onError={() => setBgFailed(true)}
+              referrerPolicy="no-referrer"
+            />
+          </div>
           <div className="pointer-events-none absolute inset-0 z-[2] bg-black/50" aria-hidden />
         </>
       ) : null}
@@ -188,9 +215,23 @@ export function ConferenceHeroEdtech() {
             sizeClass={emojiSizeClass}
           />
           <FloatingEmoji
-            emoji="⭐"
-            positionStyle={emojiSlots.star}
-            floatDuration={3.8}
+            emoji="📽️"
+            positionStyle={emojiSlots.projector}
+            floatDuration={3.6}
+            reducedMotion={reducedMotion}
+            sizeClass={emojiSizeClass}
+          />
+          <FloatingEmoji
+            emoji="🎙️"
+            positionStyle={emojiSlots.podium}
+            floatDuration={3.45}
+            reducedMotion={reducedMotion}
+            sizeClass={emojiSizeClass}
+          />
+          <FloatingEmoji
+            emoji="📊"
+            positionStyle={emojiSlots.chart}
+            floatDuration={3.75}
             reducedMotion={reducedMotion}
             sizeClass={emojiSizeClass}
           />
@@ -226,8 +267,8 @@ export function ConferenceHeroEdtech() {
             </span>
           </div>
 
-          <h1 className="max-w-full text-balance text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
-            {headline}
+          <h1 className="max-w-full whitespace-pre-line text-balance text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
+            {conferenceTitle}
           </h1>
 
           {subtitleText ? (

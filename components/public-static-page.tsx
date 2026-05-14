@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -83,11 +84,14 @@ export function PublicStaticPage({ slug }: { slug: EditablePageSlug }) {
 
   const [page, setPage] = useState<PageContentRow | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      setLoading(true);
       setLoadError(null);
+      setPage(null);
       try {
         const res = await fetch(`/api/page-contents/${slug}`, { cache: "no-store" });
         if (!res.ok) {
@@ -104,6 +108,10 @@ export function PublicStaticPage({ slug }: { slug: EditablePageSlug }) {
         if (!cancelled) {
           setLoadError(t("publicStaticPageLoadError"));
         }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
     void load();
@@ -119,13 +127,22 @@ export function PublicStaticPage({ slug }: { slug: EditablePageSlug }) {
 
   const rawContent = lang === "ua" ? (page?.content_ua ?? "") : (page?.content_en ?? "");
   const content = rawContent.trim();
-  const showPlaceholder = !content;
+  const showPlaceholder = !loading && !loadError && !content;
 
   return (
     <main className="container max-w-3xl py-12 md:py-16">
       <h1 className="text-2xl font-bold text-white md:text-3xl">{title}</h1>
       {loadError ? <p className="mt-4 text-sm text-amber-200/90">{loadError}</p> : null}
-      {showPlaceholder ? (
+      {loading ? (
+        <div
+          className="mt-10 flex justify-center py-16"
+          role="status"
+          aria-live="polite"
+          aria-label={t("publicStaticPageLoading")}
+        >
+          <Loader2 className="h-9 w-9 animate-spin text-slate-400" aria-hidden />
+        </div>
+      ) : showPlaceholder ? (
         <p className="mt-6 text-slate-300">{t("infoPlaceholderBody")}</p>
       ) : (
         <div className="static-page-markdown mt-6 text-sm md:text-base [&_a]:break-words">
