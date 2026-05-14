@@ -28,18 +28,34 @@ export async function GET(request: Request) {
 
   const { submissions, profilesById } = loaded;
 
-  const withPath = submissions.filter((s) => submissionStorageObjectPath(s).length > 0);
+  const withPath = submissions.filter((s) => submissionStorageObjectPath(s as Record<string, unknown>).length > 0);
   console.log("[admin export theses-zip] accepted submissions", {
     statusFilter: "status ILIKE 'accepted' AND archived_at IS NULL",
     totalRows: submissions.length,
     rowsWithStoragePath: withPath.length,
-    sampleStatuses: [...new Set(submissions.map((s) => (s.status ?? "").trim()).filter(Boolean))].slice(0, 12),
-    sampleFileFields: submissions.slice(0, 8).map((s) => ({
-      id: s.id,
-      file_path: s.file_path ?? null,
-      file_url: s.file_url ?? null,
-      resolvedKey: submissionStorageObjectPath(s) || null
-    }))
+    sampleStatuses: [
+      ...new Set(
+        submissions.map((s) => (typeof s.status === "string" ? s.status : "").trim()).filter(Boolean)
+      )
+    ].slice(0, 12),
+    sampleFileFields: submissions.slice(0, 8).map((s) => {
+      const row = s as Record<string, unknown>;
+      const pathLike = Object.entries(row)
+        .filter(
+          ([k, v]) =>
+            typeof v === "string" &&
+            (v as string).trim().length > 0 &&
+            /path|url|file|storage|upload|attachment|object|pdf|media/i.test(k)
+        )
+        .map(([k, v]) => [k, (v as string).length > 220 ? `${(v as string).slice(0, 220)}…` : v]);
+      return {
+        id: s.id,
+        file_path: row.file_path ?? null,
+        file_url: row.file_url ?? null,
+        resolvedKey: submissionStorageObjectPath(row) || null,
+        pathLikeStringColumns: Object.fromEntries(pathLike.slice(0, 12))
+      };
+    })
   });
 
   const zip = new JSZip();
@@ -47,13 +63,26 @@ export async function GET(request: Request) {
   let addedFiles = 0;
 
   for (const sub of submissions) {
-    const path = submissionStorageObjectPath(sub);
+    const row = sub as Record<string, unknown>;
+    const path = submissionStorageObjectPath(row);
     if (!path) {
+      const pathLike = Object.entries(row)
+        .filter(
+          ([k, v]) =>
+            typeof v === "string" &&
+            (v as string).trim().length > 0 &&
+            /path|url|file|storage|upload|attachment|object|pdf|media/i.test(k)
+        )
+        .reduce<Record<string, string | null>>((acc, [k, v]) => {
+          acc[k] = typeof v === "string" ? v : null;
+          return acc;
+        }, {});
       console.warn("[admin export theses-zip] skip — no resolvable storage key", {
         id: sub.id,
         user_id: sub.user_id,
-        file_path: sub.file_path ?? null,
-        file_url: sub.file_url ?? null
+        file_path: row.file_path ?? null,
+        file_url: row.file_url ?? null,
+        pathLikeStringColumns: pathLike
       });
       continue;
     }
@@ -65,9 +94,10 @@ export async function GET(request: Request) {
     }
 
     const buf = Buffer.from(await blob.arrayBuffer());
-    const prof = profilesById[sub.user_id];
+    const prof = profilesById[String(sub.user_id)];
     const authorPart = sanitizeExportFilenamePart(authorDisplayNameFromProfile(prof), 48);
-    const titlePart = sanitizeExportFilenamePart((sub.abstract_title ?? "abstract").trim() || "abstract", 72);
+    const rawTitle = typeof row.abstract_title === "string" ? row.abstract_title : "";
+    const titlePart = sanitizeExportFilenamePart(rawTitle.trim() || "abstract", 72);
     const ext = fileExtensionFromPath(path) || ".bin";
     const base = `${authorPart}_${titlePart}`;
     let entryName = `${base}${ext}`;

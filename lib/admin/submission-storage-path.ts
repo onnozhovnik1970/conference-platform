@@ -1,9 +1,24 @@
 const DEFAULT_BUCKET = "abstracts";
 
 /**
- * Turn a `file_path` or `file_url` value into the object key used by
- * `supabase.storage.from(bucket).download(key)` (no leading slash, no bucket prefix).
+ * Column names that may hold a Supabase Storage object key or public/signed URL.
+ * Dashboard "Submit for review" uses `file_path` (see `app/dashboard/page.tsx`); production DBs
+ * may use legacy or alternate names — we try these first, then any `*_path` / `*_url` string field.
  */
+const STORAGE_FIELD_KEYS = [
+  "file_path",
+  "file_url",
+  "abstract_file_path",
+  "thesis_file_path",
+  "attachment_path",
+  "storage_path",
+  "document_path",
+  "upload_path",
+  "media_path",
+  "pdf_path",
+  "object_path"
+] as const;
+
 function normalizeSupabaseStorageObjectKey(raw: string, bucket: string): string {
   let t = raw.trim();
   if (!t) {
@@ -51,24 +66,49 @@ function normalizeSupabaseStorageObjectKey(raw: string, bucket: string): string 
   return "";
 }
 
-/**
- * Path inside the `abstracts` storage bucket for a submission file.
- * Handles plain keys (`userId/timestamp.pdf`), full Supabase Storage URLs, and `abstracts/...` prefixes.
- */
-export function submissionStorageObjectPath(
-  row: {
-    file_path?: string | null;
-    file_url?: string | null;
-  },
-  bucket: string = DEFAULT_BUCKET
-): string {
-  const fp = typeof row.file_path === "string" ? row.file_path.trim() : "";
-  const fu = typeof row.file_url === "string" ? row.file_url.trim() : "";
+function collectRawStorageCandidates(row: Record<string, unknown>): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
 
-  for (const raw of [fp, fu]) {
-    if (!raw) {
+  const push = (s: string) => {
+    const t = s.trim();
+    if (!t || seen.has(t)) {
+      return;
+    }
+    seen.add(t);
+    out.push(t);
+  };
+
+  for (const key of STORAGE_FIELD_KEYS) {
+    const v = row[key];
+    if (typeof v === "string") {
+      push(v);
+    }
+  }
+
+  for (const [key, v] of Object.entries(row)) {
+    if (typeof v !== "string") {
       continue;
     }
+    const known = STORAGE_FIELD_KEYS as readonly string[];
+    if (known.includes(key)) {
+      continue;
+    }
+    const lk = key.toLowerCase();
+    if (/(^|_)(path|url)$/.test(lk) || lk.includes("storage") || lk.includes("upload") || lk.includes("attachment")) {
+      push(v);
+    }
+  }
+
+  return out;
+}
+
+/**
+ * Object key for `supabase.storage.from(bucket).download(key)` from a submission row
+ * (from `select('*')` or explicit columns). Tries known field names then other `*_path` / `*_url` strings.
+ */
+export function submissionStorageObjectPath(row: Record<string, unknown>, bucket: string = DEFAULT_BUCKET): string {
+  for (const raw of collectRawStorageCandidates(row)) {
     const key = normalizeSupabaseStorageObjectKey(raw, bucket);
     if (key) {
       return key;

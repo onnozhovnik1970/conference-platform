@@ -184,7 +184,7 @@ const resources = {
       adminDocumentsThesesButton: "Download All Theses",
       adminDocumentsAbstractBookTitle: "Abstract book (PDF)",
       adminDocumentsAbstractBookDesc:
-        "PDF with a cover (conference title, date, location) and all accepted abstracts sorted by author last name. Text is extracted from uploaded PDF or Word files.",
+        "PDF with a cover (conference title, date, location) and all accepted entries sorted by author last name. Each entry lists author, affiliation, and paper title from the database, with a note that the full text is in the uploaded file.",
       adminDocumentsAbstractBookButton: "Generate Abstract Book",
       adminDocumentsExporting: "Preparing download…",
       adminDocumentsExportError: "Could not generate this export.",
@@ -588,7 +588,7 @@ const resources = {
       adminDocumentsThesesButton: "Завантажити всі тези",
       adminDocumentsAbstractBookTitle: "Книга тез (PDF)",
       adminDocumentsAbstractBookDesc:
-        "PDF з титульною сторінкою (назва, дата, місце/формат) та усіма прийнятими тезами за алфавітом прізвищ. Текст витягується з PDF або Word.",
+        "PDF з титульною сторінкою (назва, дата, місце/формат) та усіма прийнятими тезами за алфавітом прізвищ. Для кожної тези: автор, заклад, назва з бази; повний текст — у завантаженому файлі.",
       adminDocumentsAbstractBookButton: "Згенерувати книгу тез",
       adminDocumentsExporting: "Підготовка файлу…",
       adminDocumentsExportError: "Не вдалося сформувати експорт.",
