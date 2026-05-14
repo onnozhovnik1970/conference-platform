@@ -596,30 +596,38 @@ export default function AdminConferenceSettingsPage() {
                   className={`${inputClass} min-h-[5rem]`}
                 />
               </div>
-              <div>
-                <label className={labelClass} htmlFor="cs-hero-subtitle-en">
-                  {t("adminConferenceFieldHeroSubtitleEn")}
-                </label>
-                <textarea
-                  id="cs-hero-subtitle-en"
-                  rows={2}
-                  value={heroSubtitle}
-                  onChange={(e) => setHeroSubtitle(e.target.value)}
-                  className={`${inputClass} min-h-[4rem]`}
-                />
-              </div>
-              <div>
-                <label className={labelClass} htmlFor="cs-hero-subtitle-ua">
-                  {t("adminConferenceFieldHeroSubtitleUa")}
-                </label>
-                <textarea
-                  id="cs-hero-subtitle-ua"
-                  rows={2}
-                  value={heroSubtitleUa}
-                  onChange={(e) => setHeroSubtitleUa(e.target.value)}
-                  className={`${inputClass} min-h-[4rem]`}
-                />
-              </div>
+              <section
+                className="space-y-4 rounded-lg border border-white/15 bg-white/[0.04] p-4 ring-1 ring-white/5"
+                aria-label="Hero subtitles"
+              >
+                <h3 className="text-sm font-semibold tracking-wide text-slate-200">Hero subtitle</h3>
+                <div>
+                  <label className={labelClass} htmlFor="cs-hero-subtitle-en">
+                    Hero subtitle (English)
+                  </label>
+                  <textarea
+                    id="cs-hero-subtitle-en"
+                    name="hero_subtitle_en"
+                    rows={3}
+                    value={heroSubtitle}
+                    onChange={(e) => setHeroSubtitle(e.target.value)}
+                    className={`${inputClass} min-h-[5rem]`}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="cs-hero-subtitle-ua">
+                    Hero subtitle (Ukrainian)
+                  </label>
+                  <textarea
+                    id="cs-hero-subtitle-ua"
+                    name="hero_subtitle_ua"
+                    rows={3}
+                    value={heroSubtitleUa}
+                    onChange={(e) => setHeroSubtitleUa(e.target.value)}
+                    className={`${inputClass} min-h-[5rem]`}
+                  />
+                </div>
+              </section>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className={labelClass} htmlFor="cs-date">
