@@ -62,17 +62,8 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.25),_transparent_45%)]" />
 
         <div className="container relative z-10 py-6 md:py-8">
-          <div className="mb-5 rounded-md border border-[#F0A500]/70 bg-[#F0A500]/15 px-4 py-2 text-center text-sm font-semibold text-[#F0A500]">
+          <div className="rounded-md border border-[#F0A500]/70 bg-[#F0A500]/15 px-4 py-2 text-center text-sm font-semibold text-[#F0A500]">
             {registrationBannerText}
-          </div>
-
-          <div className="flex flex-col items-center justify-center gap-3 pb-2 sm:flex-row">
-            <Button asChild size="lg" className="min-w-44">
-              <Link href="/register">{t("navRegister")}</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="min-w-44 border-white text-white hover:bg-white/10">
-              <Link href="/login">{t("navLogin")}</Link>
-            </Button>
           </div>
         </div>
       </section>
