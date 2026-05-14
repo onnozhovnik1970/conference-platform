@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { Atom, BookOpen, Sparkles, Video } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
