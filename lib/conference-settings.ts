@@ -14,6 +14,11 @@ export type ConferenceSettingsRow = {
   zoom_details: string | null;
   meta_title: string | null;
   meta_description: string | null;
+  support_phone: string | null;
+  support_email: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  telegram_url: string | null;
   updated_at: string;
 };
 
@@ -34,5 +39,10 @@ export const DEFAULT_CONFERENCE_SETTINGS: Omit<ConferenceSettingsRow, "updated_a
   zoom_link: null,
   zoom_details: "341 095 4568\n166231",
   meta_title: null,
-  meta_description: null
+  meta_description: null,
+  support_phone: null,
+  support_email: null,
+  facebook_url: null,
+  instagram_url: null,
+  telegram_url: null
 };

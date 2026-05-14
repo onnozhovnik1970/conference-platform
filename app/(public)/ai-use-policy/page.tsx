@@ -1,5 +1,5 @@
-import { InfoPlaceholderPage } from "@/components/info-placeholder-page";
+import { PublicStaticPage } from "@/components/public-static-page";
 
 export default function AiUsePolicyPage() {
-  return <InfoPlaceholderPage titleKey="pageTitleAiUsePolicy" />;
+  return <PublicStaticPage slug="ai-use-policy" />;
 }

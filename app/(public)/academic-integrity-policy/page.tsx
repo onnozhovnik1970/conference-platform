@@ -1,5 +1,5 @@
-import { InfoPlaceholderPage } from "@/components/info-placeholder-page";
+import { PublicStaticPage } from "@/components/public-static-page";
 
 export default function AcademicIntegrityPolicyPage() {
-  return <InfoPlaceholderPage titleKey="pageTitleAcademicIntegrityPolicy" />;
+  return <PublicStaticPage slug="academic-integrity-policy" />;
 }

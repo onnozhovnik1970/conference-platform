@@ -1,5 +1,5 @@
-import { InfoPlaceholderPage } from "@/components/info-placeholder-page";
+import { PublicStaticPage } from "@/components/public-static-page";
 
 export default function ForAuthorsPage() {
-  return <InfoPlaceholderPage titleKey="pageTitleForAuthors" />;
+  return <PublicStaticPage slug="for-authors" />;
 }

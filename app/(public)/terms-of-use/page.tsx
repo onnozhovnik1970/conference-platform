@@ -1,5 +1,5 @@
-import { InfoPlaceholderPage } from "@/components/info-placeholder-page";
+import { PublicStaticPage } from "@/components/public-static-page";
 
 export default function TermsOfUsePage() {
-  return <InfoPlaceholderPage titleKey="pageTitleTermsOfUse" />;
+  return <PublicStaticPage slug="terms-of-use" />;
 }

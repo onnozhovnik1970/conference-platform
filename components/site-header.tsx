@@ -7,8 +7,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { SiteTextLogo } from "@/components/site-text-logo";
 import { Button } from "@/components/ui/button";
+import { supportEmailTrimmed, supportPhoneDisplay, telHrefFromSupportPhone } from "@/lib/conference-contact-urls";
 import "@/lib/i18n/config";
 
 const PRIMARY_NAV = [
@@ -34,6 +36,7 @@ function mobileNavLinkClass(active: boolean): string {
 
 export function SiteHeader() {
   const { t } = useTranslation();
+  const { settings } = useConferenceSettings();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -69,9 +72,9 @@ export function SiteHeader() {
     return () => window.removeEventListener("keydown", onKey);
   }, [mobileOpen, closeMobile]);
 
-  const phoneTel = t("supportPhoneTel").trim();
-  const phoneDisplay = t("supportPhoneDisplay").trim();
-  const supportEmail = t("supportEmail").trim();
+  const phoneDisplay = supportPhoneDisplay(settings.support_phone);
+  const phoneTelHref = telHrefFromSupportPhone(settings.support_phone);
+  const supportEmail = supportEmailTrimmed(settings.support_email);
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0f2347]/95 shadow-md shadow-black/20 backdrop-blur-md">
@@ -91,9 +94,9 @@ export function SiteHeader() {
               <Link href="/support" className="text-sm font-semibold text-white hover:underline">
                 {t("siteNavSupport")}
               </Link>
-              {phoneTel ? (
-                <a href={`tel:${phoneTel}`} className="truncate text-xs text-slate-300 hover:text-white">
-                  {phoneDisplay || phoneTel}
+              {phoneTelHref ? (
+                <a href={phoneTelHref} className="truncate text-xs text-slate-300 hover:text-white">
+                  {phoneDisplay || settings.support_phone?.trim()}
                 </a>
               ) : null}
               {supportEmail ? (
@@ -166,18 +169,18 @@ export function SiteHeader() {
               >
                 {t("siteNavSupport")}
               </Link>
-              {phoneTel ? (
+              {phoneTelHref ? (
                 <a
-                  className="mt-2 flex min-h-12 items-center text-base font-medium text-sky-200 hover:text-white"
-                  href={`tel:${phoneTel}`}
+                  className="mt-2 block py-2 text-sm text-sky-200/90 hover:text-white"
+                  href={phoneTelHref}
                   onClick={closeMobile}
                 >
-                  {phoneDisplay || phoneTel}
+                  {phoneDisplay || settings.support_phone?.trim()}
                 </a>
               ) : null}
               {supportEmail ? (
                 <a
-                  className="mt-1 flex min-h-12 items-center break-all text-base font-medium text-sky-200 hover:text-white"
+                  className="mt-1 block break-all py-2 text-sm text-sky-200/90 hover:text-white"
                   href={`mailto:${supportEmail}`}
                   onClick={closeMobile}
                 >

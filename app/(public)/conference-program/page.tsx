@@ -1,5 +1,5 @@
-import { InfoPlaceholderPage } from "@/components/info-placeholder-page";
+import { PublicStaticPage } from "@/components/public-static-page";
 
 export default function ConferenceProgramPage() {
-  return <InfoPlaceholderPage titleKey="pageTitleConferenceProgram" />;
+  return <PublicStaticPage slug="conference-program" />;
 }

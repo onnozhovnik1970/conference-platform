@@ -31,6 +31,11 @@ export default function AdminConferenceSettingsPage() {
   const [zoomDetails, setZoomDetails] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
+  const [supportPhone, setSupportPhone] = useState("");
+  const [supportEmail, setSupportEmail] = useState("");
+  const [facebookUrl, setFacebookUrl] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [telegramUrl, setTelegramUrl] = useState("");
 
   const [sections, setSections] = useState<ConferenceSectionRow[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
@@ -107,6 +112,11 @@ export default function AdminConferenceSettingsPage() {
         setZoomDetails(s.zoom_details ?? "");
         setMetaTitle(s.meta_title ?? "");
         setMetaDescription(s.meta_description ?? "");
+        setSupportPhone(s.support_phone ?? "");
+        setSupportEmail(s.support_email ?? "");
+        setFacebookUrl(s.facebook_url ?? "");
+        setInstagramUrl(s.instagram_url ?? "");
+        setTelegramUrl(s.telegram_url ?? "");
       }
       setLoading(false);
     };
@@ -137,7 +147,12 @@ export default function AdminConferenceSettingsPage() {
           zoom_link: zoomLink.trim() || null,
           zoom_details: zoomDetails.trim() || null,
           meta_title: metaTitle.trim() || null,
-          meta_description: metaDescription.trim() || null
+          meta_description: metaDescription.trim() || null,
+          support_phone: supportPhone.trim() || null,
+          support_email: supportEmail.trim() || null,
+          facebook_url: facebookUrl.trim() || null,
+          instagram_url: instagramUrl.trim() || null,
+          telegram_url: telegramUrl.trim() || null
         })
       });
       if (missingSession || !response?.ok) {
@@ -160,6 +175,11 @@ export default function AdminConferenceSettingsPage() {
         setZoomDetails(s.zoom_details ?? "");
         setMetaTitle(s.meta_title ?? "");
         setMetaDescription(s.meta_description ?? "");
+        setSupportPhone(s.support_phone ?? "");
+        setSupportEmail(s.support_email ?? "");
+        setFacebookUrl(s.facebook_url ?? "");
+        setInstagramUrl(s.instagram_url ?? "");
+        setTelegramUrl(s.telegram_url ?? "");
       }
       setSuccess(t("adminConferenceSettingsSaveSuccess"));
       await refresh();
@@ -631,6 +651,82 @@ export default function AdminConferenceSettingsPage() {
                   onChange={(e) => setZoomDetails(e.target.value)}
                   className={`${inputClass} min-h-[6rem]`}
                 />
+              </div>
+              <div className="rounded-lg border border-violet-500/20 bg-violet-500/[0.06] p-4">
+                <p className="text-sm text-slate-300">{t("adminConferenceContactSocialHint")}</p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className={labelClass} htmlFor="cs-support-phone">
+                      {t("adminConferenceFieldSupportPhone")}
+                    </label>
+                    <input
+                      id="cs-support-phone"
+                      type="text"
+                      autoComplete="off"
+                      value={supportPhone}
+                      onChange={(e) => setSupportPhone(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="cs-support-email">
+                      {t("adminConferenceFieldSupportEmail")}
+                    </label>
+                    <input
+                      id="cs-support-email"
+                      type="email"
+                      autoComplete="off"
+                      value={supportEmail}
+                      onChange={(e) => setSupportEmail(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className={labelClass} htmlFor="cs-facebook-url">
+                      {t("adminConferenceFieldFacebookUrl")}
+                    </label>
+                    <input
+                      id="cs-facebook-url"
+                      type="url"
+                      inputMode="url"
+                      autoComplete="off"
+                      placeholder="https://facebook.com/..."
+                      value={facebookUrl}
+                      onChange={(e) => setFacebookUrl(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className={labelClass} htmlFor="cs-instagram-url">
+                      {t("adminConferenceFieldInstagramUrl")}
+                    </label>
+                    <input
+                      id="cs-instagram-url"
+                      type="url"
+                      inputMode="url"
+                      autoComplete="off"
+                      placeholder="https://instagram.com/..."
+                      value={instagramUrl}
+                      onChange={(e) => setInstagramUrl(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className={labelClass} htmlFor="cs-telegram-url">
+                      {t("adminConferenceFieldTelegramUrl")}
+                    </label>
+                    <input
+                      id="cs-telegram-url"
+                      type="url"
+                      inputMode="url"
+                      autoComplete="off"
+                      placeholder="https://t.me/..."
+                      value={telegramUrl}
+                      onChange={(e) => setTelegramUrl(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
               </div>
               <Button type="submit" disabled={saving}>
                 {saving ? t("adminConferenceSettingsSaving") : t("adminConferenceSettingsSave")}

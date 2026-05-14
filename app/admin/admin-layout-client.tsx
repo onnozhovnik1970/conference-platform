@@ -16,6 +16,7 @@ const nav = [
   { href: "/admin/submissions", labelKey: "adminNavSubmissions" as const },
   { href: "/admin/statistics", labelKey: "adminNavStatistics" as const },
   { href: "/admin/documents", labelKey: "adminNavDocuments" as const },
+  { href: "/admin/pages", labelKey: "adminNavPages" as const },
   { href: "/admin/accepted", labelKey: "adminNavAccepted" as const },
   { href: "/admin/needs-revision", labelKey: "adminNavNeedsRevision" as const },
   { href: "/admin/rejected", labelKey: "adminNavRejected" as const },
@@ -26,7 +27,7 @@ const nav = [
 
 function NavItem({ href, label }: { href: string; label: string }) {
   const pathname = usePathname();
-  const active = pathname === href;
+  const active = pathname === href || pathname.startsWith(`${href}/`);
   return (
     <Link
       href={href}

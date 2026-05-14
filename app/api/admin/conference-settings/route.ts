@@ -31,6 +31,11 @@ type PatchBody = {
   plenary_start_time?: unknown;
   meta_title?: unknown;
   meta_description?: unknown;
+  support_phone?: unknown;
+  support_email?: unknown;
+  facebook_url?: unknown;
+  instagram_url?: unknown;
+  telegram_url?: unknown;
 };
 
 function asOptionalDate(value: unknown): string | null {
@@ -79,6 +84,15 @@ function asOptionalText(value: unknown): string | null {
   return value;
 }
 
+function trimOrNull(value: unknown): string | null {
+  const t = asOptionalText(value);
+  if (t === null) {
+    return null;
+  }
+  const s = t.trim();
+  return s === "" ? null : s;
+}
+
 export async function GET(request: Request) {
   const auth = await assertAdminFromRequest(request);
   if (!auth.ok) {
@@ -93,7 +107,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("conference_settings")
     .select(
-      "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, updated_at"
+      "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, updated_at"
     )
     .eq("id", 1)
     .maybeSingle();
@@ -142,6 +156,12 @@ export async function PATCH(request: Request) {
   const meta_title_in = "meta_title" in body ? asOptionalText(body.meta_title) : undefined;
   const meta_description_in = "meta_description" in body ? asOptionalText(body.meta_description) : undefined;
 
+  const support_phone = trimOrNull(body.support_phone);
+  const support_email = trimOrNull(body.support_email);
+  const facebook_url = trimOrNull(body.facebook_url);
+  const instagram_url = trimOrNull(body.instagram_url);
+  const telegram_url = trimOrNull(body.telegram_url);
+
   const plenary_start_time_parsed = readOptionalPlenaryStartTime(body);
   if (plenary_start_time_parsed === "invalid") {
     return NextResponse.json({ error: "plenary_start_time must be an ISO date string or null" }, { status: 400 });
@@ -153,7 +173,7 @@ export async function PATCH(request: Request) {
   }
 
   const selectCols =
-    "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, updated_at";
+    "id, title, title_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, updated_at";
 
   const values = {
     title: titleRaw.trim(),
@@ -169,7 +189,12 @@ export async function PATCH(request: Request) {
     ...(meta_title_in !== undefined ? { meta_title: meta_title_in?.trim() ? meta_title_in.trim() : null } : {}),
     ...(meta_description_in !== undefined
       ? { meta_description: meta_description_in?.trim() ? meta_description_in.trim() : null }
-      : {})
+      : {}),
+    ...(body.support_phone !== undefined ? { support_phone } : {}),
+    ...(body.support_email !== undefined ? { support_email } : {}),
+    ...(body.facebook_url !== undefined ? { facebook_url } : {}),
+    ...(body.instagram_url !== undefined ? { instagram_url } : {}),
+    ...(body.telegram_url !== undefined ? { telegram_url } : {})
   };
 
   const { data: updated, error: updateErr } = await supabase

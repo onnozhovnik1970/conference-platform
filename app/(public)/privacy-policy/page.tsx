@@ -1,5 +1,5 @@
-import { InfoPlaceholderPage } from "@/components/info-placeholder-page";
+import { PublicStaticPage } from "@/components/public-static-page";
 
 export default function PrivacyPolicyPage() {
-  return <InfoPlaceholderPage titleKey="pageTitlePrivacyPolicy" />;
+  return <PublicStaticPage slug="privacy-policy" />;
 }
