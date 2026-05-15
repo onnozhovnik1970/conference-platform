@@ -39,6 +39,7 @@ type PatchBody = {
   instagram_url?: unknown;
   telegram_url?: unknown;
   hero_image_url?: unknown;
+  certificate_template_url?: unknown;
 };
 
 function asOptionalDate(value: unknown): string | null {
@@ -110,7 +111,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("conference_settings")
     .select(
-      "id, title, title_ua, hero_subtitle, hero_subtitle_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, updated_at"
+      "id, title, title_ua, hero_subtitle, hero_subtitle_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, certificate_template_url, updated_at"
     )
     .eq("id", 1)
     .maybeSingle();
@@ -165,6 +166,7 @@ export async function PATCH(request: Request) {
   const instagram_url = trimOrNull(body.instagram_url);
   const telegram_url = trimOrNull(body.telegram_url);
   const hero_image_url = trimOrNull(body.hero_image_url);
+  const certificate_template_url = trimOrNull(body.certificate_template_url);
 
   const plenary_start_time_parsed = readOptionalPlenaryStartTime(body);
   if (plenary_start_time_parsed === "invalid") {
@@ -177,7 +179,7 @@ export async function PATCH(request: Request) {
   }
 
   const selectCols =
-    "id, title, title_ua, hero_subtitle, hero_subtitle_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, updated_at";
+    "id, title, title_ua, hero_subtitle, hero_subtitle_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, certificate_template_url, updated_at";
 
   const values = {
     title: titleRaw.trim(),
@@ -200,6 +202,7 @@ export async function PATCH(request: Request) {
     ...(body.instagram_url !== undefined ? { instagram_url } : {}),
     ...(body.telegram_url !== undefined ? { telegram_url } : {}),
     ...(body.hero_image_url !== undefined ? { hero_image_url } : {}),
+    ...(body.certificate_template_url !== undefined ? { certificate_template_url } : {}),
     ...(body.hero_subtitle !== undefined ? { hero_subtitle: trimOrNull(body.hero_subtitle) } : {}),
     ...(body.hero_subtitle_ua !== undefined ? { hero_subtitle_ua: trimOrNull(body.hero_subtitle_ua) } : {})
   };

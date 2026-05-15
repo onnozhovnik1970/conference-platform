@@ -39,6 +39,7 @@ export default function AdminConferenceSettingsPage() {
   const [instagramUrl, setInstagramUrl] = useState("");
   const [telegramUrl, setTelegramUrl] = useState("");
   const [heroImageUrl, setHeroImageUrl] = useState("");
+  const [certificateTemplateUrl, setCertificateTemplateUrl] = useState("");
 
   const [sections, setSections] = useState<ConferenceSectionRow[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
@@ -123,6 +124,7 @@ export default function AdminConferenceSettingsPage() {
         setInstagramUrl(s.instagram_url ?? "");
         setTelegramUrl(s.telegram_url ?? "");
         setHeroImageUrl(s.hero_image_url ?? "");
+        setCertificateTemplateUrl(s.certificate_template_url ?? "");
       }
       setLoading(false);
     };
@@ -161,7 +163,8 @@ export default function AdminConferenceSettingsPage() {
           facebook_url: facebookUrl.trim() || null,
           instagram_url: instagramUrl.trim() || null,
           telegram_url: telegramUrl.trim() || null,
-          hero_image_url: heroImageUrl.trim() || null
+          hero_image_url: heroImageUrl.trim() || null,
+          certificate_template_url: certificateTemplateUrl.trim() || null
         })
       });
       if (missingSession || !response?.ok) {
@@ -192,6 +195,7 @@ export default function AdminConferenceSettingsPage() {
         setInstagramUrl(s.instagram_url ?? "");
         setTelegramUrl(s.telegram_url ?? "");
         setHeroImageUrl(s.hero_image_url ?? "");
+        setCertificateTemplateUrl(s.certificate_template_url ?? "");
       }
       setSuccess(t("adminConferenceSettingsSaveSuccess"));
       await refresh();
@@ -566,6 +570,22 @@ export default function AdminConferenceSettingsPage() {
                       value={heroImageUrl}
                       onChange={(e) => setHeroImageUrl(e.target.value)}
                       placeholder={t("adminConferenceFieldHeroImageUrlPlaceholder")}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="cs-certificate-template-url">
+                      {t("adminConferenceFieldCertificateTemplateUrl")}
+                    </label>
+                    <p className="mt-1 text-xs text-slate-400">{t("adminConferenceFieldCertificateTemplateUrlHint")}</p>
+                    <input
+                      id="cs-certificate-template-url"
+                      type="text"
+                      inputMode="url"
+                      autoComplete="off"
+                      value={certificateTemplateUrl}
+                      onChange={(e) => setCertificateTemplateUrl(e.target.value)}
+                      placeholder={t("adminConferenceFieldCertificateTemplateUrlPlaceholder")}
                       className={inputClass}
                     />
                   </div>

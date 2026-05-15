@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 
 import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
@@ -44,6 +44,21 @@ const FR_PAPER = 0.72;
 const FR_DATE_LINE = 0.8;
 
 let templatePngCache: Promise<Buffer> | null = null;
+const customTemplatePngCache = new Map<string, Promise<Buffer>>();
+
+function safePublicFilePath(urlPath: string): string | null {
+  const rel = urlPath.trim().replace(/^\/+/u, "").replace(/\\/g, "/");
+  if (!rel || rel.split("/").includes("..")) {
+    return null;
+  }
+  const pubRoot = resolve(process.cwd(), "public");
+  const candidate = resolve(pubRoot, rel);
+  const relFromPub = relative(pubRoot, candidate);
+  if (!relFromPub || relFromPub.startsWith("..") || isAbsolute(relFromPub)) {
+    return null;
+  }
+  return candidate;
+}
 
 async function rasterizeTemplateSvg(): Promise<Buffer> {
   if (!existsSync(TEMPLATE_SVG_PATH)) {
@@ -60,6 +75,58 @@ async function rasterizeTemplateSvg(): Promise<Buffer> {
     })();
   }
   return templatePngCache;
+}
+
+async function rasterizeImageBytesToPng(input: Buffer): Promise<Buffer> {
+  const meta = await sharp(input).metadata();
+  const isSvg = meta.format === "svg";
+  const w = Math.round(PAGE_W * RASTER_SCALE);
+  const h = Math.round(PAGE_H * RASTER_SCALE);
+  const pipeline = isSvg ? sharp(input, { density: 300 }) : sharp(input);
+  return pipeline.resize(w, h, { fit: "fill" }).png().toBuffer();
+}
+
+async function loadCustomTemplatePng(trimmedUrl: string): Promise<Buffer | null> {
+  try {
+    let input: Buffer;
+    if (/^https?:\/\//i.test(trimmedUrl)) {
+      const res = await fetch(trimmedUrl, { redirect: "follow" });
+      if (!res.ok) {
+        return null;
+      }
+      input = Buffer.from(await res.arrayBuffer());
+    } else if (trimmedUrl.startsWith("/")) {
+      const abs = safePublicFilePath(trimmedUrl);
+      if (!abs || !existsSync(abs)) {
+        return null;
+      }
+      input = readFileSync(abs);
+    } else {
+      return null;
+    }
+    return rasterizeImageBytesToPng(input);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Raster background for one certificate page: optional URL/path from settings, else bundled SVG.
+ */
+async function getCertificateBackgroundPng(templateUrl: string | null | undefined): Promise<Buffer> {
+  const trimmed = templateUrl?.trim();
+  if (!trimmed) {
+    return rasterizeTemplateSvg();
+  }
+  let cached = customTemplatePngCache.get(trimmed);
+  if (!cached) {
+    cached = (async () => {
+      const custom = await loadCustomTemplatePng(trimmed);
+      return custom ?? (await rasterizeTemplateSvg());
+    })();
+    customTemplatePngCache.set(trimmed, cached);
+  }
+  return cached;
 }
 
 function wrapToLines(text: string, font: PDFFont, fontSize: number, maxWidth: number, maxLines: number): string[] {
@@ -147,14 +214,14 @@ function drawCenteredSingleLine(
 }
 
 /**
- * Landscape certificate: `certificate-template.svg` (decorative background only),
+ * Landscape certificate: background from `certificateTemplateUrl` (PNG/SVG path or URL) or bundled SVG,
  * static strings from {@link getCertificateStrings}, then participant name and abstract title.
  */
 export async function renderCertificatePdfBuffer(payload: CertificatePayload): Promise<Buffer> {
   const lang: CertificateLanguage = payload.certificateLanguage ?? "en";
   const strings = getCertificateStrings(lang);
 
-  const pngBuffer = await rasterizeTemplateSvg();
+  const pngBuffer = await getCertificateBackgroundPng(payload.certificateTemplateUrl);
   const regularBytes = readFileSync(join(FONTS_DIR, "Roboto-Regular.ttf"));
   const mediumBytes = readFileSync(join(FONTS_DIR, "Roboto-Medium.ttf"));
   const italicBytes = readFileSync(join(FONTS_DIR, "Roboto-Italic.ttf"));

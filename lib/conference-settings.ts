@@ -24,6 +24,8 @@ export type ConferenceSettingsRow = {
   instagram_url: string | null;
   telegram_url: string | null;
   hero_image_url: string | null;
+  /** PNG/SVG for certificate PDF background (e.g. /images/certificate.png). */
+  certificate_template_url: string | null;
   updated_at: string;
 };
 
@@ -50,5 +52,6 @@ export const DEFAULT_CONFERENCE_SETTINGS: Omit<ConferenceSettingsRow, "updated_a
   facebook_url: null,
   instagram_url: null,
   telegram_url: null,
-  hero_image_url: null
+  hero_image_url: null,
+  certificate_template_url: null
 };

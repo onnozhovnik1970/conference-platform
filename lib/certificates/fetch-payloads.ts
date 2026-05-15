@@ -23,6 +23,8 @@ export type CertificatePayload = {
   locationDisplay: string;
   /** Derived from `abstract_language` on the submission; may be overridden by `?lang=` when generating. */
   certificateLanguage: CertificateLanguage;
+  /** From `conference_settings.certificate_template_url`; PDF uses bundled template when null/empty. */
+  certificateTemplateUrl: string | null;
 };
 
 type ProfileRow = {
@@ -209,7 +211,8 @@ export async function loadCertificatePayloads(
     dateEn: dateEn || "—",
     conferenceDateIso: s.date,
     locationDisplay,
-    certificateLanguage: resolvePayloadLanguage(row.abstract_language, options?.languageOverride)
+    certificateLanguage: resolvePayloadLanguage(row.abstract_language, options?.languageOverride),
+    certificateTemplateUrl: s.certificate_template_url?.trim() ? s.certificate_template_url.trim() : null
   }));
 }
 
@@ -287,6 +290,7 @@ export async function loadCertificatePayloadBySubmissionId(
     dateEn: dateEn || "—",
     conferenceDateIso: s.date,
     locationDisplay,
-    certificateLanguage: resolvePayloadLanguage(row.abstract_language, options?.languageOverride)
+    certificateLanguage: resolvePayloadLanguage(row.abstract_language, options?.languageOverride),
+    certificateTemplateUrl: s.certificate_template_url?.trim() ? s.certificate_template_url.trim() : null
   };
 }

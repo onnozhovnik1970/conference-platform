@@ -296,6 +296,10 @@ const resources = {
       adminConferenceFieldHeroImageUrl: "Hero Image URL",
       adminConferenceFieldHeroImageUrlPlaceholder: "https://…",
       adminConferenceFieldHeroImageUrlHint: "JPEG/WebP, 1920×600px, max 300KB",
+      adminConferenceFieldCertificateTemplateUrl: "Certificate template URL",
+      adminConferenceFieldCertificateTemplateUrlPlaceholder: "/images/certificate.png",
+      adminConferenceFieldCertificateTemplateUrlHint:
+        "PNG or SVG, 1200×850px (landscape A4). Place file in public/images/ and use path like /images/certificate.png",
       adminConferenceContactSocialHint:
         "Used in the site header (support block), Support and Contact pages, and footer social icons. Leave URLs empty to hide an icon.",
       adminConferenceFieldSupportPhone: "Support phone",
@@ -771,6 +775,10 @@ const resources = {
       adminConferenceFieldHeroImageUrl: "URL зображення героя",
       adminConferenceFieldHeroImageUrlPlaceholder: "https://…",
       adminConferenceFieldHeroImageUrlHint: "JPEG/WebP, 1920×600px, до 300 КБ",
+      adminConferenceFieldCertificateTemplateUrl: "URL шаблону сертифіката",
+      adminConferenceFieldCertificateTemplateUrlPlaceholder: "/images/certificate.png",
+      adminConferenceFieldCertificateTemplateUrlHint:
+        "PNG або SVG, 1200×850px (альбомний A4). Помістіть файл у public/images/ і використайте шлях на кшталт /images/certificate.png",
       adminConferenceContactSocialHint:
         "Використовується в шапці сайту (блок підтримки), на сторінках «Підтримка» та «Контакти», а також для іконок у підвалі. Порожній URL — іконку приховано.",
       adminConferenceFieldSupportPhone: "Телефон підтримки",
