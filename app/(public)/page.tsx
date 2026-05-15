@@ -2,7 +2,7 @@
 
 import { Atom, BookOpen, Sparkles, Video } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 import { ConferenceHeroEdtech } from "@/components/conference-hero-edtech";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
@@ -57,11 +57,9 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen">
-      <section className="animated-academic-gradient relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.25),_transparent_45%)]" />
-
+      <section className="public-tech-section-alt border-b border-slate-200/80">
         <div className="container relative z-10 py-6 md:py-8">
-          <div className="rounded-md border border-[#F0A500]/70 bg-[#F0A500]/15 px-4 py-2 text-center text-sm font-semibold text-[#F0A500]">
+          <div className="public-tech-card rounded-lg px-4 py-2.5 text-center text-sm font-semibold md:text-base">
             {registrationBannerText}
           </div>
         </div>
@@ -69,31 +67,34 @@ export default function HomePage() {
 
       <ConferenceHeroEdtech />
 
-      <section className="container py-14 md:py-20">
-        <h2 className="mb-3 text-center text-3xl font-bold md:mb-4">{t("aboutConference")}</h2>
-        <p className="mx-auto max-w-4xl text-center text-slate-300">{aboutDescription}</p>
-        <p className="mx-auto mt-3 max-w-4xl text-center text-slate-300">{t("conferenceOrganizer")}</p>
+      <section className="public-tech-section-alt container border-t border-slate-200/80 py-14 md:py-20">
+        <h2 className="mb-3 text-center text-3xl font-bold text-[#0F172A] md:mb-4">{t("aboutConference")}</h2>
+        <p className="public-tech-muted mx-auto max-w-4xl text-center">{aboutDescription}</p>
+        <p className="public-tech-muted mx-auto mt-3 max-w-4xl text-center">{t("conferenceOrganizer")}</p>
       </section>
 
-      <section className="container pb-14 md:pb-20">
-        <h2 className="mb-2 text-center text-3xl font-bold">{t("conferenceLanguagesTitle")}</h2>
-        <p className="text-center text-slate-300">{t("conferenceLanguagesSubtitle")}</p>
-        <p className="mt-2 text-center text-base font-medium text-[#F0A500]">{t("conferenceLanguagesList")}</p>
+      <section className="public-tech-section container border-t border-slate-200/80 py-14 md:py-20">
+        <h2 className="mb-2 text-center text-3xl font-bold text-[#0F172A]">{t("conferenceLanguagesTitle")}</h2>
+        <p className="public-tech-muted text-center">{t("conferenceLanguagesSubtitle")}</p>
+        <p className="mt-2 text-center text-base font-semibold text-[#4F46E5]">{t("conferenceLanguagesList")}</p>
       </section>
 
-      <section className="container pb-14 md:pb-20">
-        <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("howToParticipate")}</h2>
+      <section className="public-tech-section-alt container border-t border-slate-200/80 pb-14 md:pb-20">
+        <h2 className="mb-8 text-center text-3xl font-bold text-[#0F172A] md:mb-10">{t("howToParticipate")}</h2>
         <div className="grid gap-6 md:grid-cols-3">
           {steps.map(({ icon: Icon, titleKey, descriptionKey }, index) => (
-            <Card key={titleKey} className="border-white/10 bg-white/5">
+            <Card
+              key={titleKey}
+              className="rounded-xl border border-[rgba(108,99,255,0.2)] bg-white/80 text-[#0F172A] shadow-[0_4px_24px_rgba(79,70,229,0.08)] backdrop-blur-md supports-[backdrop-filter]:bg-[#F8FAFC]/75"
+            >
               <CardHeader>
-                <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/20 text-primary">
+                <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#6C63FF]/12 text-[#6C63FF]">
                   <Icon className="h-6 w-6" />
                 </div>
-                <CardTitle>{`${index + 1}. ${t(titleKey)}`}</CardTitle>
+                <CardTitle className="text-xl font-semibold text-[#0F172A]">{`${index + 1}. ${t(titleKey)}`}</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-sm leading-6 text-slate-300">
+                <CardDescription className="text-sm leading-6 text-[#0F172A]">
                   {titleKey === "step3Title" ? step3Text : t(descriptionKey)}
                 </CardDescription>
               </CardContent>
@@ -102,13 +103,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {showLiveSessionsBlock && (
-        <section className="container pb-14 md:pb-20">
-          <h2 className="mb-8 text-center text-3xl font-bold md:mb-10">{t("liveSessionsTitle")}</h2>
+      {showLiveSessionsBlock ? (
+        <section className="public-tech-section container border-t border-slate-200/80 pb-14 md:pb-20">
+          <h2 className="mb-8 text-center text-3xl font-bold text-[#0F172A] md:mb-10">{t("liveSessionsTitle")}</h2>
           <div className="mx-auto flex w-full max-w-xl flex-col gap-6 md:max-w-3xl">
             <div className="w-full">
               {zoomLinkRaw ? (
-                <Button asChild size="lg" className="h-14 w-full gap-2 text-base font-semibold shadow-lg shadow-primary/20 md:h-16 md:text-lg">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="cta"
+                  className="h-14 w-full gap-2 text-base md:h-16 md:text-lg"
+                >
                   <a href={zoomHref(zoomLinkRaw)} target="_blank" rel="noopener noreferrer">
                     <Video className="h-6 w-6 shrink-0" />
                     {t("plenarySessionOpening")}
@@ -127,7 +133,13 @@ export default function HomePage() {
                 </Button>
               )}
               {plenaryStartsWhen ? (
-                <p className="mt-3 text-center text-sm text-slate-400">{t("homeSectionZoomStarts", { dateTime: plenaryStartsWhen })}</p>
+                <p className="mt-3 text-center text-sm text-[#0F172A]">
+                  <Trans
+                    i18nKey="homeSectionZoomStarts"
+                    values={{ dateTime: plenaryStartsWhen }}
+                    components={{ accent: <span className="font-medium text-[#6C63FF]" /> }}
+                  />
+                </p>
               ) : null}
             </div>
             {thematicSections.length > 0 ? (
@@ -139,41 +151,43 @@ export default function HomePage() {
                   const sectionStartsWhen =
                     sec.start_time?.trim() ? formatConferenceStartsDateTime(sec.start_time, loc) : "";
                   const sectionBtnClass =
-                    "flex h-full min-h-[80px] w-full min-w-0 max-w-full flex-1 items-center justify-center gap-2 whitespace-normal border-white/25 bg-white/5 px-4 py-3 text-center text-base leading-snug text-white md:text-lg [&_svg]:shrink-0";
+                    "flex h-full min-h-[80px] w-full min-w-0 max-w-full flex-1 items-center justify-center gap-2 whitespace-normal rounded-xl border border-[rgba(108,99,255,0.15)] bg-white/90 px-4 py-3 text-center text-base font-semibold leading-snug text-[#0F172A] shadow-[0_4px_24px_rgba(79,70,229,0.06)] backdrop-blur-sm transition-colors hover:border-[rgba(108,99,255,0.4)] hover:bg-[#F8FAFC]/95 md:text-lg [&_svg]:shrink-0";
                   return (
                     <div key={sec.id} className="flex min-h-[80px] min-w-0 flex-col gap-2 self-stretch">
                       <div className="flex min-h-[80px] w-full flex-1">
-                      {hasZoom ? (
-                        <Button
-                          asChild
-                          variant="outline"
-                          className={`${sectionBtnClass} border-[#F0A500]/50 bg-[#F0A500]/10 text-white hover:bg-[#F0A500]/18`}
-                        >
-                          <a
-                            href={zoomHref(zoomRaw)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex h-full min-h-[80px] w-full items-center justify-center gap-2 text-center"
+                        {hasZoom ? (
+                          <Button asChild variant="outline" className={sectionBtnClass}>
+                            <a
+                              href={zoomHref(zoomRaw)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex h-full min-h-[80px] w-full items-center justify-center gap-2 text-center"
+                            >
+                              <Video className="h-5 w-5 shrink-0 text-[#6C63FF]" />
+                              <span className="min-w-0 break-words">{titleText}</span>
+                            </a>
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled
+                            className={`${sectionBtnClass} cursor-not-allowed opacity-60 hover:border-[rgba(108,99,255,0.15)]`}
+                            aria-disabled="true"
                           >
-                            <Video className="h-5 w-5 shrink-0 text-[#F0A500]" />
+                            <Video className="h-5 w-5 shrink-0 opacity-50" />
                             <span className="min-w-0 break-words">{titleText}</span>
-                          </a>
-                        </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled
-                          className={`${sectionBtnClass} cursor-not-allowed border-white/10 bg-white/[0.03] text-slate-500 opacity-70 hover:bg-white/[0.03]`}
-                          aria-disabled="true"
-                        >
-                          <Video className="h-5 w-5 shrink-0 opacity-50" />
-                          <span className="min-w-0 break-words">{titleText}</span>
-                        </Button>
-                      )}
+                          </Button>
+                        )}
                       </div>
                       {sectionStartsWhen ? (
-                        <p className="text-center text-sm text-slate-400">{t("homeSectionZoomStarts", { dateTime: sectionStartsWhen })}</p>
+                        <p className="text-center text-sm text-[#0F172A]">
+                          <Trans
+                            i18nKey="homeSectionZoomStarts"
+                            values={{ dateTime: sectionStartsWhen }}
+                            components={{ accent: <span className="font-medium text-[#6C63FF]" /> }}
+                          />
+                        </p>
                       ) : null}
                     </div>
                   );
@@ -182,9 +196,7 @@ export default function HomePage() {
             ) : null}
           </div>
         </section>
-      )}
-
+      ) : null}
     </main>
   );
 }
-

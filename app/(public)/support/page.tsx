@@ -17,25 +17,25 @@ export default function SupportPage() {
 
   return (
     <main className="container max-w-2xl py-12 md:py-16">
-      <h1 className="text-2xl font-bold text-white md:text-3xl">{t("pageTitleSupport")}</h1>
-      <p className="mt-3 text-sm text-slate-300 md:text-base">{t("supportPageLead")}</p>
-      <ul className="mt-6 space-y-3 text-sm text-slate-200 md:text-base">
+      <h1 className="text-2xl font-bold text-[#0F172A] md:text-3xl">{t("pageTitleSupport")}</h1>
+      <p className="mt-3 text-sm text-slate-600 md:text-base">{t("supportPageLead")}</p>
+      <ul className="mt-6 space-y-3 text-sm text-slate-600 md:text-base">
         <li>
-          <span className="block text-xs font-medium text-slate-400">{t("phone")}</span>
-          <a className="mt-0.5 inline-block text-sky-200/90 hover:underline" href={phoneTelHref}>
+          <span className="block text-xs font-medium text-slate-500">{t("phone")}</span>
+          <a className="public-tech-link mt-0.5 inline-block" href={phoneTelHref}>
             {phoneDisplay}
           </a>
         </li>
         {supportEmail ? (
           <li>
-            <span className="block text-xs font-medium text-slate-400">{t("email")}</span>
-            <a className="mt-0.5 inline-block break-all text-sky-200/90 hover:underline" href={`mailto:${supportEmail}`}>
+            <span className="block text-xs font-medium text-slate-500">{t("email")}</span>
+            <a className="public-tech-link mt-0.5 inline-block break-all" href={`mailto:${supportEmail}`}>
               {supportEmail}
             </a>
           </li>
         ) : null}
       </ul>
-      <Button asChild className="mt-8 border-white/25 bg-white/10 text-white hover:bg-white/15" variant="outline">
+      <Button asChild className="mt-8 public-tech-outline-btn" variant="outline">
         <Link href="/">{t("navHome")}</Link>
       </Button>
     </main>

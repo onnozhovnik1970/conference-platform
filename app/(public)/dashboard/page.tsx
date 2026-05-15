@@ -233,9 +233,8 @@ export default function DashboardPage() {
     void loadSections();
   }, []);
 
-  const inputClass =
-    "mt-2 h-11 w-full rounded-md border border-white/20 bg-white/5 px-3 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40";
-  const labelClass = "block text-sm font-medium text-slate-100";
+  const inputClass = "public-tech-input";
+  const labelClass = "public-tech-label";
 
   const updateField = (field: keyof SubmissionForm, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -476,7 +475,7 @@ export default function DashboardPage() {
   const progressPercent = (currentProgressStage / 3) * 100;
   const isFinalAccepted = latestStatus === "accepted";
   const isFinalRejected = latestStatus === "rejected";
-  const progressActiveColorClass = isFinalAccepted ? "bg-emerald-400" : isFinalRejected ? "bg-rose-400" : "bg-primary";
+  const progressActiveColorClass = isFinalAccepted ? "bg-emerald-500" : isFinalRejected ? "bg-rose-500" : "bg-[#4F46E5]";
   const progressStages = [
     t("dashboardStatusDraft"),
     t("dashboardStatusAiReview"),
@@ -485,41 +484,39 @@ export default function DashboardPage() {
   ];
 
   return (
-    <main className="min-h-screen">
-      <section className="animated-academic-gradient relative overflow-hidden py-6 md:py-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.25),_transparent_45%)]" />
-        <div className="container relative z-10">
-          <div className="mx-auto mt-6 max-w-5xl space-y-6 pb-10 md:mt-10">
-            <Card className="border-white/10 bg-black/35 backdrop-blur">
+    <main className="min-h-screen bg-[#F8FAFC] py-10 md:py-14">
+      <div className="container">
+        <div className="mx-auto mt-2 max-w-5xl space-y-6 pb-10 md:mt-4">
+            <Card className="public-tech-card">
               <CardHeader>
-                <CardTitle className="text-3xl text-white">{t("dashboardTitle")}</CardTitle>
-                <CardDescription className="text-slate-300">{t("dashboardSubtitle")}</CardDescription>
+                <CardTitle className="text-3xl text-[#0F172A]">{t("dashboardTitle")}</CardTitle>
+                <CardDescription className="text-slate-600">{t("dashboardSubtitle")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
-                {isLoading && <p className="text-slate-300">{t("dashboardLoading")}</p>}
-                {!isLoading && error && <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
+                {isLoading && <p className="text-slate-600">{t("dashboardLoading")}</p>}
+                {!isLoading && error && <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
                 {!isLoading && !error && profile && (
                   <div className="grid gap-4 md:grid-cols-3">
-                    <div className="rounded-md border border-white/15 bg-white/5 p-4"><p className="text-xs uppercase tracking-wide text-slate-400">{t("firstName")}</p><p className="mt-1 text-lg font-semibold text-white">{profile.first_name || "-"}</p></div>
-                    <div className="rounded-md border border-white/15 bg-white/5 p-4"><p className="text-xs uppercase tracking-wide text-slate-400">{t("lastName")}</p><p className="mt-1 text-lg font-semibold text-white">{profile.last_name || "-"}</p></div>
-                    <div className="rounded-md border border-white/15 bg-white/5 p-4"><p className="text-xs uppercase tracking-wide text-slate-400">{t("institution")}</p><p className="mt-1 text-lg font-semibold text-white">{profile.institution || "-"}</p></div>
+                    <div className="rounded-md border border-slate-200 bg-white p-4"><p className="text-xs uppercase tracking-wide text-slate-500">{t("firstName")}</p><p className="mt-1 text-lg font-semibold text-[#0F172A]">{profile.first_name || "-"}</p></div>
+                    <div className="rounded-md border border-slate-200 bg-white p-4"><p className="text-xs uppercase tracking-wide text-slate-500">{t("lastName")}</p><p className="mt-1 text-lg font-semibold text-[#0F172A]">{profile.last_name || "-"}</p></div>
+                    <div className="rounded-md border border-slate-200 bg-white p-4"><p className="text-xs uppercase tracking-wide text-slate-500">{t("institution")}</p><p className="mt-1 text-lg font-semibold text-[#0F172A]">{profile.institution || "-"}</p></div>
                   </div>
                 )}
                 {!isLoading && !error && (
-                  <div className="rounded-md border border-white/15 bg-white/5 p-4">
-                    <p className="text-sm font-semibold text-white">{t("dashboardStatusProgressTitle")}</p>
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-sm font-semibold text-[#0F172A]">{t("dashboardStatusProgressTitle")}</p>
                     <div className="mt-4">
-                      <div className="relative h-2 rounded-full bg-white/10">
+                      <div className="relative h-2 rounded-full bg-slate-200">
                         <div className={`absolute left-0 top-0 h-2 rounded-full transition-all ${progressActiveColorClass}`} style={{ width: `${progressPercent}%` }} />
                       </div>
                       <div className="mt-4 grid gap-3 sm:grid-cols-4">
                         {progressStages.map((stageLabel, idx) => {
                           const isActive = idx <= currentProgressStage;
-                          const stageDotColorClass = isActive ? progressActiveColorClass : "bg-slate-500";
+                          const stageDotColorClass = isActive ? progressActiveColorClass : "bg-slate-400";
                           return (
                             <div key={stageLabel} className="flex items-start gap-2">
                               <span className={`mt-0.5 h-3 w-3 rounded-full ${stageDotColorClass}`} />
-                              <span className={`text-xs ${isActive ? "text-white" : "text-slate-400"}`}>{stageLabel}</span>
+                              <span className={`text-xs ${isActive ? "text-[#0F172A] font-medium" : "text-slate-500"}`}>{stageLabel}</span>
                             </div>
                           );
                         })}
@@ -527,21 +524,21 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
-                {!isLoading && !error && !profile && <p className="text-slate-300">{t("dashboardNoProfile")}</p>}
-                <Button type="button" variant="outline" className="border-white text-white hover:bg-white/10" onClick={handleLogout}>{t("logout")}</Button>
+                {!isLoading && !error && !profile && <p className="text-slate-600">{t("dashboardNoProfile")}</p>}
+                <Button type="button" variant="outline" className="public-tech-outline-btn" onClick={handleLogout}>{t("logout")}</Button>
               </CardContent>
             </Card>
 
-            <Card className="border-white/10 bg-black/35 backdrop-blur">
+            <Card className="public-tech-card">
               <CardHeader>
-                <CardTitle className="text-2xl text-white">{t("dashboardSubmissionTitle")}</CardTitle>
-                <CardDescription className="text-slate-300">{t("dashboardSubmissionSubtitle")}</CardDescription>
+                <CardTitle className="text-2xl text-[#0F172A]">{t("dashboardSubmissionTitle")}</CardTitle>
+                <CardDescription className="text-slate-600">{t("dashboardSubmissionSubtitle")}</CardDescription>
               </CardHeader>
               <CardContent>
-                {submitError && <div className="mb-4 rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{submitError}</div>}
-                {submitSuccess && <div className="mb-4 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{submitSuccess}</div>}
+                {submitError && <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{submitError}</div>}
+                {submitSuccess && <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{submitSuccess}</div>}
                 {submissionBlockedNotice && (
-                  <div className="mb-4 rounded-md border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                  <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                     {t("dashboardSubmissionBlockedActive")}
                   </div>
                 )}
@@ -558,8 +555,8 @@ export default function DashboardPage() {
                     <div>
                       <label className={labelClass}>{t("yearOfStudy")}</label>
                       <select className={inputClass} value={formData.yearOfStudy} onChange={(e) => updateField("yearOfStudy", e.target.value)}>
-                        <option value="" className="bg-slate-900">--</option>
-                        {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={String(n)} className="bg-slate-900">{n}</option>)}
+                        <option value="" className="bg-white">--</option>
+                        {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={String(n)} className="bg-white">{n}</option>)}
                       </select>
                     </div>
                   </div>
@@ -567,35 +564,35 @@ export default function DashboardPage() {
                     <div>
                       <label className={labelClass}>{t("country")}</label>
                       <select className={inputClass} value={formData.country} onChange={(e) => updateField("country", e.target.value)}>
-                        <option value="" className="bg-slate-900">--</option>
-                        <option value="ua" className="bg-slate-900">{t("countryUkraine")}</option><option value="pl" className="bg-slate-900">{t("countryPoland")}</option><option value="de" className="bg-slate-900">{t("countryGermany")}</option>
-                        <option value="fr" className="bg-slate-900">{t("countryFrance")}</option><option value="gb" className="bg-slate-900">{t("countryUnitedKingdom")}</option><option value="us" className="bg-slate-900">{t("countryUnitedStates")}</option>
-                        <option value="ca" className="bg-slate-900">{t("countryCanada")}</option><option value="other" className="bg-slate-900">{t("countryOther")}</option>
+                        <option value="" className="bg-white">--</option>
+                        <option value="ua" className="bg-white">{t("countryUkraine")}</option><option value="pl" className="bg-white">{t("countryPoland")}</option><option value="de" className="bg-white">{t("countryGermany")}</option>
+                        <option value="fr" className="bg-white">{t("countryFrance")}</option><option value="gb" className="bg-white">{t("countryUnitedKingdom")}</option><option value="us" className="bg-white">{t("countryUnitedStates")}</option>
+                        <option value="ca" className="bg-white">{t("countryCanada")}</option><option value="other" className="bg-white">{t("countryOther")}</option>
                       </select>
                     </div>
                     <div><label className={labelClass}>{t("phone")}</label><input className={inputClass} value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} /></div>
                     <div>
                       <label className={labelClass}>{t("abstractLanguage")}</label>
                       <select className={inputClass} value={formData.abstractLanguage} onChange={(e) => updateField("abstractLanguage", e.target.value)}>
-                        <option value="" className="bg-slate-900">--</option>
-                        <option value="ukrainian" className="bg-slate-900">{t("abstractLanguageUkrainian")}</option>
-                        <option value="english" className="bg-slate-900">{t("abstractLanguageEnglish")}</option>
-                        <option value="german" className="bg-slate-900">{t("abstractLanguageGerman")}</option>
-                        <option value="polish" className="bg-slate-900">{t("abstractLanguagePolish")}</option>
-                        <option value="czech" className="bg-slate-900">{t("abstractLanguageCzech")}</option>
-                        <option value="french" className="bg-slate-900">{t("abstractLanguageFrench")}</option>
-                        <option value="spanish" className="bg-slate-900">{t("abstractLanguageSpanish")}</option>
-                        <option value="italian" className="bg-slate-900">{t("abstractLanguageItalian")}</option>
-                        <option value="portuguese" className="bg-slate-900">{t("abstractLanguagePortuguese")}</option>
+                        <option value="" className="bg-white">--</option>
+                        <option value="ukrainian" className="bg-white">{t("abstractLanguageUkrainian")}</option>
+                        <option value="english" className="bg-white">{t("abstractLanguageEnglish")}</option>
+                        <option value="german" className="bg-white">{t("abstractLanguageGerman")}</option>
+                        <option value="polish" className="bg-white">{t("abstractLanguagePolish")}</option>
+                        <option value="czech" className="bg-white">{t("abstractLanguageCzech")}</option>
+                        <option value="french" className="bg-white">{t("abstractLanguageFrench")}</option>
+                        <option value="spanish" className="bg-white">{t("abstractLanguageSpanish")}</option>
+                        <option value="italian" className="bg-white">{t("abstractLanguageItalian")}</option>
+                        <option value="portuguese" className="bg-white">{t("abstractLanguagePortuguese")}</option>
                       </select>
                     </div>
                   </div>
                   <div>
                     <label className={labelClass}>{t("thematicPanel")}</label>
                     <select className={inputClass} value={formData.thematicPanel} onChange={(e) => updateField("thematicPanel", e.target.value)}>
-                      <option value="" className="bg-slate-900">--</option>
+                      <option value="" className="bg-white">--</option>
                       {sections.map((sec) => (
-                        <option key={sec.id} value={sec.id} className="bg-slate-900">
+                        <option key={sec.id} value={sec.id} className="bg-white">
                           {sectionLabel(sec, i18n.language)}
                         </option>
                       ))}
@@ -608,64 +605,105 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className={labelClass}>{t("hasPresentation")}</p>
-                    <div className="mt-2 flex flex-wrap gap-4 rounded-md border border-white/20 bg-white/5 p-4">
-                      <label className="flex items-center gap-2 text-sm text-slate-100"><input type="radio" name="hasPresentation" value="yes" checked={formData.hasPresentation === "yes"} onChange={(e) => updateField("hasPresentation", e.target.value)} />{t("presentationYes")}</label>
-                      <label className="flex items-center gap-2 text-sm text-slate-100"><input type="radio" name="hasPresentation" value="no" checked={formData.hasPresentation === "no"} onChange={(e) => updateField("hasPresentation", e.target.value)} />{t("presentationNo")}</label>
+                    <div className="mt-2 flex flex-wrap gap-4 rounded-md border border-slate-200 bg-white p-4">
+                      <label className="flex items-center gap-2 text-sm text-slate-700"><input type="radio" name="hasPresentation" value="yes" checked={formData.hasPresentation === "yes"} onChange={(e) => updateField("hasPresentation", e.target.value)} />{t("presentationYes")}</label>
+                      <label className="flex items-center gap-2 text-sm text-slate-700"><input type="radio" name="hasPresentation" value="no" checked={formData.hasPresentation === "no"} onChange={(e) => updateField("hasPresentation", e.target.value)} />{t("presentationNo")}</label>
                     </div>
                   </div>
-                  <Button type="submit" size="lg" className="w-full md:w-auto" disabled={isSubmitting}>{t("dashboardSubmissionSubmit")}</Button>
+                  <Button type="submit" size="lg" variant="cta" className="w-full md:w-auto" disabled={isSubmitting}>{t("dashboardSubmissionSubmit")}</Button>
                 </form>
 
-                <div className="mt-8 rounded-md border border-white/15 bg-white/5 p-5">
-                  <h3 className="text-lg font-semibold text-white">{t("dashboardReviewTitle")}</h3>
-                  <p className="mt-1 text-sm text-slate-300">{t("dashboardReviewSubtitle")}</p>
+                <div className="mt-8 rounded-md border border-slate-200 bg-slate-50 p-5">
+                  <h3 className="text-lg font-semibold text-[#0F172A]">{t("dashboardReviewTitle")}</h3>
+                  <p className="mt-1 text-sm text-slate-600">{t("dashboardReviewSubtitle")}</p>
                   <div className="mt-4 space-y-3">
                     <div>
                       <label className={labelClass}>{t("dashboardReviewFileLabel")}</label>
-                      <input key={reviewInputKey} type="file" className={`${inputClass} h-auto py-2 file:mr-3 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary-foreground`} accept=".docx,.pdf" onChange={(e) => handleReviewFileChange(e.target.files?.[0] ?? null)} />
-                      <p className="mt-1 text-xs text-slate-400">{t("dashboardReviewFileHint")}</p>
+                      <input key={reviewInputKey} type="file" className={`${inputClass} h-auto py-2 file:mr-3 file:rounded file:border-0 file:bg-[#4F46E5] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white`} accept=".docx,.pdf" onChange={(e) => handleReviewFileChange(e.target.files?.[0] ?? null)} />
+                      <p className="mt-1 text-xs text-slate-500">{t("dashboardReviewFileHint")}</p>
                     </div>
-                    <Button type="button" size="lg" className="w-full md:w-auto" onClick={handleCheckWithAi} disabled={isCheckingWithAi}>{isCheckingWithAi ? t("dashboardReviewChecking") : t("dashboardReviewCheckButton")}</Button>
+                    <Button type="button" size="lg" variant="cta" className="w-full md:w-auto" onClick={handleCheckWithAi} disabled={isCheckingWithAi}>{isCheckingWithAi ? t("dashboardReviewChecking") : t("dashboardReviewCheckButton")}</Button>
                   </div>
 
-                  {reviewError && <div className="mt-4 rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{reviewError}</div>}
+                  {reviewError && <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{reviewError}</div>}
                   {reviewResult && (
-                    <div className="mt-4 space-y-4 rounded-md border border-white/15 bg-black/25 p-4">
-                      <h4 className="text-base font-semibold text-white">{t("dashboardReviewResultTitle")}</h4>
-                      {reviewResult.fileName && <p className="text-sm text-slate-300"><span className="font-medium text-slate-200">{t("dashboardReviewFileName")}:</span> {reviewResult.fileName}</p>}
+                    <div className="mt-4 space-y-4 rounded-md border border-slate-200 bg-white p-4">
+                      <h4 className="text-base font-semibold text-[#0F172A]">{t("dashboardReviewResultTitle")}</h4>
+                      {reviewResult.fileName && <p className="text-sm text-slate-600"><span className="font-medium text-slate-800">{t("dashboardReviewFileName")}:</span> {reviewResult.fileName}</p>}
                       {score !== null && (
                         <div className="space-y-3">
-                          <p className="text-sm text-slate-200"><span className="font-medium">{t("dashboardReviewScore")}:</span> {score}/{scoreMax}</p>
-                          <div className="h-3 w-full overflow-hidden rounded-full bg-white/10"><div className="h-full bg-emerald-400 transition-all" style={{ width: `${scorePercent}%` }} /></div>
+                          <p className="text-sm text-slate-700">
+                            <span className="font-medium">{t("dashboardReviewScore")}:</span> {score}/{scoreMax}
+                          </p>
+                          <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
+                            <div className="h-full bg-emerald-500 transition-all" style={{ width: `${scorePercent}%` }} />
+                          </div>
                         </div>
                       )}
                       {score !== null && !canSubmitForReview && (
-                        <div className="rounded-md border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                           {t("dashboardReviewNeedsImprovement")}
                         </div>
                       )}
                       {score !== null && canSubmitForReview && (
-                        <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                           {t("dashboardReviewReadyForSubmit")}
                         </div>
                       )}
-                      {reviewResult.summary && <p className="text-sm text-slate-300">{reviewResult.summary}</p>}
-                      <p className="text-sm font-medium text-emerald-400 mt-2">
+                      {reviewResult.summary && <p className="text-sm text-slate-600">{reviewResult.summary}</p>}
+                      <p className="mt-2 text-sm font-medium text-emerald-700">
                         ✓ Primary plagiarism check: {reviewResult.plagiarismWarning ?? "no indicators detected"}
                       </p>
-                      {!!reviewResult.issues?.length && <div><p className="text-sm font-medium text-slate-200">{t("dashboardReviewIssues")}:</p><ul className="list-disc pl-5 text-sm text-slate-300">{reviewResult.issues.map((item, idx) => <li key={`issue-${idx}`}>{item}</li>)}</ul></div>}
-                      {!!reviewResult.recommendations?.length && <div><p className="text-sm font-medium text-slate-200">{t("dashboardReviewRecommendations")}:</p><ul className="list-disc pl-5 text-sm text-slate-300">{reviewResult.recommendations.map((item, idx) => <li key={`rec-${idx}`}>{item}</li>)}</ul></div>}
-                      {!!reviewResult.formattingIssues?.length && <div><p className="text-sm font-medium text-slate-200">{t("dashboardReviewFormattingIssues")}:</p><ul className="list-disc pl-5 text-sm text-slate-300">{reviewResult.formattingIssues.map((item, idx) => <li key={`fmt-${idx}`}>{item}</li>)}</ul></div>}
-                      {reviewResult.motivationalMessage && <p className="text-sm text-slate-300">{reviewResult.motivationalMessage}</p>}
+                      {!!reviewResult.issues?.length && (
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">{t("dashboardReviewIssues")}:</p>
+                          <ul className="list-disc pl-5 text-sm text-slate-600">
+                            {reviewResult.issues.map((item, idx) => (
+                              <li key={`issue-${idx}`}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {!!reviewResult.recommendations?.length && (
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">{t("dashboardReviewRecommendations")}:</p>
+                          <ul className="list-disc pl-5 text-sm text-slate-600">
+                            {reviewResult.recommendations.map((item, idx) => (
+                              <li key={`rec-${idx}`}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {!!reviewResult.formattingIssues?.length && (
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">{t("dashboardReviewFormattingIssues")}:</p>
+                          <ul className="list-disc pl-5 text-sm text-slate-600">
+                            {reviewResult.formattingIssues.map((item, idx) => (
+                              <li key={`fmt-${idx}`}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {reviewResult.motivationalMessage && <p className="text-sm text-slate-600">{reviewResult.motivationalMessage}</p>}
 
-                      {submitForReviewError && <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{submitForReviewError}</div>}
-                      {submitForReviewSuccess && <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{submitForReviewSuccess}</div>}
+                      {submitForReviewError && (
+                        <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{submitForReviewError}</div>
+                      )}
+                      {submitForReviewSuccess && (
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{submitForReviewSuccess}</div>
+                      )}
                       {!canSubmitForReview ? (
-                        <Button type="button" size="lg" variant="outline" className="w-full border-white text-white hover:bg-white/10 md:w-auto" onClick={handleResetReviewFile}>
+                        <Button
+                          type="button"
+                          size="lg"
+                          variant="outline"
+                          className="public-tech-outline-btn w-full md:w-auto"
+                          onClick={handleResetReviewFile}
+                        >
                           {t("dashboardReviewUploadNewVersion")}
                         </Button>
                       ) : (
-                        <Button type="button" size="lg" className="w-full md:w-auto" onClick={handleSubmitForReview} disabled={isSubmittingForReview}>
+                        <Button type="button" size="lg" variant="cta" className="w-full md:w-auto" onClick={handleSubmitForReview} disabled={isSubmittingForReview}>
                           {t("dashboardSubmitForReview")}
                         </Button>
                       )}
@@ -677,7 +715,6 @@ export default function DashboardPage() {
             </Card>
           </div>
         </div>
-      </section>
     </main>
   );
 }

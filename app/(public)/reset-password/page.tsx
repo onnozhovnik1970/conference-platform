@@ -120,92 +120,84 @@ export default function ResetPasswordPage() {
     }
   };
 
-  const inputClass =
-    "mt-2 h-11 w-full rounded-md border border-white/20 bg-white/5 px-3 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40";
-  const labelClass = "block text-sm font-medium text-slate-100";
+  const inputClass = "public-tech-input";
+  const labelClass = "public-tech-label";
 
   return (
-    <main className="min-h-screen">
-      <section className="animated-academic-gradient relative min-h-screen overflow-hidden py-6 md:py-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(30,58,138,0.35),_transparent_50%)]" />
-        <div className="absolute inset-0 bg-[#0c1929]/40" />
-
-        <div className="container relative z-10">
-          <div className="mx-auto mt-6 flex max-w-xl justify-end pb-2 md:mt-8">
-            <Button asChild size="sm" variant="secondary">
-              <Link href="/login">{t("navLogin")}</Link>
-            </Button>
-          </div>
-
-          <div className="mx-auto max-w-xl pb-10">
-            <Card className="border-blue-950/60 bg-[#0f2744]/85 shadow-xl shadow-black/20 backdrop-blur-md">
-              <CardHeader>
-                <CardTitle className="text-3xl text-white">{t("resetPasswordTitle")}</CardTitle>
-                <CardDescription className="text-slate-300">{t("resetPasswordSubtitle")}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isVerifyingLink && (
-                  <p className="text-sm text-slate-300">{t("resetPasswordVerifying")}</p>
-                )}
-
-                {!isVerifyingLink && linkError && (
-                  <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                    {linkError}
-                    <div className="mt-3">
-                      <Button asChild variant="secondary" size="sm">
-                        <Link href="/login">{t("navLogin")}</Link>
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {!isVerifyingLink && linkReady && (
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    {formError && (
-                      <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                        {formError}
-                      </div>
-                    )}
-                    <div>
-                      <label htmlFor="new-password" className={labelClass}>
-                        {t("resetPasswordNew")}
-                      </label>
-                      <input
-                        id="new-password"
-                        type="password"
-                        autoComplete="new-password"
-                        value={newPassword}
-                        onChange={(event) => setNewPassword(event.target.value)}
-                        className={inputClass}
-                        required
-                        minLength={MIN_PASSWORD_LENGTH}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="confirm-password" className={labelClass}>
-                        {t("confirmPassword")}
-                      </label>
-                      <input
-                        id="confirm-password"
-                        type="password"
-                        autoComplete="new-password"
-                        value={confirmPassword}
-                        onChange={(event) => setConfirmPassword(event.target.value)}
-                        className={inputClass}
-                        required
-                        minLength={MIN_PASSWORD_LENGTH}
-                      />
-                    </div>
-                    <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? t("resetPasswordSubmitting") : t("resetPasswordSubmit")}
-                    </Button>
-                  </form>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+    <main className="min-h-screen bg-[#F8FAFC] py-10 md:py-14">
+      <div className="container">
+        <div className="mx-auto mt-2 flex max-w-xl justify-end pb-2 md:mt-4">
+          <Button asChild size="sm" variant="outline" className="public-tech-outline-btn">
+            <Link href="/login">{t("navLogin")}</Link>
+          </Button>
         </div>
-      </section>
+
+        <div className="mx-auto max-w-xl pb-10">
+          <Card className="public-tech-card">
+            <CardHeader>
+              <CardTitle className="text-3xl text-[#0F172A]">{t("resetPasswordTitle")}</CardTitle>
+              <CardDescription className="text-slate-600">{t("resetPasswordSubtitle")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isVerifyingLink && <p className="text-sm text-slate-600">{t("resetPasswordVerifying")}</p>}
+
+              {!isVerifyingLink && linkError && (
+                <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {linkError}
+                  <div className="mt-3">
+                    <Button asChild variant="outline" size="sm" className="public-tech-outline-btn">
+                      <Link href="/login">{t("navLogin")}</Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {!isVerifyingLink && linkReady && (
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  {formError && (
+                    <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                      {formError}
+                    </div>
+                  )}
+                  <div>
+                    <label htmlFor="new-password" className={labelClass}>
+                      {t("resetPasswordNew")}
+                    </label>
+                    <input
+                      id="new-password"
+                      type="password"
+                      autoComplete="new-password"
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      className={inputClass}
+                      required
+                      minLength={MIN_PASSWORD_LENGTH}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="confirm-password" className={labelClass}>
+                      {t("confirmPassword")}
+                    </label>
+                    <input
+                      id="confirm-password"
+                      type="password"
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      className={inputClass}
+                      required
+                      minLength={MIN_PASSWORD_LENGTH}
+                    />
+                  </div>
+                  <Button type="submit" size="lg" variant="cta" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? t("resetPasswordSubmitting") : t("resetPasswordSubmit")}
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </main>
   );
 }

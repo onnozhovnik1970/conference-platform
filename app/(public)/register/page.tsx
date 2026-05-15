@@ -37,9 +37,8 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const inputClass =
-    "mt-2 h-11 w-full rounded-md border border-white/20 bg-white/5 px-3 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40";
-  const labelClass = "block text-sm font-medium text-slate-100";
+  const inputClass = "public-tech-input";
+  const labelClass = "public-tech-label";
 
   const validate = () => {
     const nextErrors: Partial<Record<keyof FormData, string>> = {};
@@ -146,21 +145,18 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="min-h-screen">
-      <section className="animated-academic-gradient relative overflow-hidden py-6 md:py-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.25),_transparent_45%)]" />
-
-        <div className="container relative z-10">
-          <div className="mx-auto mt-6 max-w-3xl pb-10 md:mt-10">
-            <Card className="border-white/10 bg-black/35 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-3xl text-white">{t("registerTitle")}</CardTitle>
-                <CardDescription className="text-slate-300">{t("registerSubtitle")}</CardDescription>
-              </CardHeader>
+    <main className="min-h-screen bg-[#F8FAFC] py-10 md:py-14">
+      <div className="container">
+        <div className="mx-auto mt-2 max-w-3xl pb-10 md:mt-4">
+          <Card className="public-tech-card">
+            <CardHeader>
+              <CardTitle className="text-3xl text-[#0F172A]">{t("registerTitle")}</CardTitle>
+              <CardDescription className="text-slate-600">{t("registerSubtitle")}</CardDescription>
+            </CardHeader>
 
               <CardContent>
                 {submitError && (
-                  <div className="mb-6 rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+                  <div className="mb-6 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                     {submitError}
                   </div>
                 )}
@@ -170,24 +166,24 @@ export default function RegisterPage() {
                     <div>
                       <label className={labelClass}>{t("lastName")}</label>
                       <input className={inputClass} value={formData.lastName} onChange={(e) => updateField("lastName", e.target.value)} />
-                      {errors.lastName && <p className="mt-1 text-xs text-rose-300">{errors.lastName}</p>}
+                      {errors.lastName && <p className="mt-1 text-xs text-rose-600">{errors.lastName}</p>}
                     </div>
                     <div>
                       <label className={labelClass}>{t("firstName")}</label>
                       <input className={inputClass} value={formData.firstName} onChange={(e) => updateField("firstName", e.target.value)} />
-                      {errors.firstName && <p className="mt-1 text-xs text-rose-300">{errors.firstName}</p>}
+                      {errors.firstName && <p className="mt-1 text-xs text-rose-600">{errors.firstName}</p>}
                     </div>
                     <div>
                       <label className={labelClass}>{t("middleName")}</label>
                       <input className={inputClass} value={formData.middleName} onChange={(e) => updateField("middleName", e.target.value)} />
-                      {errors.middleName && <p className="mt-1 text-xs text-rose-300">{errors.middleName}</p>}
+                      {errors.middleName && <p className="mt-1 text-xs text-rose-600">{errors.middleName}</p>}
                     </div>
                   </div>
 
                   <div>
                     <label className={labelClass}>{t("institution")}</label>
                     <input className={inputClass} value={formData.institution} onChange={(e) => updateField("institution", e.target.value)} />
-                    {errors.institution && <p className="mt-1 text-xs text-rose-300">{errors.institution}</p>}
+                    {errors.institution && <p className="mt-1 text-xs text-rose-600">{errors.institution}</p>}
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-3">
@@ -199,7 +195,7 @@ export default function RegisterPage() {
                         value={formData.email}
                         onChange={(e) => updateField("email", e.target.value)}
                       />
-                      {errors.email && <p className="mt-1 text-xs text-rose-300">{errors.email}</p>}
+                      {errors.email && <p className="mt-1 text-xs text-rose-600">{errors.email}</p>}
                     </div>
                     <div>
                       <label className={labelClass}>{t("password")}</label>
@@ -209,7 +205,7 @@ export default function RegisterPage() {
                         value={formData.password}
                         onChange={(e) => updateField("password", e.target.value)}
                       />
-                      {errors.password && <p className="mt-1 text-xs text-rose-300">{errors.password}</p>}
+                      {errors.password && <p className="mt-1 text-xs text-rose-600">{errors.password}</p>}
                     </div>
                     <div>
                       <label className={labelClass}>{t("confirmPassword")}</label>
@@ -219,11 +215,11 @@ export default function RegisterPage() {
                         value={formData.confirmPassword}
                         onChange={(e) => updateField("confirmPassword", e.target.value)}
                       />
-                      {errors.confirmPassword && <p className="mt-1 text-xs text-rose-300">{errors.confirmPassword}</p>}
+                      {errors.confirmPassword && <p className="mt-1 text-xs text-rose-600">{errors.confirmPassword}</p>}
                     </div>
                   </div>
 
-                  <Button type="submit" size="lg" className="w-full md:w-auto" disabled={isSubmitting}>
+                  <Button type="submit" size="lg" variant="cta" className="w-full md:w-auto" disabled={isSubmitting}>
                     {t("registerSubmit")}
                   </Button>
                 </form>
@@ -231,7 +227,6 @@ export default function RegisterPage() {
             </Card>
           </div>
         </div>
-      </section>
     </main>
   );
 }

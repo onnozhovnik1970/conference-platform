@@ -74,29 +74,25 @@ export default function LoginPage() {
     }
   };
 
-  const inputClass =
-    "mt-2 h-11 w-full rounded-md border border-white/20 bg-white/5 px-3 text-sm text-white placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40";
-  const labelClass = "block text-sm font-medium text-slate-100";
+  const inputClass = "public-tech-input";
+  const labelClass = "public-tech-label";
 
   return (
-    <main className="min-h-screen">
-      <section className="animated-academic-gradient relative overflow-hidden py-6 md:py-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.25),_transparent_45%)]" />
-
-        <div className="container relative z-10">
-          <div className="mx-auto mt-6 max-w-xl pb-10 md:mt-10">
-            <Card className="border-white/10 bg-black/35 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-3xl text-white">{t("loginTitle")}</CardTitle>
-                <CardDescription className="text-slate-300">{t("loginSubtitle")}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  {authError && (
-                    <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                      {authError}
-                    </div>
-                  )}
+    <main className="min-h-screen bg-[#F8FAFC] py-10 md:py-14">
+      <div className="container">
+        <div className="mx-auto mt-2 max-w-xl pb-10 md:mt-4">
+          <Card className="public-tech-card">
+            <CardHeader>
+              <CardTitle className="text-3xl text-[#0F172A]">{t("loginTitle")}</CardTitle>
+              <CardDescription className="text-slate-600">{t("loginSubtitle")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {authError && (
+                  <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    {authError}
+                  </div>
+                )}
                   <div>
                     <label htmlFor="email" className={labelClass}>
                       {t("email")}
@@ -130,20 +126,20 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={openForgotPassword}
-                      className="mt-2 text-sm text-primary hover:underline"
+                      className="public-tech-link mt-2 text-sm"
                     >
                       {t("loginForgotPassword")}
                     </button>
                   </div>
 
-                  <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                  <Button type="submit" size="lg" variant="cta" className="w-full" disabled={isSubmitting}>
                     {t("loginSubmit")}
                   </Button>
                 </form>
 
                 {showForgotPassword && (
-                  <div className="mt-6 space-y-4 border-t border-white/10 pt-6">
-                    <p className="text-sm text-slate-300">{t("loginResetPasswordHint")}</p>
+                  <div className="mt-6 space-y-4 border-t border-slate-200 pt-6">
+                    <p className="text-sm text-slate-600">{t("loginResetPasswordHint")}</p>
                     <div>
                       <label htmlFor="reset-email" className={labelClass}>
                         {t("email")}
@@ -159,18 +155,19 @@ export default function LoginPage() {
                       />
                     </div>
                     {resetError && (
-                      <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                      <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                         {resetError}
                       </div>
                     )}
                     {resetSuccess && (
-                      <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                      <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                         {t("loginResetLinkSuccess")}
                       </div>
                     )}
                     <Button
                       type="button"
                       size="lg"
+                      variant="cta"
                       className="w-full"
                       disabled={isSendingReset || !resetEmail.trim()}
                       onClick={() => void handleSendResetLink()}
@@ -183,7 +180,6 @@ export default function LoginPage() {
             </Card>
           </div>
         </div>
-      </section>
     </main>
   );
 }

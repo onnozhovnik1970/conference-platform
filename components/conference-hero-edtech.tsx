@@ -53,6 +53,8 @@ function isZoomRedundantLocation(location: string, zoomLabel: string): boolean {
   return mentionsZoom && mentionsOnline;
 }
 
+const HERO_FLOAT_EMOJIS = ["🎤", "📖", "🌍", "🎓", "⚡"] as const;
+
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },
@@ -64,62 +66,58 @@ function rand(min: number, max: number): number {
   return min + Math.random() * (max - min);
 }
 
-type HeroEmojiSlots = {
-  mic: CSSProperties;
-  cam: CSSProperties;
-  books: CSSProperties;
-  projector: CSSProperties;
-  podium: CSSProperties;
-  chart: CSSProperties;
-};
+type HeroEmojiSlot = CSSProperties;
 
-/**
- * Six emojis in four corners only (two stacked in each top corner, one per bottom corner) — kept away from vertical center / title block.
- */
-function buildHeroEmojiSlots(): HeroEmojiSlots {
+/** Five corner-band positions (randomized after mount) — away from vertical center / title block. */
+function buildHeroEmojiSlots(): HeroEmojiSlot[] {
   const jitter = () => rand(-0.9, 0.9);
   const pct = (min: number, max: number) =>
     Math.min(max + 1.1, Math.max(min - 0.25, rand(min, max) + jitter()));
 
-  return {
-    mic: { top: `${pct(2, 5.5)}%`, left: `${pct(2, 5.5)}%` },
-    podium: { top: `${pct(11, 15.5)}%`, left: `${pct(2.5, 6.5)}%` },
-    cam: { top: `${pct(2, 5.5)}%`, right: `${pct(2, 5.5)}%` },
-    chart: { top: `${pct(11, 15.5)}%`, right: `${pct(2.5, 6.5)}%` },
-    books: { bottom: `${pct(3, 7)}%`, left: `${pct(2.5, 6.5)}%` },
-    projector: { bottom: `${pct(3, 7)}%`, right: `${pct(2.5, 6.5)}%` }
-  };
+  return [
+    { top: `${pct(2, 5.5)}%`, left: `${pct(2, 5.5)}%` },
+    { top: `${pct(2, 5.5)}%`, right: `${pct(2, 5.5)}%` },
+    { top: `${pct(11, 16)}%`, left: `${pct(2.5, 7)}%` },
+    { top: `${pct(11, 16)}%`, right: `${pct(2.5, 7)}%` },
+    { bottom: `${pct(3, 7)}%`, left: `${pct(38, 52)}%` }
+  ];
 }
 
-type FloatingEmojiProps = {
+type FloatingNeonEmojiProps = {
   emoji: string;
-  positionStyle: CSSProperties;
+  positionStyle: HeroEmojiSlot;
   floatDuration: number;
   reducedMotion: boolean | null;
-  sizeClass: string;
+  /** Alternates cyan vs pink glow */
+  glowIndex: number;
 };
 
-/** Bare emoji — decorative layer only; keep z-index below copy (see parent wrapper). */
-function FloatingEmoji({ emoji, positionStyle, floatDuration, reducedMotion, sizeClass }: FloatingEmojiProps) {
+/** Bare emoji (48px) with neon drop-shadow — no extra box or background. */
+function FloatingNeonEmoji({ emoji, positionStyle, floatDuration, reducedMotion, glowIndex }: FloatingNeonEmojiProps) {
+  const filter =
+    glowIndex % 2 === 0
+      ? "drop-shadow(0 0 12px rgba(0, 240, 255, 0.6))"
+      : "drop-shadow(0 0 12px rgba(255, 42, 122, 0.6))";
+
   return (
-    <div className="pointer-events-none absolute z-0" style={positionStyle} aria-hidden>
-      <motion.div
-        animate={reducedMotion ? undefined : { y: [0, -8, 0] }}
-        transition={
-          reducedMotion ? undefined : { duration: floatDuration, repeat: Infinity, ease: "easeInOut" as const }
-        }
-        className={`select-none bg-transparent leading-none ${sizeClass}`}
-        role="presentation"
-      >
-        <span aria-hidden>{emoji}</span>
-      </motion.div>
-    </div>
+    <motion.span
+      className="pointer-events-none absolute z-[3] select-none leading-none"
+      style={{ ...positionStyle, fontSize: 48, filter }}
+      aria-hidden
+      role="presentation"
+      animate={reducedMotion ? undefined : { y: [0, -8, 0] }}
+      transition={
+        reducedMotion ? undefined : { duration: floatDuration, repeat: Infinity, ease: "easeInOut" as const }
+      }
+    >
+      {emoji}
+    </motion.span>
   );
 }
 
 /**
- * Full-width hero: `hero_image_url` cover, overlay, H1 (`title`/`title_ua`) + optional H2 (`hero_subtitle`/`hero_subtitle_ua`) + CTAs.
- * Dark blue gradient fallback when URL is missing or the image fails. Six floating emojis in corner bands only (below copy).
+ * Full-width hero: `hero_image_url` cover, overlay, H1/H2 + CTAs.
+ * Five bare neon emojis (🎤 📖 🌍 🎓 ⚡) in corner bands — no per-emoji boxes or backgrounds.
  */
 export function ConferenceHeroEdtech() {
   const { t, i18n } = useTranslation();
@@ -130,7 +128,7 @@ export function ConferenceHeroEdtech() {
   const heroUrlRaw = settings.hero_image_url?.trim() ?? "";
   const heroImageSrc = useMemo(() => normalizeHeroImageUrl(heroUrlRaw), [heroUrlRaw]);
   const [bgFailed, setBgFailed] = useState(false);
-  const [emojiSlots, setEmojiSlots] = useState<HeroEmojiSlots | null>(null);
+  const [emojiSlots, setEmojiSlots] = useState<HeroEmojiSlot[] | null>(null);
 
   useEffect(() => {
     setEmojiSlots(buildHeroEmojiSlots());
@@ -175,7 +173,7 @@ export function ConferenceHeroEdtech() {
     return raw;
   }, [settings.location, loc, t]);
 
-  const emojiSizeClass = "text-[40px] sm:text-4xl md:text-5xl";
+  const floatDurations = [3.5, 4, 3.2, 3.6, 3.45] as const;
 
   return (
     <section
@@ -206,55 +204,18 @@ export function ConferenceHeroEdtech() {
         </>
       ) : null}
 
-      {emojiSlots ? (
-        <div
-          className="pointer-events-none absolute inset-0 z-[3] overflow-hidden"
-          aria-hidden
-        >
-          <FloatingEmoji
-            emoji="🎤"
-            positionStyle={emojiSlots.mic}
-            floatDuration={3.5}
-            reducedMotion={reducedMotion}
-            sizeClass={emojiSizeClass}
-          />
-          <FloatingEmoji
-            emoji="📷"
-            positionStyle={emojiSlots.cam}
-            floatDuration={4}
-            reducedMotion={reducedMotion}
-            sizeClass={emojiSizeClass}
-          />
-          <FloatingEmoji
-            emoji="📚"
-            positionStyle={emojiSlots.books}
-            floatDuration={3.2}
-            reducedMotion={reducedMotion}
-            sizeClass={emojiSizeClass}
-          />
-          <FloatingEmoji
-            emoji="📽️"
-            positionStyle={emojiSlots.projector}
-            floatDuration={3.6}
-            reducedMotion={reducedMotion}
-            sizeClass={emojiSizeClass}
-          />
-          <FloatingEmoji
-            emoji="🎙️"
-            positionStyle={emojiSlots.podium}
-            floatDuration={3.45}
-            reducedMotion={reducedMotion}
-            sizeClass={emojiSizeClass}
-          />
-          <FloatingEmoji
-            emoji="📊"
-            positionStyle={emojiSlots.chart}
-            floatDuration={3.75}
-            reducedMotion={reducedMotion}
-            sizeClass={emojiSizeClass}
-          />
-        </div>
-      ) : null}
+      {emojiSlots
+        ? HERO_FLOAT_EMOJIS.map((emoji, i) => (
+            <FloatingNeonEmoji
+              key={emoji}
+              emoji={emoji}
+              positionStyle={emojiSlots[i]!}
+              floatDuration={floatDurations[i]}
+              reducedMotion={reducedMotion}
+              glowIndex={i}
+            />
+          ))
+        : null}
 
       <div className="relative z-20 mx-auto box-border flex w-full max-w-full flex-1 flex-col justify-center px-4 py-14 sm:px-6 sm:py-16 md:py-20">
         <motion.div
@@ -302,7 +263,8 @@ export function ConferenceHeroEdtech() {
             <Button
               asChild
               size="lg"
-              className="h-12 w-full max-w-xs border-0 bg-white text-base font-semibold text-slate-900 shadow-md shadow-black/25 sm:h-14 sm:max-w-none sm:min-w-[12rem] sm:w-auto"
+              variant="cta"
+              className="h-12 w-full max-w-xs text-base sm:h-14 sm:max-w-none sm:min-w-[12rem] sm:w-auto"
             >
               <Link href="/register">{t("heroRegisterNow")}</Link>
             </Button>
