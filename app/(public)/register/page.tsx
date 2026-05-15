@@ -148,10 +148,10 @@ export default function RegisterPage() {
     <main className="min-h-screen bg-[#F8FAFC] py-10 md:py-14">
       <div className="container">
         <div className="mx-auto mt-2 max-w-3xl pb-10 md:mt-4">
-          <Card className="public-tech-card">
+          <Card className="border border-slate-200 bg-white text-[#0F172A] shadow-[0_4px_24px_rgba(108,99,255,0.08)]">
             <CardHeader>
               <CardTitle className="text-3xl text-[#0F172A]">{t("registerTitle")}</CardTitle>
-              <CardDescription className="text-slate-600">{t("registerSubtitle")}</CardDescription>
+              <CardDescription className="text-sm text-slate-600">{t("registerSubtitle")}</CardDescription>
             </CardHeader>
 
               <CardContent>

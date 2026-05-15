@@ -81,11 +81,11 @@ export default function HomePage() {
 
       <section className="public-tech-section-alt container border-t border-slate-200/80 pb-14 md:pb-20">
         <h2 className="mb-8 text-center text-3xl font-bold text-[#0F172A] md:mb-10">{t("howToParticipate")}</h2>
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-4 pb-1 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0 md:snap-none">
           {steps.map(({ icon: Icon, titleKey, descriptionKey }, index) => (
             <Card
               key={titleKey}
-              className="rounded-xl border border-[rgba(108,99,255,0.2)] bg-white/80 text-[#0F172A] shadow-[0_4px_24px_rgba(79,70,229,0.08)] backdrop-blur-md supports-[backdrop-filter]:bg-[#F8FAFC]/75"
+              className="w-[80vw] max-w-[80vw] shrink-0 snap-start rounded-xl border border-[rgba(108,99,255,0.2)] bg-white/80 text-[#0F172A] shadow-[0_4px_24px_rgba(79,70,229,0.08)] backdrop-blur-md supports-[backdrop-filter]:bg-[#F8FAFC]/75 md:w-auto md:max-w-none md:shrink md:snap-align-none"
             >
               <CardHeader>
                 <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#6C63FF]/12 text-[#6C63FF]">

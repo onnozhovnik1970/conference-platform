@@ -81,10 +81,10 @@ export default function LoginPage() {
     <main className="min-h-screen bg-[#F8FAFC] py-10 md:py-14">
       <div className="container">
         <div className="mx-auto mt-2 max-w-xl pb-10 md:mt-4">
-          <Card className="public-tech-card">
+          <Card className="border border-slate-200 bg-white text-[#0F172A] shadow-[0_4px_24px_rgba(108,99,255,0.08)]">
             <CardHeader>
               <CardTitle className="text-3xl text-[#0F172A]">{t("loginTitle")}</CardTitle>
-              <CardDescription className="text-slate-600">{t("loginSubtitle")}</CardDescription>
+              <CardDescription className="text-sm text-slate-600">{t("loginSubtitle")}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-5">

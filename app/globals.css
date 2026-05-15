@@ -80,11 +80,11 @@
   }
 
   .public-tech-input {
-    @apply mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-[#0F172A] placeholder:text-slate-400 focus:border-[#4F46E5] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/25;
+    @apply mt-2 h-11 w-full rounded-md border border-slate-300 bg-[#F8FAFC] px-3 text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#4F46E5] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/25;
   }
 
   .public-tech-label {
-    @apply block text-sm font-medium text-slate-700;
+    @apply block text-sm font-medium text-[#0F172A];
   }
 
   .public-tech-link {
@@ -93,5 +93,16 @@
 
   .public-tech-outline-btn {
     @apply border border-slate-200 bg-white/90 font-semibold text-[#0F172A] shadow-sm hover:bg-slate-50;
+  }
+}
+
+@layer utilities {
+  /* Horizontal scroll strips: keep scrolling, hide scrollbar (WebKit + Firefox) */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
