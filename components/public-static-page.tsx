@@ -11,6 +11,8 @@ import { useConferenceSettings } from "@/components/conference-settings-provider
 import { Button } from "@/components/ui/button";
 import { resolvedSupportPhoneDisplay, resolvedSupportPhoneTelHref, supportEmailTrimmed } from "@/lib/conference-contact-urls";
 import { EDITABLE_PAGES_META, type EditablePageSlug, type PageContentRow } from "@/lib/editable-pages";
+import { publicSitePrimaryBtnClass } from "@/lib/public-site-buttons";
+import { cn } from "@/lib/utils";
 import "@/lib/i18n/config";
 
 const staticPageMarkdownComponents: Partial<Components> = {
@@ -150,7 +152,7 @@ export function PublicStaticPage({ slug }: { slug: EditablePageSlug }) {
         </div>
       )}
       {slug === "contact" ? <ConferenceContactChannels /> : null}
-      <Button asChild className="mt-8 public-tech-outline-btn" variant="outline">
+      <Button asChild variant="cta" className={cn("mt-8 h-auto min-h-0 border-0 shadow-none", publicSitePrimaryBtnClass)}>
         <Link href="/">{t("navHome")}</Link>
       </Button>
     </main>

@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { Button } from "@/components/ui/button";
 import { resolvedSupportPhoneDisplay, resolvedSupportPhoneTelHref, supportEmailTrimmed } from "@/lib/conference-contact-urls";
+import { publicSitePrimaryBtnClass } from "@/lib/public-site-buttons";
+import { cn } from "@/lib/utils";
 import "@/lib/i18n/config";
 
 export default function SupportPage() {
@@ -35,7 +37,7 @@ export default function SupportPage() {
           </li>
         ) : null}
       </ul>
-      <Button asChild className="mt-8 public-tech-outline-btn" variant="outline">
+      <Button asChild variant="cta" className={cn("mt-8 h-auto min-h-0 border-0 shadow-none", publicSitePrimaryBtnClass)}>
         <Link href="/">{t("navHome")}</Link>
       </Button>
     </main>
