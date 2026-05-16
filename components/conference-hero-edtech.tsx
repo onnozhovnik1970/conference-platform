@@ -183,18 +183,29 @@ export function ConferenceHeroEdtech() {
 
   const floatDurations = [3.5, 4, 3.2, 3.6, 3.45] as const;
 
+  const heroBtnBase =
+    "inline-flex h-auto w-full items-center justify-center px-8 py-3 min-w-[160px] rounded-full text-base font-semibold transition-all duration-200 ease-in-out sm:w-auto";
+  const heroRegisterBtnClass = `${heroBtnBase} border-0 bg-[#0f2347] text-white shadow-none hover:border-0 hover:bg-[#1a3a6b] hover:text-white hover:shadow-[0_0_20px_rgba(15,35,71,0.4)] hover:scale-[1.03]`;
+  const heroLoginBtnClass = onPhotoBanner
+    ? `${heroBtnBase} border-2 border-[#0f2347] bg-transparent text-[#0f2347] shadow-none hover:border-[#0f2347] hover:bg-[#0f2347] hover:text-white hover:scale-[1.03]`
+    : `${heroBtnBase} border-2 border-white bg-transparent text-white shadow-none hover:bg-white hover:text-[#0f2347] hover:scale-[1.03]`;
+
   return (
     <section
       className={`relative isolate box-border flex min-h-[max(400px,min(85svh,880px))] w-full max-w-full flex-col justify-center overflow-hidden ${interHero.className}`}
     >
-      {/* Banner base — visible navy gradient (always; image layers on top when set) */}
+      {/* Banner base — teal while hero image loads; navy gradient when image absent or failed */}
       <div
-        className="pointer-events-none absolute inset-0 z-0 min-h-[400px] bg-gradient-to-br from-[#0f2347] via-[#1a3a6b] to-[#243b6b]"
+        className={
+          showPhotoBg
+            ? "pointer-events-none absolute inset-0 z-0 min-h-[400px] bg-[#3aacaa]"
+            : "pointer-events-none absolute inset-0 z-0 min-h-[400px] bg-gradient-to-br from-[#0f2347] via-[#1a3a6b] to-[#243b6b]"
+        }
         aria-hidden
       />
 
       {showPhotoBg && heroImageSrc ? (
-        <div className="pointer-events-none absolute inset-0 z-[1] min-h-[400px]">
+        <div className="pointer-events-none absolute inset-0 z-[1] min-h-[400px] bg-[#3aacaa]">
           <div className="relative h-full min-h-[400px] w-full">
             <Image
               src={heroImageSrc}
@@ -202,7 +213,7 @@ export function ConferenceHeroEdtech() {
               fill
               priority
               sizes="100vw"
-              className="object-cover"
+              className="object-cover object-center"
               unoptimized
               onError={() => setBgFailed(true)}
               referrerPolicy="no-referrer"
@@ -210,6 +221,9 @@ export function ConferenceHeroEdtech() {
           </div>
         </div>
       ) : null}
+
+      {/* Light wash — brightens gradient / photo without a dark scrim */}
+      <div className="pointer-events-none absolute inset-0 z-[2] min-h-[400px] bg-white/10" aria-hidden />
 
       {emojiSlots
         ? HERO_FLOAT_EMOJIS.map((emoji, i) => (
@@ -265,19 +279,11 @@ export function ConferenceHeroEdtech() {
             </h2>
           ) : null}
 
-          <div className="mt-10 flex w-full max-w-full flex-col gap-3 sm:flex sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center">
-            <Button asChild variant="cta" className="w-full max-w-xs sm:w-auto sm:min-w-[12rem]">
+          <div className="mt-10 flex w-full max-w-full flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+            <Button asChild variant="outline" className={heroRegisterBtnClass}>
               <Link href="/register">{t("heroRegisterNow")}</Link>
             </Button>
-            <Button
-              asChild
-              variant="outline"
-              className={
-                onPhotoBanner
-                  ? "h-auto w-full max-w-xs rounded-full border-2 border-[#0f2347] bg-transparent px-8 py-3 text-base font-semibold text-[#0f2347] shadow-none transition-all duration-200 ease-in-out hover:scale-[1.03] hover:border-[#0f2347] hover:bg-[#0f2347] hover:text-white sm:w-auto sm:min-w-[12rem]"
-                  : "h-auto w-full max-w-xs rounded-full border-2 border-white bg-transparent px-8 py-3 text-base font-semibold text-white shadow-none transition-all duration-200 ease-in-out hover:scale-[1.03] hover:bg-white hover:text-[#0f2347] sm:w-auto sm:min-w-[12rem]"
-              }
-            >
+            <Button asChild variant="outline" className={heroLoginBtnClass}>
               <Link href="/login">{t("navLogin")}</Link>
             </Button>
           </div>
