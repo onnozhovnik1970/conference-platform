@@ -51,7 +51,7 @@ type SubmissionForm = {
 };
 
 type LatestSubmissionRow = {
-  id: number;
+  id: number | string;
   status: string | null;
   ai_score: number | null;
   ai_summary: string | null;
@@ -214,10 +214,16 @@ export default function DashboardPage() {
 
   const saveAiReviewToDatabase = useCallback(
     async (
-      submissionId: number,
+      submissionId: number | string,
       review: DashboardReviewResult,
       filePath: string | null
     ): Promise<{ ok: true; row: LatestSubmissionRow } | { ok: false; error: string }> => {
+      const id = String(submissionId).trim();
+      if (!id || id === "undefined" || id === "NaN") {
+        console.error("dashboard save ai review error: invalid submission id", { submissionId });
+        return { ok: false, error: "invalid_id" };
+      }
+
       const {
         data: { session }
       } = await supabase.auth.getSession();
@@ -226,23 +232,35 @@ export default function DashboardPage() {
         return { ok: false, error: "auth" };
       }
 
-      const response = await fetch(`/api/dashboard/submissions/${encodeURIComponent(String(submissionId))}/ai-review`, {
-        method: "PATCH",
+      const requestBody = {
+        submission_id: id,
+        review: {
+          score: review.score,
+          scoreMax: review.scoreMax ?? 10,
+          summary: review.summary ?? null,
+          issues: review.issues ?? [],
+          recommendations: review.recommendations ?? [],
+          formattingIssues: review.formattingIssues ?? []
+        },
+        ...(filePath ? { file_path: filePath } : {})
+      };
+
+      const response = await fetch("/api/dashboard/submissions/ai-review", {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          review,
-          ...(filePath ? { file_path: filePath } : {})
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
         try {
           const body = (await response.json()) as { error?: string };
+          console.error("dashboard save ai review error:", response.status, body, requestBody);
           return { ok: false, error: body.error?.trim() || "save" };
         } catch {
+          console.error("dashboard save ai review error:", response.status, requestBody);
           return { ok: false, error: "save" };
         }
       }
@@ -285,7 +303,7 @@ export default function DashboardPage() {
   );
 
   const upsertEditableSubmission = useCallback(
-    async (form: SubmissionForm): Promise<{ id: number } | { error: string }> => {
+    async (form: SubmissionForm): Promise<{ id: number | string; row: LatestSubmissionRow } | { error: string }> => {
       if (!userId) {
         return { error: "auth" };
       }
@@ -297,16 +315,18 @@ export default function DashboardPage() {
       if (latest?.id && canEditSubmission(latestStatus)) {
         const nextStatus =
           latestStatus === "needs_revision" ? "needs_revision" : SUBMISSION_STATUS_DRAFT;
-        const { error: updateError } = await supabase
+        const { data, error: updateError } = await supabase
           .from("submissions")
           .update({ ...payload, status: nextStatus })
-          .eq("id", latest.id);
+          .eq("id", latest.id)
+          .select(SUBMISSION_SELECT)
+          .single();
 
-        if (updateError) {
+        if (updateError || !data?.id) {
           console.log("dashboard submission update error:", updateError);
           return { error: "save" };
         }
-        return { id: latest.id };
+        return { id: data.id, row: data as LatestSubmissionRow };
       }
 
       if (latest && isSubmissionLocked(latestStatus)) {
@@ -324,7 +344,7 @@ export default function DashboardPage() {
           status: SUBMISSION_STATUS_DRAFT,
           ...payload
         })
-        .select("id")
+        .select(SUBMISSION_SELECT)
         .single();
 
       if (insertError || !data?.id) {
@@ -332,13 +352,13 @@ export default function DashboardPage() {
         return { error: "save" };
       }
 
-      return { id: data.id as number };
+      return { id: data.id, row: data as LatestSubmissionRow };
     },
     [userId, latestSubmission, buildSubmissionPayload]
   );
 
   const uploadAbstractFile = useCallback(
-    async (file: File, submissionId: number): Promise<{ path: string } | { error: true }> => {
+    async (file: File, submissionId: number | string): Promise<{ path: string } | { error: true }> => {
       if (!userId) {
         return { error: true };
       }
@@ -512,6 +532,7 @@ export default function DashboardPage() {
 
     setIsCheckingWithAi(true);
     try {
+      // 1) Save or update submission in DB and obtain a stable id.
       const upserted = await upsertEditableSubmission(formData);
       if ("error" in upserted) {
         if (upserted.error === "locked" || upserted.error === "blocked") {
@@ -522,12 +543,28 @@ export default function DashboardPage() {
         return;
       }
 
-      const uploaded = await uploadAbstractFile(reviewFile, upserted.id);
+      const submissionId = upserted.id;
+      setLatestSubmission(upserted.row);
+
+      // 2) Upload abstract file and attach storage path to the submission.
+      const uploaded = await uploadAbstractFile(reviewFile, submissionId);
       if ("error" in uploaded) {
         setReviewError(t("dashboardReviewUploadError"));
         return;
       }
 
+      const { error: filePathError } = await supabase
+        .from("submissions")
+        .update({ file_path: uploaded.path })
+        .eq("id", submissionId);
+
+      if (filePathError) {
+        console.log("dashboard file_path update error:", filePathError);
+        setReviewError(t("dashboardReviewUploadError"));
+        return;
+      }
+
+      // 3) Run digital assistant check.
       const payload = new globalThis.FormData();
       payload.set("file", reviewFile);
       payload.set("abstractTitle", formData.abstractTitle.trim() || t("abstractTitle"));
@@ -557,21 +594,14 @@ export default function DashboardPage() {
         plagiarismWarning: result.plagiarismWarning ?? null
       });
 
-      const keepStatus =
-        latestSubmission?.status === "needs_revision" ? "needs_revision" : SUBMISSION_STATUS_DRAFT;
-
-      const { error: formUpdateError } = await supabase
-        .from("submissions")
-        .update({ ...buildSubmissionPayload(formData), status: keepStatus })
-        .eq("id", upserted.id);
-
-      if (formUpdateError) {
-        console.log("dashboard submission form update error:", formUpdateError);
-      }
-
-      const saved = await saveAiReviewToDatabase(upserted.id, reviewForDb, uploaded.path);
+      // 4) Persist AI report on the submission row.
+      const saved = await saveAiReviewToDatabase(submissionId, reviewForDb, uploaded.path);
       if (!saved.ok) {
-        setReviewError(t("dashboardReviewSaveError"));
+        if (saved.error === "invalid_id") {
+          setReviewError(t("dashboardSubmissionError"));
+        } else {
+          setReviewError(t("dashboardReviewSaveError"));
+        }
         return;
       }
 
