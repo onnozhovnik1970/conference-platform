@@ -38,7 +38,9 @@ const RASTER_SCALE = 2;
 const FR_CONFERENCE = 52 / PAGE_H;
 const FR_CERT_TITLE = 133 / PAGE_H;
 const FR_CERTIFIES = 208 / PAGE_H;
-const FR_NAME = 0.58;
+/** Participant name center — ~one line closer to "This certifies that" than previous 0.58. */
+const OFFSET_CERTIFIES_TO_NAME_PT = 78;
+const FR_NAME = FR_CERTIFIES + OFFSET_CERTIFIES_TO_NAME_PT / PAGE_H;
 const FR_HAS_PRESENTED = 0.64;
 const FR_PAPER = 0.72;
 const FR_DATE_LINE = 0.8;
