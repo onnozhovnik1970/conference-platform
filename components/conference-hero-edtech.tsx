@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { formatConferenceIsoDate } from "@/lib/conference-dates";
-import { parseHeroBgColor, parseHeroType } from "@/lib/conference-settings";
+import { DEFAULT_HERO_BG_COLOR, parseHeroBgColor, parseHeroType } from "@/lib/conference-settings";
 import "@/lib/i18n/config";
 
 const interHero = Inter({
@@ -22,7 +22,8 @@ const interHero = Inter({
 });
 
 const ParticlesBackground = dynamic(() => import("@/components/particles-background"), {
-  ssr: false
+  ssr: false,
+  loading: () => null
 });
 
 /** Accepts https URLs, protocol-relative `//…`, and `data:image/…` for tests. */
@@ -72,7 +73,7 @@ const fadeUp = {
  */
 export function ConferenceHeroEdtech() {
   const { t, i18n } = useTranslation();
-  const { settings } = useConferenceSettings();
+  const { settings, loading: settingsLoading } = useConferenceSettings();
   const loc = i18n.language === "ua" ? "ua" : "en";
 
   const heroType = parseHeroType(settings.hero_type);
@@ -191,11 +192,17 @@ export function ConferenceHeroEdtech() {
     </motion.div>
   );
 
-  if (isParticlesHero) {
+  /** Teal shell while settings load — avoids default image-mode navy gradient flash. */
+  const showParticlesShell = isParticlesHero || settingsLoading;
+
+  if (showParticlesShell) {
     return (
       <section className={`relative isolate w-full max-w-full ${interHero.className}`}>
-        <div className="relative w-full min-h-[480px]" style={{ backgroundColor: heroBgColor }}>
-          <ParticlesBackground bgColor={heroBgColor} />
+        <div
+          className="relative h-[480px] w-full min-h-[480px] bg-[#3aacaa]"
+          style={{ backgroundColor: heroBgColor || DEFAULT_HERO_BG_COLOR }}
+        >
+          {!settingsLoading && isParticlesHero ? <ParticlesBackground bgColor={heroBgColor} /> : null}
           <div className="relative z-10 px-4 py-10 text-center sm:px-6 sm:py-12 md:py-14">
             {heroContent}
           </div>

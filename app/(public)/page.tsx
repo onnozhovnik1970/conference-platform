@@ -66,7 +66,7 @@ export default function HomePage() {
       : "";
 
   return (
-    <main className="min-h-screen">
+    <main>
       <section className="public-tech-section-alt border-b border-slate-200/80">
         <div className="container relative z-10 py-6 md:py-8">
           <div className="public-tech-card rounded-lg px-4 py-2.5 text-center text-sm font-semibold md:text-base">
@@ -78,7 +78,10 @@ export default function HomePage() {
       <ConferenceHeroEdtech />
 
       <div className="relative z-10 flex flex-col bg-white">
-      <section className="public-tech-section-alt container border-t border-slate-200/80 py-14 md:py-20">
+      <section
+        id="about"
+        className="public-tech-section-alt container scroll-mt-24 border-t border-slate-200/80 py-14 md:py-20"
+      >
         <h2 className="mb-3 text-center text-3xl font-bold text-[#0F172A] md:mb-4">{t("aboutConference")}</h2>
         <p className="public-tech-muted mx-auto max-w-4xl text-center">{aboutDescription}</p>
         <p className="public-tech-muted mx-auto mt-3 max-w-4xl text-center">{t("conferenceOrganizer")}</p>

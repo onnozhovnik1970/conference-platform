@@ -2,24 +2,24 @@
 
 import type { ReactNode } from "react";
 
-import { SiteFooter } from "@/components/site-footer";
+import { Footer } from "@/components/footer";
 import { SiteHeader } from "@/components/site-header";
 
 import { cn } from "@/lib/utils";
 
+/** @deprecated Prefer `app/(public)/layout.tsx` structure; kept for compatibility. */
 export function SiteShell({
   children,
   contentClassName
 }: {
   children: ReactNode;
-  /** Extra classes on the main content wrapper (e.g. public light theme). */
   contentClassName?: string;
 }) {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <div className={cn("flex-1", contentClassName)}>{children}</div>
-      <SiteFooter />
+      <div className={cn("min-h-0 flex-1", contentClassName)}>{children}</div>
+      <Footer />
     </div>
   );
 }

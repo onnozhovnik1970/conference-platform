@@ -85,7 +85,7 @@ export const DEFAULT_CONFERENCE_SETTINGS: Omit<ConferenceSettingsRow, "updated_a
   instagram_url: null,
   telegram_url: null,
   hero_image_url: null,
-  hero_type: "image",
+  hero_type: "particles",
   hero_bg_color: DEFAULT_HERO_BG_COLOR,
   certificate_template_url: null
 };
