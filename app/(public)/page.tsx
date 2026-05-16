@@ -84,7 +84,15 @@ export default function HomePage() {
       >
         <h2 className="mb-3 text-center text-3xl font-bold text-[#0F172A] md:mb-4">{t("aboutConference")}</h2>
         <p className="public-tech-muted mx-auto max-w-4xl text-center">{aboutDescription}</p>
-        <p className="public-tech-muted mx-auto mt-3 max-w-4xl text-center">{t("conferenceOrganizer")}</p>
+        <div className="mx-auto mt-4 flex justify-center px-4">
+          <div className="inline-block rounded-2xl border border-[#0f2347]/20 bg-[#0f2347]/10 px-6 py-3">
+            <p className="text-center text-base font-semibold text-[#0f2347]">
+              {t("siteFooterOrganizerLine1")}
+              <br />
+              {t("siteFooterOrganizerLine2")}
+            </p>
+          </div>
+        </div>
       </section>
 
       <section className="public-tech-section container border-t border-slate-200/80 py-14 md:py-20">

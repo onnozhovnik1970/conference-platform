@@ -6,20 +6,9 @@ import { useTranslation } from "react-i18next";
 
 import { FooterSocialLinks } from "@/components/footer-social-links";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
+import { SiteTextLogo } from "@/components/site-text-logo";
 import { supportEmailTrimmed } from "@/lib/conference-contact-urls";
 import "@/lib/i18n/config";
-
-function primaryConferenceTitle(raw: string): string {
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return "";
-  }
-  const lines = trimmed
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
-  return lines[0] ?? trimmed;
-}
 
 const MAIN_NAV_LINKS = [
   { href: "/", labelKey: "siteFooterHome" },
@@ -69,15 +58,8 @@ function FooterNav({
 
 /** Public site footer — conference info, contact, navigation, copyright, social. */
 export function Footer() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { settings } = useConferenceSettings();
-  const loc = i18n.language === "ua" ? "ua" : "en";
-
-  const conferenceName =
-    loc === "ua"
-      ? primaryConferenceTitle(settings.title_ua?.trim() || "")
-      : primaryConferenceTitle(settings.title?.trim() || "");
-  const displayName = conferenceName || t("navBrand");
   const yearFromDate = settings.date?.trim().slice(0, 4) ?? "";
   const year = yearFromDate && /^\d{4}$/.test(yearFromDate) ? yearFromDate : String(new Date().getFullYear());
   const supportEmail = supportEmailTrimmed(settings.support_email);
@@ -85,18 +67,17 @@ export function Footer() {
   return (
     <footer className="relative z-30 isolate mt-auto shrink-0 border-t border-white/10 bg-[#0a1628] py-10 text-slate-300">
       <div className="container flex flex-col items-center gap-6 text-center">
-        <div className="space-y-1">
-          <p className="text-lg font-bold text-white md:text-xl">{displayName}</p>
-          <p className="text-sm text-slate-400">{t("siteFooterEdition", { year })}</p>
+        <div className="flex flex-col items-center [&_a]:max-w-none [&_a]:items-center [&_a]:text-center">
+          <SiteTextLogo />
         </div>
 
-        <p className="mx-auto max-w-3xl px-2 text-balance text-sm leading-relaxed text-slate-300 md:text-base">
-          {t("conferenceOrganizer")}
-        </p>
-
-        <p className="mx-auto max-w-3xl px-2 text-balance text-base font-semibold leading-snug text-slate-100 md:text-lg">
-          {t("siteFooterDepartmentLine")}
-        </p>
+        <div className="mt-4 inline-block rounded-2xl border border-white/20 bg-white/10 px-6 py-3">
+          <p className="text-center text-base font-semibold text-white">
+            {t("siteFooterOrganizerLine1")}
+            <br />
+            {t("siteFooterOrganizerLine2")}
+          </p>
+        </div>
 
         <p className="text-sm text-slate-300">
           <span className="text-slate-400">{t("siteFooterEmailLabel")}: </span>
@@ -120,9 +101,7 @@ export function Footer() {
           telegramUrl={settings.telegram_url}
         />
 
-        <p className="max-w-2xl px-4 text-xs text-slate-400 sm:text-sm">
-          {t("siteFooterCopyright", { year, name: displayName })}
-        </p>
+        <p className="max-w-2xl px-4 text-xs text-slate-400 sm:text-sm">{t("siteFooterCopyright", { year })}</p>
 
         <p className="max-w-xl px-4 text-xs leading-relaxed text-slate-500 sm:text-sm">{t("siteFooterCredits")}</p>
       </div>
