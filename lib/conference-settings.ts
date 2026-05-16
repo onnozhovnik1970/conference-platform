@@ -1,3 +1,31 @@
+export type HeroType = "image" | "particles";
+
+export function parseHeroType(value: string | null | undefined): HeroType {
+  return value === "particles" ? "particles" : "image";
+}
+
+export const DEFAULT_HERO_BG_COLOR = "#3aacaa";
+
+/** Normalizes a hex color or returns null if invalid. */
+export function normalizeHeroBgColor(value: string | null | undefined): string | null {
+  if (!value?.trim()) {
+    return null;
+  }
+  const s = value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(s)) {
+    return s.toLowerCase();
+  }
+  const short = s.match(/^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/);
+  if (short) {
+    return `#${short[1]}${short[1]}${short[2]}${short[2]}${short[3]}${short[3]}`.toLowerCase();
+  }
+  return null;
+}
+
+export function parseHeroBgColor(value: string | null | undefined): string {
+  return normalizeHeroBgColor(value) ?? DEFAULT_HERO_BG_COLOR;
+}
+
 export type ConferenceSettingsRow = {
   id: number;
   title: string;
@@ -24,6 +52,10 @@ export type ConferenceSettingsRow = {
   instagram_url: string | null;
   telegram_url: string | null;
   hero_image_url: string | null;
+  /** Home hero background: banner image or animated particles. */
+  hero_type: HeroType;
+  /** Particles hero background color (hex). */
+  hero_bg_color: string | null;
   /** PNG/SVG for certificate PDF background (e.g. /images/certificate.png). */
   certificate_template_url: string | null;
   updated_at: string;
@@ -53,5 +85,7 @@ export const DEFAULT_CONFERENCE_SETTINGS: Omit<ConferenceSettingsRow, "updated_a
   instagram_url: null,
   telegram_url: null,
   hero_image_url: null,
+  hero_type: "image",
+  hero_bg_color: DEFAULT_HERO_BG_COLOR,
   certificate_template_url: null
 };

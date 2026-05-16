@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server";
-import { DEFAULT_CONFERENCE_SETTINGS, type ConferenceSettingsRow } from "@/lib/conference-settings";
+import {
+  DEFAULT_CONFERENCE_SETTINGS,
+  normalizeHeroBgColor,
+  type ConferenceSettingsRow,
+  type HeroType
+} from "@/lib/conference-settings";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -39,6 +44,8 @@ type PatchBody = {
   instagram_url?: unknown;
   telegram_url?: unknown;
   hero_image_url?: unknown;
+  hero_type?: unknown;
+  hero_bg_color?: unknown;
   certificate_template_url?: unknown;
 };
 
@@ -97,6 +104,35 @@ function trimOrNull(value: unknown): string | null {
   return s === "" ? null : s;
 }
 
+function readHeroTypeFromBody(body: PatchBody): HeroType | "invalid" | undefined {
+  if (!("hero_type" in body)) {
+    return undefined;
+  }
+  const value = body.hero_type;
+  if (value === null || value === undefined || value === "") {
+    return "image";
+  }
+  if (value === "image" || value === "particles") {
+    return value;
+  }
+  return "invalid";
+}
+
+function readHeroBgColorFromBody(body: PatchBody): string | null | "invalid" | undefined {
+  if (!("hero_bg_color" in body)) {
+    return undefined;
+  }
+  const raw = trimOrNull(body.hero_bg_color);
+  if (raw === null) {
+    return null;
+  }
+  const normalized = normalizeHeroBgColor(raw);
+  if (!normalized) {
+    return "invalid";
+  }
+  return normalized;
+}
+
 export async function GET(request: Request) {
   const auth = await assertAdminFromRequest(request);
   if (!auth.ok) {
@@ -111,7 +147,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("conference_settings")
     .select(
-      "id, title, title_ua, hero_subtitle, hero_subtitle_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, certificate_template_url, updated_at"
+      "id, title, title_ua, hero_subtitle, hero_subtitle_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, hero_type, hero_bg_color, certificate_template_url, updated_at"
     )
     .eq("id", 1)
     .maybeSingle();
@@ -167,10 +203,18 @@ export async function PATCH(request: Request) {
   const telegram_url = trimOrNull(body.telegram_url);
   const hero_image_url = trimOrNull(body.hero_image_url);
   const certificate_template_url = trimOrNull(body.certificate_template_url);
+  const hero_type_parsed = readHeroTypeFromBody(body);
+  const hero_bg_color_parsed = readHeroBgColorFromBody(body);
 
   const plenary_start_time_parsed = readOptionalPlenaryStartTime(body);
   if (plenary_start_time_parsed === "invalid") {
     return NextResponse.json({ error: "plenary_start_time must be an ISO date string or null" }, { status: 400 });
+  }
+  if (hero_type_parsed === "invalid") {
+    return NextResponse.json({ error: "hero_type must be image or particles" }, { status: 400 });
+  }
+  if (hero_bg_color_parsed === "invalid") {
+    return NextResponse.json({ error: "hero_bg_color must be a hex color (e.g. #3aacaa)" }, { status: 400 });
   }
 
   const supabase = getServiceRoleClient();
@@ -179,7 +223,7 @@ export async function PATCH(request: Request) {
   }
 
   const selectCols =
-    "id, title, title_ua, hero_subtitle, hero_subtitle_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, certificate_template_url, updated_at";
+    "id, title, title_ua, hero_subtitle, hero_subtitle_ua, date, plenary_start_time, deadline, location, description, description_ua, zoom_link, zoom_details, meta_title, meta_description, support_phone, support_email, facebook_url, instagram_url, telegram_url, hero_image_url, hero_type, hero_bg_color, certificate_template_url, updated_at";
 
   const values = {
     title: titleRaw.trim(),
@@ -202,6 +246,8 @@ export async function PATCH(request: Request) {
     ...(body.instagram_url !== undefined ? { instagram_url } : {}),
     ...(body.telegram_url !== undefined ? { telegram_url } : {}),
     ...(body.hero_image_url !== undefined ? { hero_image_url } : {}),
+    ...(hero_type_parsed !== undefined ? { hero_type: hero_type_parsed } : {}),
+    ...(hero_bg_color_parsed !== undefined ? { hero_bg_color: hero_bg_color_parsed } : {}),
     ...(body.certificate_template_url !== undefined ? { certificate_template_url } : {}),
     ...(body.hero_subtitle !== undefined ? { hero_subtitle: trimOrNull(body.hero_subtitle) } : {}),
     ...(body.hero_subtitle_ua !== undefined ? { hero_subtitle_ua: trimOrNull(body.hero_subtitle_ua) } : {})

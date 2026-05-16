@@ -8,7 +8,14 @@ import { useConferenceSettings } from "@/components/conference-settings-provider
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { datetimeLocalValueToIso, isoToDatetimeLocalValue } from "@/lib/conference-dates";
 import type { ConferenceSectionRow } from "@/lib/conference-sections";
-import type { ConferenceSettingsRow } from "@/lib/conference-settings";
+import {
+  DEFAULT_HERO_BG_COLOR,
+  normalizeHeroBgColor,
+  parseHeroBgColor,
+  parseHeroType,
+  type ConferenceSettingsRow,
+  type HeroType
+} from "@/lib/conference-settings";
 import "@/lib/i18n/config";
 import { supabase } from "@/lib/supabase";
 
@@ -39,6 +46,8 @@ export default function AdminConferenceSettingsPage() {
   const [instagramUrl, setInstagramUrl] = useState("");
   const [telegramUrl, setTelegramUrl] = useState("");
   const [heroImageUrl, setHeroImageUrl] = useState("");
+  const [heroType, setHeroType] = useState<HeroType>("image");
+  const [heroBgColor, setHeroBgColor] = useState(DEFAULT_HERO_BG_COLOR);
   const [certificateTemplateUrl, setCertificateTemplateUrl] = useState("");
 
   const [sections, setSections] = useState<ConferenceSectionRow[]>([]);
@@ -124,6 +133,8 @@ export default function AdminConferenceSettingsPage() {
         setInstagramUrl(s.instagram_url ?? "");
         setTelegramUrl(s.telegram_url ?? "");
         setHeroImageUrl(s.hero_image_url ?? "");
+        setHeroType(parseHeroType(s.hero_type));
+        setHeroBgColor(parseHeroBgColor(s.hero_bg_color));
         setCertificateTemplateUrl(s.certificate_template_url ?? "");
       }
       setLoading(false);
@@ -164,6 +175,8 @@ export default function AdminConferenceSettingsPage() {
           instagram_url: instagramUrl.trim() || null,
           telegram_url: telegramUrl.trim() || null,
           hero_image_url: heroImageUrl.trim() || null,
+          hero_type: heroType,
+          hero_bg_color: normalizeHeroBgColor(heroBgColor) ?? null,
           certificate_template_url: certificateTemplateUrl.trim() || null
         })
       });
@@ -195,6 +208,8 @@ export default function AdminConferenceSettingsPage() {
         setInstagramUrl(s.instagram_url ?? "");
         setTelegramUrl(s.telegram_url ?? "");
         setHeroImageUrl(s.hero_image_url ?? "");
+        setHeroType(parseHeroType(s.hero_type));
+        setHeroBgColor(parseHeroBgColor(s.hero_bg_color));
         setCertificateTemplateUrl(s.certificate_template_url ?? "");
       }
       setSuccess(t("adminConferenceSettingsSaveSuccess"));
@@ -558,6 +573,60 @@ export default function AdminConferenceSettingsPage() {
                     />
                   </div>
                   <div>
+                    <p className={labelClass}>{t("adminConferenceFieldHeroType")}</p>
+                    <div className="mt-2 flex flex-wrap gap-4" role="radiogroup" aria-label={t("adminConferenceFieldHeroType")}>
+                      <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-200">
+                        <input
+                          type="radio"
+                          name="hero-type"
+                          value="image"
+                          checked={heroType === "image"}
+                          onChange={() => setHeroType("image")}
+                          className="h-4 w-4 border-slate-500 text-sky-400 focus:ring-sky-400"
+                        />
+                        {t("adminConferenceFieldHeroTypeImage")}
+                      </label>
+                      <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-200">
+                        <input
+                          type="radio"
+                          name="hero-type"
+                          value="particles"
+                          checked={heroType === "particles"}
+                          onChange={() => setHeroType("particles")}
+                          className="h-4 w-4 border-slate-500 text-sky-400 focus:ring-sky-400"
+                        />
+                        {t("adminConferenceFieldHeroTypeParticles")}
+                      </label>
+                    </div>
+                  </div>
+                  {heroType === "particles" ? (
+                    <div>
+                      <label className={labelClass} htmlFor="cs-hero-bg-color">
+                        {t("adminConferenceFieldHeroBgColor")}
+                      </label>
+                      <p className="mt-1 text-xs text-slate-400">{t("adminConferenceFieldHeroBgColorHint")}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                        <input
+                          id="cs-hero-bg-color"
+                          type="color"
+                          value={parseHeroBgColor(heroBgColor)}
+                          onChange={(e) => setHeroBgColor(e.target.value)}
+                          className="h-10 w-14 cursor-pointer rounded border border-slate-600 bg-slate-900 p-1"
+                          aria-label={t("adminConferenceFieldHeroBgColor")}
+                        />
+                        <input
+                          type="text"
+                          value={heroBgColor}
+                          onChange={(e) => setHeroBgColor(e.target.value)}
+                          placeholder={DEFAULT_HERO_BG_COLOR}
+                          className={`${inputClass} max-w-[10rem] font-mono text-sm`}
+                          spellCheck={false}
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+                  <div>
                     <label className={labelClass} htmlFor="cs-hero-image-url">
                       {t("adminConferenceFieldHeroImageUrl")}
                     </label>
@@ -570,7 +639,8 @@ export default function AdminConferenceSettingsPage() {
                       value={heroImageUrl}
                       onChange={(e) => setHeroImageUrl(e.target.value)}
                       placeholder={t("adminConferenceFieldHeroImageUrlPlaceholder")}
-                      className={inputClass}
+                      className={`${inputClass} ${heroType === "particles" ? "opacity-60" : ""}`}
+                      disabled={heroType === "particles"}
                     />
                   </div>
                   <div>
