@@ -189,10 +189,10 @@ export function ConferenceHeroEdtech() {
 
   if (isParticlesHero) {
     return (
-      <section className={`relative isolate w-full max-w-full overflow-hidden ${interHero.className}`}>
-        <div className="relative h-[480px] w-full" style={{ backgroundColor: heroBgColor }}>
+      <section className={`relative isolate w-full max-w-full ${interHero.className}`}>
+        <div className="relative w-full min-h-[480px]" style={{ backgroundColor: heroBgColor }}>
           <ParticlesBackground bgColor={heroBgColor} />
-          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
+          <div className="relative z-10 px-4 py-10 text-center sm:px-6 sm:py-12 md:py-14">
             {heroContent}
           </div>
         </div>
