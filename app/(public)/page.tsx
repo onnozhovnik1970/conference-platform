@@ -19,6 +19,17 @@ const steps = [
   { icon: Sparkles, titleKey: "step3Title", descriptionKey: "step3Description" }
 ] as const;
 
+/** Plenary card — gradient CTA (matches hero exception). */
+const plenarySessionBtnClass =
+  "h-auto w-full gap-2 rounded-full px-8 py-3 text-base font-semibold transition-all duration-200 ease-in-out hover:scale-[1.03] sm:w-auto sm:min-w-[12rem]";
+
+/** Thematic track / session cards — white card with navy typography. */
+const trackSessionCardClass =
+  "flex w-full flex-col gap-2 rounded-2xl border border-[rgba(15,35,71,0.1)] bg-white px-6 py-4 text-left no-underline shadow-none transition-all duration-200 ease-in-out hover:scale-[1.02] hover:border-[#0f2347] hover:shadow-[0_4px_20px_rgba(15,35,71,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f2347]/30";
+
+const trackSessionCardDisabledClass =
+  `${trackSessionCardClass} cursor-not-allowed opacity-60 hover:scale-100 hover:border-[rgba(15,35,71,0.1)] hover:shadow-none`;
+
 export default function HomePage() {
   const { t, i18n } = useTranslation();
   const { settings } = useConferenceSettings();
@@ -107,28 +118,23 @@ export default function HomePage() {
         <section className="public-tech-section container border-t border-slate-200/80 pb-14 md:pb-20">
           <h2 className="mb-8 text-center text-3xl font-bold text-[#0F172A] md:mb-10">{t("liveSessionsTitle")}</h2>
           <div className="mx-auto flex w-full max-w-xl flex-col gap-6 md:max-w-3xl">
-            <div className="w-full">
+            <div className="flex w-full flex-col items-center">
               {zoomLinkRaw ? (
-                <Button
-                  asChild
-                  size="lg"
-                  variant="cta"
-                  className="h-14 w-full gap-2 text-base md:h-16 md:text-lg"
-                >
+                <Button asChild variant="cta" className={plenarySessionBtnClass}>
                   <a href={zoomHref(zoomLinkRaw)} target="_blank" rel="noopener noreferrer">
-                    <Video className="h-6 w-6 shrink-0" />
+                    <Video className="h-5 w-5 shrink-0" />
                     {t("plenarySessionOpening")}
                   </a>
                 </Button>
               ) : (
                 <Button
                   type="button"
-                  size="lg"
+                  variant="cta"
                   disabled
-                  className="h-14 w-full gap-2 text-base opacity-60 md:h-16 md:text-lg"
+                  className={`${plenarySessionBtnClass} opacity-60 hover:scale-100`}
                   aria-disabled="true"
                 >
-                  <Video className="h-6 w-6 shrink-0 opacity-50" />
+                  <Video className="h-5 w-5 shrink-0 opacity-50" />
                   {t("plenarySessionOpening")}
                 </Button>
               )}
@@ -150,45 +156,50 @@ export default function HomePage() {
                   const titleText = sectionLabel(sec, i18n.language);
                   const sectionStartsWhen =
                     sec.start_time?.trim() ? formatConferenceStartsDateTime(sec.start_time, loc) : "";
-                  const sectionBtnClass =
-                    "flex h-full min-h-[80px] w-full min-w-0 max-w-full flex-1 items-center justify-center gap-2 whitespace-normal rounded-xl border border-[rgba(108,99,255,0.15)] bg-white/90 px-4 py-3 text-center text-base font-semibold leading-snug text-[#0F172A] shadow-[0_4px_24px_rgba(79,70,229,0.06)] backdrop-blur-sm transition-colors hover:border-[rgba(108,99,255,0.4)] hover:bg-[#F8FAFC]/95 md:text-lg [&_svg]:shrink-0";
                   return (
-                    <div key={sec.id} className="flex min-h-[80px] min-w-0 flex-col gap-2 self-stretch">
-                      <div className="flex min-h-[80px] w-full flex-1">
-                        {hasZoom ? (
-                          <Button asChild variant="outline" className={sectionBtnClass}>
-                            <a
-                              href={zoomHref(zoomRaw)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex h-full min-h-[80px] w-full items-center justify-center gap-2 text-center"
-                            >
-                              <Video className="h-5 w-5 shrink-0 text-[#6C63FF]" />
-                              <span className="min-w-0 break-words">{titleText}</span>
-                            </a>
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            disabled
-                            className={`${sectionBtnClass} cursor-not-allowed opacity-60 hover:border-[rgba(108,99,255,0.15)]`}
-                            aria-disabled="true"
-                          >
-                            <Video className="h-5 w-5 shrink-0 opacity-50" />
-                            <span className="min-w-0 break-words">{titleText}</span>
-                          </Button>
-                        )}
-                      </div>
-                      {sectionStartsWhen ? (
-                        <p className="text-center text-sm text-[#0F172A]">
-                          <Trans
-                            i18nKey="homeSectionZoomStarts"
-                            values={{ dateTime: sectionStartsWhen }}
-                            components={{ accent: <span className="font-medium text-[#6C63FF]" /> }}
-                          />
-                        </p>
-                      ) : null}
+                    <div key={sec.id} className="min-w-0 self-stretch">
+                      {hasZoom ? (
+                        <a
+                          href={zoomHref(zoomRaw)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={trackSessionCardClass}
+                        >
+                          <div className="flex items-start gap-3">
+                            <Video className="mt-0.5 h-5 w-5 shrink-0 text-[#0f2347]" aria-hidden />
+                            <span className="min-w-0 flex-1 break-words text-base font-semibold leading-snug text-[#0f2347]">
+                              {titleText}
+                            </span>
+                          </div>
+                          {sectionStartsWhen ? (
+                            <p className="text-sm text-[#0f2347]">
+                              <Trans
+                                i18nKey="homeSectionZoomStarts"
+                                values={{ dateTime: sectionStartsWhen }}
+                                components={{ accent: <span className="font-medium text-[#6C63FF]" /> }}
+                              />
+                            </p>
+                          ) : null}
+                        </a>
+                      ) : (
+                        <div className={trackSessionCardDisabledClass} aria-disabled="true">
+                          <div className="flex items-start gap-3">
+                            <Video className="mt-0.5 h-5 w-5 shrink-0 text-[#0f2347] opacity-50" aria-hidden />
+                            <span className="min-w-0 flex-1 break-words text-base font-semibold leading-snug text-[#0f2347]">
+                              {titleText}
+                            </span>
+                          </div>
+                          {sectionStartsWhen ? (
+                            <p className="text-sm text-[#0f2347]">
+                              <Trans
+                                i18nKey="homeSectionZoomStarts"
+                                values={{ dateTime: sectionStartsWhen }}
+                                components={{ accent: <span className="font-medium text-[#6C63FF]" /> }}
+                              />
+                            </p>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -116,7 +116,7 @@ function FloatingNeonEmoji({ emoji, positionStyle, floatDuration, reducedMotion,
 }
 
 /**
- * Full-width hero: `hero_image_url` cover, overlay, H1/H2 + CTAs.
+ * Full-width hero: `hero_image_url` cover, H1/H2 + CTAs (navy typography on image).
  * Five bare neon emojis (🎤 📖 🌍 🎓 ⚡) in corner bands — no per-emoji boxes or backgrounds.
  */
 export function ConferenceHeroEdtech() {
@@ -179,29 +179,26 @@ export function ConferenceHeroEdtech() {
     <section
       className={`relative isolate box-border flex min-h-[min(85svh,880px)] w-full max-w-full flex-col justify-center overflow-hidden ${interHero.className}`}
     >
-      {/* Fallback when no image — solid dark blue gradient (visible on all viewports) */}
+      {/* Fallback when no image — light gradient so navy typography stays readable */}
       <div
-        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-[#0f2347] to-[#1a3a6b]"
+        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-[#F8FAFC] to-white"
         aria-hidden
       />
 
       {showPhotoBg && heroImageSrc ? (
-        <>
-          <div className="pointer-events-none absolute inset-0 z-[1] size-full">
-            <Image
-              src={heroImageSrc}
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-              unoptimized
-              onError={() => setBgFailed(true)}
-              referrerPolicy="no-referrer"
-            />
-          </div>
-          <div className="pointer-events-none absolute inset-0 z-[2] bg-black/50" aria-hidden />
-        </>
+        <div className="pointer-events-none absolute inset-0 z-[1] size-full">
+          <Image
+            src={heroImageSrc}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+            unoptimized
+            onError={() => setBgFailed(true)}
+            referrerPolicy="no-referrer"
+          />
+        </div>
       ) : null}
 
       {emojiSlots
@@ -225,12 +222,12 @@ export function ConferenceHeroEdtech() {
           transition={{ ...fadeUp.transition, delay: 0.04 }}
           className="relative z-10 mx-auto flex w-full max-w-full flex-col items-center text-center"
         >
-          <div className="mb-6 flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:gap-x-3 sm:px-4 sm:text-sm">
+          <div className="mb-6 flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-2 rounded-full border border-[#0f2347]/15 bg-white/80 px-3 py-2 text-xs font-semibold text-[#0f2347] backdrop-blur-sm sm:gap-x-3 sm:px-4 sm:text-sm">
             <span className="inline-flex max-w-full items-center gap-1.5 break-words">
               <Calendar className="h-3.5 w-3.5 shrink-0 opacity-95 sm:h-4 sm:w-4" aria-hidden />
               {dateLabel}
             </span>
-            <span className="text-white/45" aria-hidden>
+            <span className="text-[#0f2347]/45" aria-hidden>
               ·
             </span>
             {badgeCityLine ? (
@@ -239,7 +236,7 @@ export function ConferenceHeroEdtech() {
                   <MapPin className="h-3.5 w-3.5 shrink-0 opacity-90 sm:h-4 sm:w-4" aria-hidden />
                   {badgeCityLine}
                 </span>
-                <span className="text-white/45" aria-hidden>
+                <span className="text-[#0f2347]/45" aria-hidden>
                   ·
                 </span>
               </>
@@ -250,11 +247,11 @@ export function ConferenceHeroEdtech() {
             </span>
           </div>
 
-          <h1 className="mx-auto w-full max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-4xl font-bold leading-[1.1] tracking-tight text-white md:text-6xl md:leading-[1.08]">
+          <h1 className="mx-auto w-full max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-4xl font-bold leading-[1.1] tracking-tight text-[#0f2347] md:text-6xl md:leading-[1.08]">
             {heroH1}
           </h1>
           {heroH2 ? (
-            <h2 className="mx-auto mt-5 max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-xl font-normal leading-snug text-white/95 md:mt-6 md:text-2xl md:leading-relaxed">
+            <h2 className="mx-auto mt-5 max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-xl font-normal leading-snug text-[#0f2347] md:mt-6 md:text-2xl md:leading-relaxed">
               {heroH2}
             </h2>
           ) : null}
@@ -262,17 +259,15 @@ export function ConferenceHeroEdtech() {
           <div className="mt-10 flex w-full max-w-full flex-col gap-3 sm:flex sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center">
             <Button
               asChild
-              size="lg"
-              variant="cta"
-              className="h-12 w-full max-w-xs text-base sm:h-14 sm:max-w-none sm:min-w-[12rem] sm:w-auto"
+              variant="outline"
+              className="h-auto w-full max-w-xs rounded-full border-0 bg-[#0f2347] px-8 py-3 text-base font-semibold text-white shadow-none transition-all duration-200 ease-in-out hover:scale-[1.03] hover:border-0 hover:bg-[#1a3a6b] hover:text-white hover:shadow-[0_0_20px_rgba(15,35,71,0.4)] sm:w-auto sm:min-w-[12rem]"
             >
               <Link href="/register">{t("heroRegisterNow")}</Link>
             </Button>
             <Button
               asChild
-              size="lg"
               variant="outline"
-              className="h-12 w-full max-w-xs border-2 border-white bg-transparent text-base font-semibold text-white shadow-md shadow-black/20 hover:bg-white/10 sm:h-14 sm:max-w-none sm:min-w-[12rem] sm:w-auto"
+              className="h-auto w-full max-w-xs rounded-full border-2 border-[#0f2347] bg-transparent px-8 py-3 text-base font-semibold text-[#0f2347] shadow-none transition-all duration-200 ease-in-out hover:scale-[1.03] hover:border-[#0f2347] hover:bg-[#0f2347] hover:text-white sm:w-auto sm:min-w-[12rem]"
             >
               <Link href="/login">{t("navLogin")}</Link>
             </Button>
