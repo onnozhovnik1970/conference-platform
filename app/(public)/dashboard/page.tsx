@@ -27,7 +27,9 @@ import {
 } from "@/lib/dashboard-submission";
 import { sectionLabel, type ConferenceSectionRow } from "@/lib/conference-sections";
 import "@/lib/i18n/config";
+import { publicSitePrimaryBtnClass } from "@/lib/public-site-buttons";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 type Profile = {
   first_name: string | null;
@@ -1135,9 +1137,11 @@ export default function DashboardPage() {
                             {!canSubmitForReview ? (
                               <Button
                                 type="button"
-                                size="lg"
-                                variant="outline"
-                                className="public-tech-outline-btn w-full md:w-auto"
+                                variant="cta"
+                                className={cn(
+                                  "h-auto min-h-0 w-full border-0 shadow-none md:w-auto",
+                                  publicSitePrimaryBtnClass
+                                )}
                                 onClick={() => void handleResetReviewFile()}
                               >
                                 {t("dashboardReviewUploadNewVersion")}
