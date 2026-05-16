@@ -14,7 +14,8 @@ const buttonVariants = cva(
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         outline: "border border-input bg-background/60 hover:bg-accent/60",
-        cta: "public-tech-cta hover:brightness-[1.02] active:brightness-[0.98]"
+        /** Solid navy primary CTA */
+        cta: "h-auto min-h-0 rounded-full border-0 bg-[#0f2347] px-8 py-3 text-base font-semibold text-white shadow-none transition-all duration-200 ease-in-out hover:scale-[1.03] hover:border-0 hover:bg-[#1a3a6b] hover:text-white hover:shadow-[0_0_20px_rgba(15,35,71,0.4)] active:scale-[1.03] disabled:hover:scale-100 disabled:hover:bg-[#0f2347] disabled:hover:shadow-none"
       },
       size: {
         default: "h-10 px-4 py-2",

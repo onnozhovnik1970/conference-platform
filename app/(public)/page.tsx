@@ -19,9 +19,8 @@ const steps = [
   { icon: Sparkles, titleKey: "step3Title", descriptionKey: "step3Description" }
 ] as const;
 
-/** Plenary card — gradient CTA (matches hero exception). */
-const plenarySessionBtnClass =
-  "h-auto w-full gap-2 rounded-full px-8 py-3 text-base font-semibold transition-all duration-200 ease-in-out hover:scale-[1.03] sm:w-auto sm:min-w-[12rem]";
+/** Plenary card — solid navy CTA width helpers. */
+const plenarySessionBtnClass = "w-full gap-2 sm:w-auto sm:min-w-[12rem]";
 
 /** Thematic track / session cards — white card with navy typography. */
 const trackSessionCardClass =

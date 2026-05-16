@@ -56,6 +56,11 @@ type LatestSubmissionStatus = {
   ai_formatting_issues: string[] | null;
 };
 
+const dashboardCardClass =
+  "rounded-2xl border border-[rgba(15,35,71,0.1)] bg-white text-[#0f2347] shadow-[0_4px_24px_rgba(15,35,71,0.06)]";
+
+const dashboardPanelClass = "rounded-2xl border border-[rgba(15,35,71,0.1)] bg-white p-4";
+
 const initialSubmissionForm: SubmissionForm = {
   abstractTitle: "",
   faculty: "",
@@ -484,27 +489,27 @@ export default function DashboardPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] py-10 md:py-14">
+    <main className="min-h-screen bg-[#f8f9ff] py-10 md:py-14">
       <div className="container">
         <div className="mx-auto mt-2 max-w-5xl space-y-6 pb-10 md:mt-4">
-            <Card className="public-tech-card">
+            <Card className={dashboardCardClass}>
               <CardHeader>
-                <CardTitle className="text-3xl text-[#0F172A]">{t("dashboardTitle")}</CardTitle>
-                <CardDescription className="text-slate-600">{t("dashboardSubtitle")}</CardDescription>
+                <CardTitle className="text-3xl text-[#0f2347]">{t("dashboardTitle")}</CardTitle>
+                <CardDescription className="text-gray-600">{t("dashboardSubtitle")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
-                {isLoading && <p className="text-slate-600">{t("dashboardLoading")}</p>}
+                {isLoading && <p className="text-gray-600">{t("dashboardLoading")}</p>}
                 {!isLoading && error && <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
                 {!isLoading && !error && profile && (
                   <div className="grid gap-4 md:grid-cols-3">
-                    <div className="rounded-md border border-slate-200 bg-white p-4"><p className="text-xs uppercase tracking-wide text-slate-500">{t("firstName")}</p><p className="mt-1 text-lg font-semibold text-[#0F172A]">{profile.first_name || "-"}</p></div>
-                    <div className="rounded-md border border-slate-200 bg-white p-4"><p className="text-xs uppercase tracking-wide text-slate-500">{t("lastName")}</p><p className="mt-1 text-lg font-semibold text-[#0F172A]">{profile.last_name || "-"}</p></div>
-                    <div className="rounded-md border border-slate-200 bg-white p-4"><p className="text-xs uppercase tracking-wide text-slate-500">{t("institution")}</p><p className="mt-1 text-lg font-semibold text-[#0F172A]">{profile.institution || "-"}</p></div>
+                    <div className={dashboardPanelClass}><p className="text-xs uppercase tracking-wide text-gray-500">{t("firstName")}</p><p className="mt-1 text-lg font-semibold text-[#0f2347]">{profile.first_name || "-"}</p></div>
+                    <div className={dashboardPanelClass}><p className="text-xs uppercase tracking-wide text-gray-500">{t("lastName")}</p><p className="mt-1 text-lg font-semibold text-[#0f2347]">{profile.last_name || "-"}</p></div>
+                    <div className={dashboardPanelClass}><p className="text-xs uppercase tracking-wide text-gray-500">{t("institution")}</p><p className="mt-1 text-lg font-semibold text-[#0f2347]">{profile.institution || "-"}</p></div>
                   </div>
                 )}
                 {!isLoading && !error && (
-                  <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-sm font-semibold text-[#0F172A]">{t("dashboardStatusProgressTitle")}</p>
+                  <div className={dashboardPanelClass}>
+                    <p className="text-sm font-semibold text-[#0f2347]">{t("dashboardStatusProgressTitle")}</p>
                     <div className="mt-4">
                       <div className="relative h-2 rounded-full bg-slate-200">
                         <div className={`absolute left-0 top-0 h-2 rounded-full transition-all ${progressActiveColorClass}`} style={{ width: `${progressPercent}%` }} />
@@ -516,7 +521,7 @@ export default function DashboardPage() {
                           return (
                             <div key={stageLabel} className="flex items-start gap-2">
                               <span className={`mt-0.5 h-3 w-3 rounded-full ${stageDotColorClass}`} />
-                              <span className={`text-xs ${isActive ? "text-[#0F172A] font-medium" : "text-slate-500"}`}>{stageLabel}</span>
+                              <span className={`text-xs ${isActive ? "text-[#0f2347] font-medium" : "text-gray-500"}`}>{stageLabel}</span>
                             </div>
                           );
                         })}
@@ -524,15 +529,15 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
-                {!isLoading && !error && !profile && <p className="text-slate-600">{t("dashboardNoProfile")}</p>}
-                <Button type="button" variant="outline" className="public-tech-outline-btn" onClick={handleLogout}>{t("logout")}</Button>
+                {!isLoading && !error && !profile && <p className="text-gray-600">{t("dashboardNoProfile")}</p>}
+                <Button type="button" variant="cta" onClick={handleLogout}>{t("logout")}</Button>
               </CardContent>
             </Card>
 
-            <Card className="public-tech-card">
+            <Card className={dashboardCardClass}>
               <CardHeader>
-                <CardTitle className="text-2xl text-[#0F172A]">{t("dashboardSubmissionTitle")}</CardTitle>
-                <CardDescription className="text-slate-600">{t("dashboardSubmissionSubtitle")}</CardDescription>
+                <CardTitle className="text-2xl text-[#0f2347]">{t("dashboardSubmissionTitle")}</CardTitle>
+                <CardDescription className="text-gray-600">{t("dashboardSubmissionSubtitle")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {submitError && <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{submitError}</div>}
@@ -605,34 +610,34 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className={labelClass}>{t("hasPresentation")}</p>
-                    <div className="mt-2 flex flex-wrap gap-4 rounded-md border border-slate-200 bg-white p-4">
-                      <label className="flex items-center gap-2 text-sm text-slate-700"><input type="radio" name="hasPresentation" value="yes" checked={formData.hasPresentation === "yes"} onChange={(e) => updateField("hasPresentation", e.target.value)} />{t("presentationYes")}</label>
-                      <label className="flex items-center gap-2 text-sm text-slate-700"><input type="radio" name="hasPresentation" value="no" checked={formData.hasPresentation === "no"} onChange={(e) => updateField("hasPresentation", e.target.value)} />{t("presentationNo")}</label>
+                    <div className="mt-2 flex flex-wrap gap-4 rounded-2xl border border-[rgba(15,35,71,0.1)] bg-white p-4">
+                      <label className="flex items-center gap-2 text-sm text-gray-600"><input type="radio" name="hasPresentation" value="yes" checked={formData.hasPresentation === "yes"} onChange={(e) => updateField("hasPresentation", e.target.value)} />{t("presentationYes")}</label>
+                      <label className="flex items-center gap-2 text-sm text-gray-600"><input type="radio" name="hasPresentation" value="no" checked={formData.hasPresentation === "no"} onChange={(e) => updateField("hasPresentation", e.target.value)} />{t("presentationNo")}</label>
                     </div>
                   </div>
                   <Button type="submit" size="lg" variant="cta" className="w-full md:w-auto" disabled={isSubmitting}>{t("dashboardSubmissionSubmit")}</Button>
                 </form>
 
-                <div className="mt-8 rounded-md border border-slate-200 bg-slate-50 p-5">
-                  <h3 className="text-lg font-semibold text-[#0F172A]">{t("dashboardReviewTitle")}</h3>
-                  <p className="mt-1 text-sm text-slate-600">{t("dashboardReviewSubtitle")}</p>
+                <div className="mt-8 rounded-2xl border border-[rgba(15,35,71,0.1)] bg-white p-5">
+                  <h3 className="text-lg font-semibold text-[#0f2347]">{t("dashboardReviewTitle")}</h3>
+                  <p className="mt-1 text-sm text-gray-600">{t("dashboardReviewSubtitle")}</p>
                   <div className="mt-4 space-y-3">
                     <div>
                       <label className={labelClass}>{t("dashboardReviewFileLabel")}</label>
                       <input key={reviewInputKey} type="file" className={`${inputClass} h-auto py-2 file:mr-3 file:rounded file:border-0 file:bg-[#4F46E5] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white`} accept=".docx,.pdf" onChange={(e) => handleReviewFileChange(e.target.files?.[0] ?? null)} />
-                      <p className="mt-1 text-xs text-slate-500">{t("dashboardReviewFileHint")}</p>
+                      <p className="mt-1 text-xs text-gray-500">{t("dashboardReviewFileHint")}</p>
                     </div>
                     <Button type="button" size="lg" variant="cta" className="w-full md:w-auto" onClick={handleCheckWithAi} disabled={isCheckingWithAi}>{isCheckingWithAi ? t("dashboardReviewChecking") : t("dashboardReviewCheckButton")}</Button>
                   </div>
 
                   {reviewError && <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{reviewError}</div>}
                   {reviewResult && (
-                    <div className="mt-4 space-y-4 rounded-md border border-slate-200 bg-white p-4">
-                      <h4 className="text-base font-semibold text-[#0F172A]">{t("dashboardReviewResultTitle")}</h4>
-                      {reviewResult.fileName && <p className="text-sm text-slate-600"><span className="font-medium text-slate-800">{t("dashboardReviewFileName")}:</span> {reviewResult.fileName}</p>}
+                    <div className="mt-4 space-y-4 rounded-2xl border border-[rgba(15,35,71,0.1)] bg-[#f8f9ff] p-4">
+                      <h4 className="text-base font-semibold text-[#0f2347]">{t("dashboardReviewResultTitle")}</h4>
+                      {reviewResult.fileName && <p className="text-sm text-gray-600"><span className="font-medium text-gray-700">{t("dashboardReviewFileName")}:</span> {reviewResult.fileName}</p>}
                       {score !== null && (
                         <div className="space-y-3">
-                          <p className="text-sm text-slate-700">
+                          <p className="text-sm text-gray-600">
                             <span className="font-medium">{t("dashboardReviewScore")}:</span> {score}/{scoreMax}
                           </p>
                           <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
@@ -650,14 +655,14 @@ export default function DashboardPage() {
                           {t("dashboardReviewReadyForSubmit")}
                         </div>
                       )}
-                      {reviewResult.summary && <p className="text-sm text-slate-600">{reviewResult.summary}</p>}
+                      {reviewResult.summary && <p className="text-sm text-gray-600">{reviewResult.summary}</p>}
                       <p className="mt-2 text-sm font-medium text-emerald-700">
                         ✓ Primary plagiarism check: {reviewResult.plagiarismWarning ?? "no indicators detected"}
                       </p>
                       {!!reviewResult.issues?.length && (
                         <div>
-                          <p className="text-sm font-medium text-slate-800">{t("dashboardReviewIssues")}:</p>
-                          <ul className="list-disc pl-5 text-sm text-slate-600">
+                          <p className="text-sm font-medium text-gray-700">{t("dashboardReviewIssues")}:</p>
+                          <ul className="list-disc pl-5 text-sm text-gray-600">
                             {reviewResult.issues.map((item, idx) => (
                               <li key={`issue-${idx}`}>{item}</li>
                             ))}
@@ -666,8 +671,8 @@ export default function DashboardPage() {
                       )}
                       {!!reviewResult.recommendations?.length && (
                         <div>
-                          <p className="text-sm font-medium text-slate-800">{t("dashboardReviewRecommendations")}:</p>
-                          <ul className="list-disc pl-5 text-sm text-slate-600">
+                          <p className="text-sm font-medium text-gray-700">{t("dashboardReviewRecommendations")}:</p>
+                          <ul className="list-disc pl-5 text-sm text-gray-600">
                             {reviewResult.recommendations.map((item, idx) => (
                               <li key={`rec-${idx}`}>{item}</li>
                             ))}
@@ -676,15 +681,15 @@ export default function DashboardPage() {
                       )}
                       {!!reviewResult.formattingIssues?.length && (
                         <div>
-                          <p className="text-sm font-medium text-slate-800">{t("dashboardReviewFormattingIssues")}:</p>
-                          <ul className="list-disc pl-5 text-sm text-slate-600">
+                          <p className="text-sm font-medium text-gray-700">{t("dashboardReviewFormattingIssues")}:</p>
+                          <ul className="list-disc pl-5 text-sm text-gray-600">
                             {reviewResult.formattingIssues.map((item, idx) => (
                               <li key={`fmt-${idx}`}>{item}</li>
                             ))}
                           </ul>
                         </div>
                       )}
-                      {reviewResult.motivationalMessage && <p className="text-sm text-slate-600">{reviewResult.motivationalMessage}</p>}
+                      {reviewResult.motivationalMessage && <p className="text-sm text-gray-600">{reviewResult.motivationalMessage}</p>}
 
                       {submitForReviewError && (
                         <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{submitForReviewError}</div>

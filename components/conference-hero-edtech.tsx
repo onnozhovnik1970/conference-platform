@@ -35,6 +35,9 @@ function normalizeHeroImageUrl(raw: string): string | null {
   if (s.startsWith("data:image/")) {
     return s;
   }
+  if (s.startsWith("/")) {
+    return s;
+  }
   return null;
 }
 
@@ -139,6 +142,11 @@ export function ConferenceHeroEdtech() {
   }, [heroUrlRaw]);
 
   const showPhotoBg = Boolean(heroImageSrc) && !bgFailed;
+  const onPhotoBanner = showPhotoBg;
+  const headingClass = onPhotoBanner ? "text-[#0f2347]" : "text-white";
+  const badgeClass = onPhotoBanner
+    ? "border-[#0f2347]/15 bg-white/80 text-[#0f2347]"
+    : "border-white/25 bg-white/15 text-white";
 
   /** Hero H1: `title` / `title_ua` (main conference name). */
   const heroH1 = useMemo(() => {
@@ -177,27 +185,29 @@ export function ConferenceHeroEdtech() {
 
   return (
     <section
-      className={`relative isolate box-border flex min-h-[min(85svh,880px)] w-full max-w-full flex-col justify-center overflow-hidden ${interHero.className}`}
+      className={`relative isolate box-border flex min-h-[max(400px,min(85svh,880px))] w-full max-w-full flex-col justify-center overflow-hidden ${interHero.className}`}
     >
-      {/* Fallback when no image — light gradient so navy typography stays readable */}
+      {/* Banner base — visible navy gradient (always; image layers on top when set) */}
       <div
-        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-[#F8FAFC] to-white"
+        className="pointer-events-none absolute inset-0 z-0 min-h-[400px] bg-gradient-to-br from-[#0f2347] via-[#1a3a6b] to-[#243b6b]"
         aria-hidden
       />
 
       {showPhotoBg && heroImageSrc ? (
-        <div className="pointer-events-none absolute inset-0 z-[1] size-full">
-          <Image
-            src={heroImageSrc}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-            unoptimized
-            onError={() => setBgFailed(true)}
-            referrerPolicy="no-referrer"
-          />
+        <div className="pointer-events-none absolute inset-0 z-[1] min-h-[400px]">
+          <div className="relative h-full min-h-[400px] w-full">
+            <Image
+              src={heroImageSrc}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+              unoptimized
+              onError={() => setBgFailed(true)}
+              referrerPolicy="no-referrer"
+            />
+          </div>
         </div>
       ) : null}
 
@@ -217,17 +227,16 @@ export function ConferenceHeroEdtech() {
       <div className="relative z-20 mx-auto box-border flex w-full max-w-full flex-1 flex-col justify-center px-4 py-14 sm:px-6 sm:py-16 md:py-20">
         <motion.div
           initial={fadeUp.initial}
-          whileInView={fadeUp.animate}
-          viewport={{ once: true, margin: "-60px" }}
+          animate={fadeUp.animate}
           transition={{ ...fadeUp.transition, delay: 0.04 }}
           className="relative z-10 mx-auto flex w-full max-w-full flex-col items-center text-center"
         >
-          <div className="mb-6 flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-2 rounded-full border border-[#0f2347]/15 bg-white/80 px-3 py-2 text-xs font-semibold text-[#0f2347] backdrop-blur-sm sm:gap-x-3 sm:px-4 sm:text-sm">
+          <div className={`mb-6 flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-2 rounded-full border px-3 py-2 text-xs font-semibold backdrop-blur-sm sm:gap-x-3 sm:px-4 sm:text-sm ${badgeClass}`}>
             <span className="inline-flex max-w-full items-center gap-1.5 break-words">
               <Calendar className="h-3.5 w-3.5 shrink-0 opacity-95 sm:h-4 sm:w-4" aria-hidden />
               {dateLabel}
             </span>
-            <span className="text-[#0f2347]/45" aria-hidden>
+            <span className={onPhotoBanner ? "text-[#0f2347]/45" : "text-white/45"} aria-hidden>
               ·
             </span>
             {badgeCityLine ? (
@@ -236,7 +245,7 @@ export function ConferenceHeroEdtech() {
                   <MapPin className="h-3.5 w-3.5 shrink-0 opacity-90 sm:h-4 sm:w-4" aria-hidden />
                   {badgeCityLine}
                 </span>
-                <span className="text-[#0f2347]/45" aria-hidden>
+                <span className={onPhotoBanner ? "text-[#0f2347]/45" : "text-white/45"} aria-hidden>
                   ·
                 </span>
               </>
@@ -247,27 +256,27 @@ export function ConferenceHeroEdtech() {
             </span>
           </div>
 
-          <h1 className="mx-auto w-full max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-4xl font-bold leading-[1.1] tracking-tight text-[#0f2347] md:text-6xl md:leading-[1.08]">
+          <h1 className={`mx-auto w-full max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl md:leading-[1.08] ${headingClass}`}>
             {heroH1}
           </h1>
           {heroH2 ? (
-            <h2 className="mx-auto mt-5 max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-xl font-normal leading-snug text-[#0f2347] md:mt-6 md:text-2xl md:leading-relaxed">
+            <h2 className={`mx-auto mt-5 max-w-[min(100%,54rem)] text-balance whitespace-pre-line text-xl font-normal leading-snug md:mt-6 md:text-2xl md:leading-relaxed ${headingClass}`}>
               {heroH2}
             </h2>
           ) : null}
 
           <div className="mt-10 flex w-full max-w-full flex-col gap-3 sm:flex sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center">
-            <Button
-              asChild
-              variant="outline"
-              className="h-auto w-full max-w-xs rounded-full border-0 bg-[#0f2347] px-8 py-3 text-base font-semibold text-white shadow-none transition-all duration-200 ease-in-out hover:scale-[1.03] hover:border-0 hover:bg-[#1a3a6b] hover:text-white hover:shadow-[0_0_20px_rgba(15,35,71,0.4)] sm:w-auto sm:min-w-[12rem]"
-            >
+            <Button asChild variant="cta" className="w-full max-w-xs sm:w-auto sm:min-w-[12rem]">
               <Link href="/register">{t("heroRegisterNow")}</Link>
             </Button>
             <Button
               asChild
               variant="outline"
-              className="h-auto w-full max-w-xs rounded-full border-2 border-[#0f2347] bg-transparent px-8 py-3 text-base font-semibold text-[#0f2347] shadow-none transition-all duration-200 ease-in-out hover:scale-[1.03] hover:border-[#0f2347] hover:bg-[#0f2347] hover:text-white sm:w-auto sm:min-w-[12rem]"
+              className={
+                onPhotoBanner
+                  ? "h-auto w-full max-w-xs rounded-full border-2 border-[#0f2347] bg-transparent px-8 py-3 text-base font-semibold text-[#0f2347] shadow-none transition-all duration-200 ease-in-out hover:scale-[1.03] hover:border-[#0f2347] hover:bg-[#0f2347] hover:text-white sm:w-auto sm:min-w-[12rem]"
+                  : "h-auto w-full max-w-xs rounded-full border-2 border-white bg-transparent px-8 py-3 text-base font-semibold text-white shadow-none transition-all duration-200 ease-in-out hover:scale-[1.03] hover:bg-white hover:text-[#0f2347] sm:w-auto sm:min-w-[12rem]"
+              }
             >
               <Link href="/login">{t("navLogin")}</Link>
             </Button>

@@ -70,15 +70,6 @@
     @apply rounded-xl border border-[rgba(0,240,255,0.2)] bg-white/80 text-[#0F172A] backdrop-blur-md;
   }
 
-  .public-tech-cta {
-    background: linear-gradient(135deg, #ff2a7a, #00f0ff);
-    @apply border-0 font-bold text-white shadow-md transition-shadow;
-  }
-
-  .public-tech-cta:hover:not(:disabled) {
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-  }
-
   .public-tech-input {
     @apply mt-2 h-11 w-full rounded-md border border-slate-300 bg-[#F8FAFC] px-3 text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#4F46E5] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/25;
   }
