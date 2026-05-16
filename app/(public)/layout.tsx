@@ -7,7 +7,7 @@ export default function PublicLayout({ children }: Readonly<{ children: React.Re
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <div className={cn("min-h-0 flex-1", "public-site")}>{children}</div>
+      <div className={cn("relative z-0 min-h-0 flex-1", "public-site")}>{children}</div>
       <Footer />
     </div>
   );

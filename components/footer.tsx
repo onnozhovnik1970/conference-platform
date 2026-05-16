@@ -83,7 +83,7 @@ export function Footer() {
   const supportEmail = supportEmailTrimmed(settings.support_email);
 
   return (
-    <footer className="relative z-30 mt-auto shrink-0 border-t border-white/10 bg-[#0a1628] py-10 text-slate-300">
+    <footer className="relative z-30 isolate mt-auto shrink-0 border-t border-white/10 bg-[#0a1628] py-10 text-slate-300">
       <div className="container flex flex-col items-center gap-6 text-center">
         <div className="space-y-1">
           <p className="text-lg font-bold text-white md:text-xl">{displayName}</p>

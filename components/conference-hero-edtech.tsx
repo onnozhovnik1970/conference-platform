@@ -197,13 +197,13 @@ export function ConferenceHeroEdtech() {
 
   if (showParticlesShell) {
     return (
-      <section className={`relative isolate w-full max-w-full ${interHero.className}`}>
+      <section className={`relative z-0 w-full max-w-full overflow-hidden ${interHero.className}`}>
         <div
-          className="relative h-[480px] w-full min-h-[480px] bg-[#3aacaa]"
+          className="relative z-0 h-[480px] max-h-[480px] w-full overflow-hidden bg-[#3aacaa]"
           style={{ backgroundColor: heroBgColor || DEFAULT_HERO_BG_COLOR }}
         >
           {!settingsLoading && isParticlesHero ? <ParticlesBackground bgColor={heroBgColor} /> : null}
-          <div className="relative z-10 px-4 py-10 text-center sm:px-6 sm:py-12 md:py-14">
+          <div className="relative z-10 flex h-full flex-col justify-center px-4 text-center sm:px-6">
             {heroContent}
           </div>
         </div>

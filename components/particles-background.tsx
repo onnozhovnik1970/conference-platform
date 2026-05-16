@@ -122,14 +122,25 @@ export default function ParticlesBackground({ bgColor }: ParticlesBackgroundProp
   }, [color, particleCount, prefersReducedMotion]);
 
   if (!init) {
-    return <div className="pointer-events-none absolute inset-0 z-0" style={{ backgroundColor: color }} aria-hidden />;
+    return (
+      <div
+        className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+        style={{ backgroundColor: color, zIndex: 0 }}
+        aria-hidden
+      />
+    );
   }
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-0" style={{ backgroundColor: color }} aria-hidden>
+    <div
+      className="pointer-events-none absolute inset-0 z-0 h-full w-full overflow-hidden"
+      style={{ backgroundColor: color, zIndex: 0 }}
+      aria-hidden
+    >
       <Particles
         key={`${color}-${particleCount}-${prefersReducedMotion}`}
         className="absolute inset-0 h-full w-full"
+        style={{ zIndex: 0 }}
         options={options}
       />
     </div>
