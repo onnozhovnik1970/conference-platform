@@ -22,17 +22,27 @@ export type DashboardReviewResult = {
   plagiarismWarning?: string | null;
 };
 
+/** Parse AI score (supports decimals e.g. 6.5). Always uses parseFloat, never parseInt. */
 export function parseAiScore(value: unknown): number | undefined {
-  if (typeof value === "number" && !Number.isNaN(value)) {
-    return value;
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (typeof value === "number") {
+    return Number.isNaN(value) ? undefined : value;
   }
   if (typeof value === "string" && value.trim() !== "") {
-    const parsed = Number.parseFloat(value);
+    const parsed = parseFloat(value.trim());
     if (!Number.isNaN(parsed)) {
       return parsed;
     }
   }
   return undefined;
+}
+
+/** Value safe to persist on `submissions.ai_score` (numeric, may be fractional). */
+export function aiScoreForDatabase(value: unknown): number | null {
+  const parsed = parseAiScore(value);
+  return parsed === undefined ? null : parsed;
 }
 
 export function rowHasAiReport(row: DashboardAiSubmissionRow | null | undefined): boolean {
@@ -96,7 +106,7 @@ export function mergeReviewResults(
 
 export function buildAiReviewDbPayload(result: DashboardReviewResult) {
   return {
-    ai_score: result.score ?? null,
+    ai_score: aiScoreForDatabase(result.score),
     ai_summary: result.summary?.trim() || null,
     ai_issues: result.issues ?? [],
     ai_recommendations: result.recommendations ?? [],

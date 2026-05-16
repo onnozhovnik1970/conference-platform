@@ -131,9 +131,18 @@ Respond entirely in ${responseLanguageLabel}.`;
     }
 
     const result = JSON.parse(jsonMatch[0]);
+    const rawScore = result.score;
+    const score =
+      typeof rawScore === "number" && !Number.isNaN(rawScore)
+        ? rawScore
+        : typeof rawScore === "string" && rawScore.trim() !== ""
+          ? parseFloat(rawScore.trim())
+          : NaN;
+    const normalizedScore = Number.isNaN(score) ? undefined : score;
+
     return NextResponse.json({
       success: true,
-      score: result.score,
+      score: normalizedScore,
       scoreMax: result.scoreMax,
       issues: result.issues,
       recommendations: result.recommendations,

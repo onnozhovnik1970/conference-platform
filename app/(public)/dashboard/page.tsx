@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  aiScoreForDatabase,
   buildAiReviewDbPayload,
   mergeReviewResults,
   parseAiScore,
@@ -235,7 +236,7 @@ export default function DashboardPage() {
       const requestBody = {
         submission_id: id,
         review: {
-          score: review.score,
+          score: aiScoreForDatabase(review.score) ?? undefined,
           scoreMax: review.scoreMax ?? 10,
           summary: review.summary ?? null,
           issues: review.issues ?? [],
@@ -255,14 +256,29 @@ export default function DashboardPage() {
       });
 
       if (!response.ok) {
+        let responseBody: Record<string, unknown> = {};
         try {
-          const body = (await response.json()) as { error?: string };
-          console.error("dashboard save ai review error:", response.status, body, requestBody);
-          return { ok: false, error: body.error?.trim() || "save" };
+          responseBody = (await response.json()) as Record<string, unknown>;
         } catch {
-          console.error("dashboard save ai review error:", response.status, requestBody);
-          return { ok: false, error: "save" };
+          responseBody = { parseError: "Response was not JSON" };
         }
+
+        const serverError =
+          typeof responseBody.error === "string"
+            ? responseBody.error
+            : typeof responseBody.message === "string"
+              ? responseBody.message
+              : "Unknown server error";
+
+        console.error("dashboard save ai review error:", {
+          httpStatus: response.status,
+          serverError,
+          serverResponse: responseBody,
+          requestUrl: "/api/dashboard/submissions/ai-review",
+          requestBody
+        });
+
+        return { ok: false, error: serverError.trim() || "save" };
       }
 
       const body = (await response.json()) as { submission?: LatestSubmissionRow };
@@ -579,7 +595,7 @@ export default function DashboardPage() {
       }
 
       const reviewForDb: DashboardReviewResult = {
-        score: result.score,
+        score: parseAiScore(result.score),
         scoreMax: result.scoreMax ?? 10,
         summary: result.summary,
         issues: result.issues ?? [],

@@ -198,10 +198,26 @@ export async function saveDashboardAiReview(params: {
   return { ok: true, submission: updated as Record<string, unknown> };
 }
 
+function validationErrorResponse(
+  error: string,
+  status: number,
+  body: Record<string, unknown>,
+  extra?: Record<string, unknown>
+): NextResponse {
+  console.log("Request body:", JSON.stringify(body, null, 2));
+  console.log("Validation error:", error, extra ?? {});
+  return NextResponse.json({ error, ...extra }, { status });
+}
+
 export async function handleDashboardAiReviewSave(
   request: Request,
   submissionIdFromPath: string | null
 ): Promise<NextResponse> {
+  console.log("[dashboard/ai-review] incoming", {
+    method: request.method,
+    pathSubmissionId: submissionIdFromPath
+  });
+
   const auth = await getDashboardUserFromRequest(request);
   if (!auth.ok) {
     return auth.response;
@@ -211,55 +227,69 @@ export async function handleDashboardAiReviewSave(
   let body: unknown;
   try {
     body = rawText.trim() === "" ? null : JSON.parse(rawText);
-  } catch {
-    console.error("[dashboard/ai-review] invalid JSON", { rawText: rawText.slice(0, 500) });
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  } catch (parseError) {
+    const error = "Invalid JSON body";
+    console.log("Request body:", rawText.slice(0, 2000));
+    console.log("Validation error:", error, parseError);
+    return NextResponse.json({ error }, { status: 400 });
   }
 
-  if (!body || typeof body !== "object" || Array.isArray(body)) {
-    console.error("[dashboard/ai-review] invalid body shape", { body });
-    return NextResponse.json({ error: "Invalid body", received: body }, { status: 400 });
+  const record =
+    body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : null;
+
+  if (!record) {
+    const error = "Invalid body";
+    console.log("Request body:", JSON.stringify(body, null, 2));
+    console.log("Validation error:", error);
+    return NextResponse.json({ error, received: body }, { status: 400 });
   }
 
-  const record = body as Record<string, unknown>;
+  console.log("Request body:", JSON.stringify(record, null, 2));
+
   const submissionId =
     normalizeDashboardSubmissionId(submissionIdFromPath) ??
     normalizeDashboardSubmissionId(record.submission_id) ??
     normalizeDashboardSubmissionId(record.submissionId);
 
   if (!submissionId) {
-    console.error("[dashboard/ai-review] missing submission id", {
+    const error = "Missing or invalid submission_id. Save the submission first, then attach AI results.";
+    console.log("Validation error:", error, {
       pathId: submissionIdFromPath,
-      bodyKeys: Object.keys(record),
-      body: record
+      submission_id: record.submission_id,
+      submissionId: record.submissionId,
+      receivedBodyKeys: Object.keys(record)
     });
-    return NextResponse.json(
-      {
-        error: "Missing or invalid submission_id. Save the submission first, then attach AI results.",
-        receivedBodyKeys: Object.keys(record)
-      },
-      { status: 400 }
-    );
+    return validationErrorResponse(error, 400, record, {
+      receivedBodyKeys: Object.keys(record)
+    });
   }
 
   const review = parseReviewFromRequestBody(record);
   if (!review || !reviewPayloadHasContent(review)) {
-    console.error("[dashboard/ai-review] missing review payload", {
+    const error =
+      "Missing or empty review payload (need score, summary, issues, or recommendations).";
+    console.log("Validation error:", error, {
       submissionId,
-      bodyKeys: Object.keys(record),
-      body: record
+      parsedReview: review,
+      receivedBodyKeys: Object.keys(record)
     });
-    return NextResponse.json(
-      {
-        error: "Missing or empty review payload (need score, summary, issues, or recommendations).",
-        receivedBodyKeys: Object.keys(record)
-      },
-      { status: 400 }
-    );
+    return validationErrorResponse(error, 400, record, {
+      submissionId,
+      parsedReview: review,
+      receivedBodyKeys: Object.keys(record)
+    });
   }
 
   const filePathRaw = record.file_path ?? record.filePath;
   const filePath = typeof filePathRaw === "string" ? filePathRaw : null;
+
+  console.log("[dashboard/ai-review] saving", {
+    submissionId,
+    userId: auth.user.id,
+    reviewScore: review.score,
+    hasSummary: Boolean(review.summary?.trim()),
+    filePath: filePath ?? null
+  });
 
   const result = await saveDashboardAiReview({
     supabase: auth.supabase,
@@ -270,8 +300,12 @@ export async function handleDashboardAiReviewSave(
   });
 
   if (!result.ok) {
+    const errorBody = await result.response.clone().json().catch(() => ({}));
+    console.log("Request body:", JSON.stringify(record, null, 2));
+    console.log("Validation error:", (errorBody as { error?: string }).error ?? "Database update failed", errorBody);
     return result.response;
   }
 
+  console.log("[dashboard/ai-review] saved", { submissionId });
   return NextResponse.json({ submission: result.submission });
 }
