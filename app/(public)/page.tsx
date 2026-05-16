@@ -77,6 +77,7 @@ export default function HomePage() {
 
       <ConferenceHeroEdtech />
 
+      <div className="relative z-10 flex flex-col bg-white">
       <section className="public-tech-section-alt container border-t border-slate-200/80 py-14 md:py-20">
         <h2 className="mb-3 text-center text-3xl font-bold text-[#0F172A] md:mb-4">{t("aboutConference")}</h2>
         <p className="public-tech-muted mx-auto max-w-4xl text-center">{aboutDescription}</p>
@@ -207,6 +208,7 @@ export default function HomePage() {
           </div>
         </section>
       ) : null}
+      </div>
     </main>
   );
 }
