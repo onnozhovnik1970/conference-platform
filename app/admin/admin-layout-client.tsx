@@ -13,7 +13,8 @@ import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { href: "/admin/submissions", labelKey: "adminNavSubmissions" as const },
+  { href: "/admin/submissions", labelKey: "adminNavAll" as const },
+  { href: "/admin/under-review", labelKey: "adminNavUnderReview" as const },
   { href: "/admin/statistics", labelKey: "adminNavStatistics" as const },
   { href: "/admin/documents", labelKey: "adminNavDocuments" as const },
   { href: "/admin/pages", labelKey: "adminNavPages" as const },

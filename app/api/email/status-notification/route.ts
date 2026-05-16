@@ -2,18 +2,10 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
 import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server";
+import { ADMIN_STATUS_OPTIONS, isAdminSubmissionStatus } from "@/lib/admin/submission-filters";
 
-const ALLOWED_STATUSES = [
-  "pending",
-  "pending_review",
-  "under_review",
-  "accepted",
-  "rejected",
-  "needs_revision"
-] as const;
-
-function isAllowedStatus(value: unknown): value is (typeof ALLOWED_STATUSES)[number] {
-  return typeof value === "string" && (ALLOWED_STATUSES as readonly string[]).includes(value);
+function isAllowedStatus(value: unknown): value is (typeof ADMIN_STATUS_OPTIONS)[number] {
+  return typeof value === "string" && isAdminSubmissionStatus(value);
 }
 
 function escapeHtml(text: string): string {
@@ -26,6 +18,7 @@ function escapeHtml(text: string): string {
 
 function statusBilingual(status: string): { uk: string; en: string } {
   const map: Record<string, { uk: string; en: string }> = {
+    draft: { uk: "Чернетка", en: "Draft" },
     pending: { uk: "Очікує", en: "Pending" },
     pending_review: { uk: "На перевірці", en: "Pending review" },
     under_review: { uk: "На розгляді", en: "Under review" },

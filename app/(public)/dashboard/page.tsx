@@ -7,6 +7,14 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  buildAiReviewDbPayload,
+  mergeReviewResults,
+  parseAiScore,
+  reviewResultFromSubmissionRow,
+  rowHasAiReport,
+  type DashboardReviewResult
+} from "@/lib/dashboard-ai-report";
+import {
   canEditSubmission,
   canStartNewSubmissionRow,
   getParticipantDisplayStatus,
@@ -40,20 +48,6 @@ type SubmissionForm = {
   supervisorTitleDegree: string;
   supervisorPosition: string;
   hasPresentation: "yes" | "no" | "";
-};
-
-type ReviewResult = {
-  success?: boolean;
-  error?: string;
-  score?: number;
-  scoreMax?: number;
-  issues?: string[];
-  recommendations?: string[];
-  formattingIssues?: string[];
-  summary?: string;
-  fileName?: string;
-  motivationalMessage?: string;
-  plagiarismWarning?: string | null;
 };
 
 type LatestSubmissionRow = {
@@ -103,17 +97,6 @@ const initialSubmissionForm: SubmissionForm = {
 
 const SUBMISSION_SELECT =
   "id, status, ai_score, ai_summary, ai_issues, ai_recommendations, ai_formatting_issues, file_path, abstract_title, faculty, specialty, group_name, year_of_study, country, phone, abstract_language, section_id, supervisor_name, supervisor_title_degree, supervisor_position, has_presentation, created_at";
-
-function reviewResultFromRow(row: LatestSubmissionRow): ReviewResult {
-  return {
-    score: row.ai_score ?? undefined,
-    scoreMax: 10,
-    issues: row.ai_issues ?? [],
-    recommendations: row.ai_recommendations ?? [],
-    formattingIssues: row.ai_formatting_issues ?? [],
-    summary: row.ai_summary ?? undefined
-  };
-}
 
 function formFromRow(row: LatestSubmissionRow): SubmissionForm {
   const year =
@@ -186,7 +169,8 @@ export default function DashboardPage() {
   const [reviewFile, setReviewFile] = useState<File | null>(null);
   const [reviewInputKey, setReviewInputKey] = useState(0);
   const [reviewError, setReviewError] = useState<string | null>(null);
-  const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
+  /** Ephemeral fields from the latest API check (fileName, motivationalMessage, etc.). */
+  const [sessionReviewResult, setSessionReviewResult] = useState<DashboardReviewResult | null>(null);
   const [isCheckingWithAi, setIsCheckingWithAi] = useState(false);
 
   const [isSubmittingForReview, setIsSubmittingForReview] = useState(false);
@@ -214,13 +198,64 @@ export default function DashboardPage() {
     if (latest && canEditSubmission(latest.status)) {
       setFormData(formFromRow(latest));
     }
-
-    if (latest?.ai_score !== null && latest?.ai_score !== undefined) {
-      setReviewResult(reviewResultFromRow(latest));
-    } else {
-      setReviewResult(null);
-    }
   }, []);
+
+  const persistedReviewResult = useMemo(() => {
+    if (!latestSubmission || !rowHasAiReport(latestSubmission)) {
+      return null;
+    }
+    return reviewResultFromSubmissionRow(latestSubmission);
+  }, [latestSubmission]);
+
+  const displayReviewResult = useMemo(
+    () => mergeReviewResults(persistedReviewResult, sessionReviewResult),
+    [persistedReviewResult, sessionReviewResult]
+  );
+
+  const saveAiReviewToDatabase = useCallback(
+    async (
+      submissionId: number,
+      review: DashboardReviewResult,
+      filePath: string | null
+    ): Promise<{ ok: true; row: LatestSubmissionRow } | { ok: false; error: string }> => {
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        return { ok: false, error: "auth" };
+      }
+
+      const response = await fetch(`/api/dashboard/submissions/${encodeURIComponent(String(submissionId))}/ai-review`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          review,
+          ...(filePath ? { file_path: filePath } : {})
+        })
+      });
+
+      if (!response.ok) {
+        try {
+          const body = (await response.json()) as { error?: string };
+          return { ok: false, error: body.error?.trim() || "save" };
+        } catch {
+          return { ok: false, error: "save" };
+        }
+      }
+
+      const body = (await response.json()) as { submission?: LatestSubmissionRow };
+      if (!body.submission) {
+        return { ok: false, error: "save" };
+      }
+
+      return { ok: true, row: body.submission };
+    },
+    []
+  );
 
   const buildSubmissionPayload = useCallback(
     (form: SubmissionForm) => {
@@ -351,7 +386,7 @@ export default function DashboardPage() {
 
       if (profileError) {
         console.log("dashboard profile load error:", profileError);
-        setError(t("dashboardLoadError"));
+        setError(i18n.t("dashboardLoadError"));
         setIsLoading(false);
         return;
       }
@@ -361,7 +396,7 @@ export default function DashboardPage() {
     };
 
     void loadProfile();
-  }, [router, t, loadLatestSubmission]);
+  }, [router, loadLatestSubmission, i18n]);
 
   useEffect(() => {
     const loadSections = async () => {
@@ -386,7 +421,10 @@ export default function DashboardPage() {
   const latestStatus = latestSubmission?.status ?? null;
   const submissionLocked = !isLoading && isSubmissionLocked(latestStatus);
   const submissionEditable = !isLoading && canEditSubmission(latestStatus);
-  const displayStatus = getParticipantDisplayStatus(latestStatus, latestSubmission?.ai_score);
+  const displayStatus = getParticipantDisplayStatus(
+    latestStatus,
+    parseAiScore(latestSubmission?.ai_score) ?? displayReviewResult?.score
+  );
   const displayStatusKey = displayStatusLabelKey(displayStatus);
 
   const handleReviewFileChange = (file: File | null) => {
@@ -420,13 +458,30 @@ export default function DashboardPage() {
     setReviewFile(file);
   };
 
-  const handleResetReviewFile = () => {
+  const handleResetReviewFile = async () => {
     setReviewFile(null);
-    setReviewResult(null);
+    setSessionReviewResult(null);
     setReviewError(null);
     setSubmitForReviewError(null);
     setSubmitForReviewSuccess(null);
     setReviewInputKey((prev) => prev + 1);
+
+    if (!latestSubmission?.id || !userId) {
+      return;
+    }
+
+    const clearedReview: DashboardReviewResult = {
+      score: undefined,
+      summary: undefined,
+      issues: [],
+      recommendations: [],
+      formattingIssues: []
+    };
+
+    const saved = await saveAiReviewToDatabase(latestSubmission.id, clearedReview, latestSubmission.file_path);
+    if (saved.ok) {
+      setLatestSubmission(saved.row);
+    }
   };
 
   const handleCheckWithAi = async () => {
@@ -479,37 +534,54 @@ export default function DashboardPage() {
       payload.set("language", i18n.language === "ua" || i18n.language === "uk" ? "ua" : "en");
 
       const response = await fetch("/api/review-abstract", { method: "POST", body: payload });
-      const result = (await response.json()) as ReviewResult;
+      const result = (await response.json()) as DashboardReviewResult & { success?: boolean; error?: string };
 
       if (!response.ok || !result.success) {
         setReviewError(result.error || t("dashboardReviewError"));
         return;
       }
 
-      setReviewResult(result);
-
-      const aiPayload = {
-        ai_score: result.score ?? null,
-        ai_summary: result.summary ?? null,
-        ai_issues: result.issues ?? [],
-        ai_recommendations: result.recommendations ?? [],
-        ai_formatting_issues: result.formattingIssues ?? [],
-        file_path: uploaded.path
+      const reviewForDb: DashboardReviewResult = {
+        score: result.score,
+        scoreMax: result.scoreMax ?? 10,
+        summary: result.summary,
+        issues: result.issues ?? [],
+        recommendations: result.recommendations ?? [],
+        formattingIssues: result.formattingIssues ?? []
       };
+
+      setSessionReviewResult({
+        ...reviewForDb,
+        fileName: result.fileName ?? reviewFile.name,
+        motivationalMessage: result.motivationalMessage,
+        plagiarismWarning: result.plagiarismWarning ?? null
+      });
 
       const keepStatus =
         latestSubmission?.status === "needs_revision" ? "needs_revision" : SUBMISSION_STATUS_DRAFT;
 
-      const { error: updateError } = await supabase
+      const { error: formUpdateError } = await supabase
         .from("submissions")
-        .update({ ...buildSubmissionPayload(formData), ...aiPayload, status: keepStatus })
+        .update({ ...buildSubmissionPayload(formData), status: keepStatus })
         .eq("id", upserted.id);
 
-      if (updateError) {
-        console.log("dashboard save ai review error:", updateError);
+      if (formUpdateError) {
+        console.log("dashboard submission form update error:", formUpdateError);
       }
 
-      await loadLatestSubmission(userId);
+      const saved = await saveAiReviewToDatabase(upserted.id, reviewForDb, uploaded.path);
+      if (!saved.ok) {
+        setReviewError(t("dashboardReviewSaveError"));
+        return;
+      }
+
+      setLatestSubmission(saved.row);
+      setSessionReviewResult({
+        ...reviewResultFromSubmissionRow(saved.row),
+        fileName: result.fileName ?? reviewFile.name,
+        motivationalMessage: result.motivationalMessage,
+        plagiarismWarning: result.plagiarismWarning ?? null
+      });
     } catch {
       setReviewError(t("dashboardReviewError"));
     } finally {
@@ -521,7 +593,7 @@ export default function DashboardPage() {
     setSubmitForReviewError(null);
     setSubmitForReviewSuccess(null);
 
-    if (!userId || !reviewResult) {
+    if (!userId || !displayReviewResult) {
       setSubmitForReviewError(t("dashboardSubmissionAuthError"));
       return;
     }
@@ -531,7 +603,7 @@ export default function DashboardPage() {
       return;
     }
 
-    const score = typeof reviewResult.score === "number" ? reviewResult.score : null;
+    const score = typeof displayReviewResult.score === "number" ? displayReviewResult.score : null;
     if (score === null || score < 7) {
       setSubmitForReviewError(t("dashboardReviewNeedsImprovement"));
       return;
@@ -566,11 +638,7 @@ export default function DashboardPage() {
           ...buildSubmissionPayload(formData),
           status: SUBMISSION_STATUS_PENDING_REVIEW,
           file_path: filePath,
-          ai_score: reviewResult.score ?? null,
-          ai_summary: reviewResult.summary ?? null,
-          ai_issues: reviewResult.issues ?? [],
-          ai_recommendations: reviewResult.recommendations ?? [],
-          ai_formatting_issues: reviewResult.formattingIssues ?? []
+          ...buildAiReviewDbPayload(displayReviewResult)
         })
         .eq("id", upserted.id);
 
@@ -582,6 +650,7 @@ export default function DashboardPage() {
 
       setSubmitForReviewSuccess(t("dashboardSubmitForReviewSuccess"));
       setReviewFile(null);
+      setSessionReviewResult(null);
       setReviewInputKey((prev) => prev + 1);
       await loadLatestSubmission(userId);
     } catch {
@@ -600,11 +669,13 @@ export default function DashboardPage() {
     event.preventDefault();
   };
 
-  const score = typeof reviewResult?.score === "number" ? reviewResult.score : null;
-  const scoreMax = typeof reviewResult?.scoreMax === "number" ? reviewResult.scoreMax : 10;
+  const score = typeof displayReviewResult?.score === "number" ? displayReviewResult.score : null;
+  const scoreMax = typeof displayReviewResult?.scoreMax === "number" ? displayReviewResult.scoreMax : 10;
   const scorePercent = score !== null ? Math.max(0, Math.min(100, (score / scoreMax) * 100)) : 0;
   const canSubmitForReview = submissionEditable && score !== null && score >= 7;
-  const showAiReport = reviewResult !== null && (reviewResult.score !== undefined || !!reviewResult.summary);
+  const showAiReport =
+    displayReviewResult !== null &&
+    (displayReviewResult.score !== undefined || !!displayReviewResult.summary?.trim());
 
   const progressStage = useMemo(() => {
     if (displayStatus === "accepted" || displayStatus === "rejected") {
@@ -933,12 +1004,13 @@ export default function DashboardPage() {
                       <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{reviewError}</div>
                     )}
 
-                    {showAiReport && reviewResult && (
+                    {showAiReport && displayReviewResult && (
                       <div className="mt-4 space-y-4 rounded-2xl border border-[rgba(15,35,71,0.1)] bg-[#f8f9ff] p-4">
                         <h4 className="text-base font-semibold text-[#0f2347]">{t("dashboardReviewResultTitle")}</h4>
-                        {reviewResult.fileName && (
+                        {displayReviewResult.fileName && (
                           <p className="text-sm text-gray-600">
-                            <span className="font-medium text-gray-700">{t("dashboardReviewFileName")}:</span> {reviewResult.fileName}
+                            <span className="font-medium text-gray-700">{t("dashboardReviewFileName")}:</span>{" "}
+                            {displayReviewResult.fileName}
                           </p>
                         )}
                         {score !== null && (
@@ -961,42 +1033,44 @@ export default function DashboardPage() {
                             {t("dashboardReviewReadyForSubmit")}
                           </div>
                         )}
-                        {reviewResult.summary && <p className="text-sm text-gray-600">{reviewResult.summary}</p>}
+                        {displayReviewResult.summary && (
+                          <p className="text-sm text-gray-600">{displayReviewResult.summary}</p>
+                        )}
                         <p className="mt-2 text-sm font-medium text-emerald-700">
-                          ✓ Primary plagiarism check: {reviewResult.plagiarismWarning ?? "no indicators detected"}
+                          ✓ Primary plagiarism check: {displayReviewResult.plagiarismWarning ?? "no indicators detected"}
                         </p>
-                        {!!reviewResult.issues?.length && (
+                        {!!displayReviewResult.issues?.length && (
                           <div>
                             <p className="text-sm font-medium text-gray-700">{t("dashboardReviewIssues")}:</p>
                             <ul className="list-disc pl-5 text-sm text-gray-600">
-                              {reviewResult.issues.map((item, idx) => (
+                              {displayReviewResult.issues.map((item, idx) => (
                                 <li key={`issue-${idx}`}>{item}</li>
                               ))}
                             </ul>
                           </div>
                         )}
-                        {!!reviewResult.recommendations?.length && (
+                        {!!displayReviewResult.recommendations?.length && (
                           <div>
                             <p className="text-sm font-medium text-gray-700">{t("dashboardReviewRecommendations")}:</p>
                             <ul className="list-disc pl-5 text-sm text-gray-600">
-                              {reviewResult.recommendations.map((item, idx) => (
+                              {displayReviewResult.recommendations.map((item, idx) => (
                                 <li key={`rec-${idx}`}>{item}</li>
                               ))}
                             </ul>
                           </div>
                         )}
-                        {!!reviewResult.formattingIssues?.length && (
+                        {!!displayReviewResult.formattingIssues?.length && (
                           <div>
                             <p className="text-sm font-medium text-gray-700">{t("dashboardReviewFormattingIssues")}:</p>
                             <ul className="list-disc pl-5 text-sm text-gray-600">
-                              {reviewResult.formattingIssues.map((item, idx) => (
+                              {displayReviewResult.formattingIssues.map((item, idx) => (
                                 <li key={`fmt-${idx}`}>{item}</li>
                               ))}
                             </ul>
                           </div>
                         )}
-                        {reviewResult.motivationalMessage && (
-                          <p className="text-sm text-gray-600">{reviewResult.motivationalMessage}</p>
+                        {displayReviewResult.motivationalMessage && (
+                          <p className="text-sm text-gray-600">{displayReviewResult.motivationalMessage}</p>
                         )}
 
                         {submitForReviewError && (
@@ -1018,7 +1092,7 @@ export default function DashboardPage() {
                                 size="lg"
                                 variant="outline"
                                 className="public-tech-outline-btn w-full md:w-auto"
-                                onClick={handleResetReviewFile}
+                                onClick={() => void handleResetReviewFile()}
                               >
                                 {t("dashboardReviewUploadNewVersion")}
                               </Button>

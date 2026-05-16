@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { deleteSubmissionRecord } from "@/lib/admin/delete-submission";
+import { ADMIN_STATUS_OPTIONS, type AdminSubmissionStatus } from "@/lib/admin/submission-filters";
 import { assertAdminFromRequest, getServiceRoleClient } from "@/lib/admin-server";
 
-const STATUS_OPTIONS = [
-  "pending",
-  "pending_review",
-  "under_review",
-  "accepted",
-  "rejected",
-  "needs_revision"
-] as const;
-
-function isAllowedStatus(value: unknown): value is (typeof STATUS_OPTIONS)[number] {
-  return typeof value === "string" && (STATUS_OPTIONS as readonly string[]).includes(value);
+function isAllowedStatus(value: unknown): value is AdminSubmissionStatus {
+  return typeof value === "string" && (ADMIN_STATUS_OPTIONS as readonly string[]).includes(value);
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -118,6 +111,31 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       },
       { status: 404 }
     );
+  }
+
+  return NextResponse.json({ success: true, status: updatePayload.status ?? undefined });
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await assertAdminFromRequest(request);
+  if (!auth.ok) {
+    return auth.response;
+  }
+
+  const { id } = await params;
+  const rawId = id?.trim();
+  if (!rawId) {
+    return NextResponse.json({ error: "Missing or invalid submission id" }, { status: 400 });
+  }
+
+  const supabase = getServiceRoleClient();
+  if (!supabase) {
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+  }
+
+  const result = await deleteSubmissionRecord(supabase, rawId);
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.notFound ? 404 : 500 });
   }
 
   return NextResponse.json({ success: true });

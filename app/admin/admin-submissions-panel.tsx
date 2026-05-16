@@ -1,11 +1,18 @@
 "use client";
 
-import { Award, Download, Loader2, Mail } from "lucide-react";
+import { Award, Download, Loader2, Mail, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ADMIN_STATUS_OPTIONS,
+  matchesAdminSubmissionsView,
+  normalizeAdminSubmissionStatus,
+  type AdminSubmissionStatus,
+  type AdminSubmissionsView
+} from "@/lib/admin/submission-filters";
 import { sectionLabel, type ConferenceSectionRow } from "@/lib/conference-sections";
 import "@/lib/i18n/config";
 import { supabase } from "@/lib/supabase";
@@ -13,21 +20,7 @@ import { cn } from "@/lib/utils";
 
 const LEGACY_PANEL_KEYS = ["panel1", "panel2", "panel3", "panel4", "panel5", "panel6"] as const;
 
-const STATUS_OPTIONS = ["pending", "pending_review", "under_review", "accepted", "rejected", "needs_revision"] as const;
-type SubmissionAdminStatus = (typeof STATUS_OPTIONS)[number];
-
-export type AdminSubmissionsView = "pipeline" | "accepted" | "needs_revision" | "rejected" | "archive";
-
-function isSubmissionAdminStatus(value: string): value is SubmissionAdminStatus {
-  return (STATUS_OPTIONS as readonly string[]).includes(value);
-}
-
-function normalizeStatus(value: string | null | undefined): SubmissionAdminStatus {
-  if (value && isSubmissionAdminStatus(value)) {
-    return value;
-  }
-  return "pending";
-}
+export type { AdminSubmissionsView };
 
 type SubmissionRecord = {
   id: number;
@@ -57,7 +50,7 @@ export type AdminRow = {
   sectionId: string | null;
   thematicPanelRaw: string;
   authorName: string;
-  status: SubmissionAdminStatus;
+  status: AdminSubmissionStatus;
   reviewerComment: string;
   filePath: string | null;
   archivedAt: string | null;
@@ -74,13 +67,15 @@ function buildAuthorName(profile: ProfileRecord | undefined, unknownLabel: strin
   return name || unknownLabel;
 }
 
-function statusBadgeClass(status: SubmissionAdminStatus): string {
+function statusBadgeClass(status: AdminSubmissionStatus): string {
   const base = "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium";
   switch (status) {
     case "accepted":
       return `${base} border-emerald-400/50 bg-emerald-500/15 text-emerald-200`;
     case "rejected":
       return `${base} border-rose-400/50 bg-rose-500/15 text-rose-200`;
+    case "draft":
+      return `${base} border-slate-400/50 bg-slate-500/15 text-slate-200`;
     case "pending":
       return `${base} border-amber-400/50 bg-amber-400/15 text-amber-100`;
     case "pending_review":
@@ -94,20 +89,7 @@ function statusBadgeClass(status: SubmissionAdminStatus): string {
 }
 
 function filterRows(rows: AdminRow[], view: AdminSubmissionsView): AdminRow[] {
-  switch (view) {
-    case "pipeline":
-      return rows.filter((r) => !r.archivedAt);
-    case "accepted":
-      return rows.filter((r) => !r.archivedAt && r.status === "accepted");
-    case "needs_revision":
-      return rows.filter((r) => !r.archivedAt && r.status === "needs_revision");
-    case "rejected":
-      return rows.filter((r) => !r.archivedAt && r.status === "rejected");
-    case "archive":
-      return rows.filter((r) => Boolean(r.archivedAt));
-    default:
-      return rows;
-  }
+  return rows.filter((r) => matchesAdminSubmissionsView(r.status, r.archivedAt, view));
 }
 
 type AdminSubmissionsPanelProps = {
@@ -126,6 +108,8 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
   const [certificateDownloadingId, setCertificateDownloadingId] = useState<number | null>(null);
   const [certificateSendingId, setCertificateSendingId] = useState<number | null>(null);
   const [archiveId, setArchiveId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isClearingRejected, setIsClearingRejected] = useState(false);
   const [sectionFilter, setSectionFilter] = useState<"all" | string>("all");
   const [sections, setSections] = useState<ConferenceSectionRow[]>([]);
 
@@ -146,8 +130,10 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
   }, []);
 
   const formatStatusLabel = useCallback(
-    (status: SubmissionAdminStatus) => {
+    (status: AdminSubmissionStatus) => {
       switch (status) {
+        case "draft":
+          return t("adminStatusDraft");
         case "pending":
           return t("adminStatusPending");
         case "pending_review":
@@ -207,7 +193,7 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
           sectionId: submission.section_id?.trim() || null,
           thematicPanelRaw: submission.thematic_panel?.trim() || "",
           authorName: buildAuthorName(profile, unknownAuthor),
-          status: normalizeStatus(submission.status),
+          status: normalizeAdminSubmissionStatus(submission.status),
           reviewerComment: submission.reviewer_comment ?? "",
           filePath: submission.file_path?.trim() || null,
           archivedAt: submission.archived_at
@@ -277,7 +263,7 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
   }, [viewFiltered, sectionFilter, rowMatchesSectionFilter]);
 
   const handleStatusChange = (id: number, value: string) => {
-    const next = normalizeStatus(value);
+    const next = normalizeAdminSubmissionStatus(value);
     setRows((prev) => prev.map((row) => (row.id === id ? { ...row, status: next } : row)));
   };
 
@@ -304,28 +290,98 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
     }
 
     if (!response.ok) {
-      setError(t("adminUpdateStatusError"));
+      try {
+        const body = (await response.json()) as { error?: string };
+        setError(body?.error?.trim() || t("adminUpdateStatusError"));
+      } catch {
+        setError(t("adminUpdateStatusError"));
+      }
       setSavingId(null);
       return;
     }
 
-    const notify = await fetchAsAdmin("/api/email/status-notification", {
-      method: "POST",
-      body: JSON.stringify({
-        userId: row.userId,
-        participantName: row.authorName,
-        abstractTitle: row.title,
-        newStatus: row.status,
-        reviewerComment: row.reviewerComment.trim() || null
-      })
-    });
-
     setSavingId(null);
+    setInfoNotice(t("adminSaveSuccess"));
 
-    if (notify.missingSession || !notify.response?.ok) {
-      setError(t("adminEmailNotificationError"));
+    const shouldNotify = row.status !== "draft";
+    if (shouldNotify) {
+      const notify = await fetchAsAdmin("/api/email/status-notification", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: row.userId,
+          participantName: row.authorName,
+          abstractTitle: row.title === "—" ? t("abstractTitle") : row.title,
+          newStatus: row.status,
+          reviewerComment: row.reviewerComment.trim() || null
+        })
+      });
+
+      if (notify.missingSession || !notify.response?.ok) {
+        setInfoNotice(t("adminSaveSuccessEmailFailed"));
+      }
     }
 
+    setRows((prev) => prev.filter((r) => matchesAdminSubmissionsView(r.status, r.archivedAt, view)));
+    await loadSubmissions();
+  };
+
+  const handleDeletePermanent = async (row: AdminRow) => {
+    if (!window.confirm(t("adminDeleteSubmissionConfirm"))) {
+      return;
+    }
+
+    setError(null);
+    setInfoNotice(null);
+    setDeletingId(row.id);
+
+    const { response, missingSession } = await fetchAsAdmin(
+      `/api/admin/submissions/${encodeURIComponent(String(row.id))}`,
+      { method: "DELETE" }
+    );
+
+    setDeletingId(null);
+
+    if (missingSession || !response?.ok) {
+      try {
+        const body = (await response?.json()) as { error?: string };
+        setError(body?.error?.trim() || t("adminDeleteSubmissionError"));
+      } catch {
+        setError(t("adminDeleteSubmissionError"));
+      }
+      return;
+    }
+
+    setRows((prev) => prev.filter((r) => r.id !== row.id));
+    await loadSubmissions();
+  };
+
+  const handleClearAllRejected = async () => {
+    if (!window.confirm(t("adminClearRejectedConfirm"))) {
+      return;
+    }
+
+    setError(null);
+    setInfoNotice(null);
+    setIsClearingRejected(true);
+
+    const { response, missingSession } = await fetchAsAdmin("/api/admin/submissions/clear-rejected", {
+      method: "POST"
+    });
+
+    setIsClearingRejected(false);
+
+    if (missingSession || !response?.ok) {
+      try {
+        const body = (await response?.json()) as { error?: string };
+        setError(body?.error?.trim() || t("adminClearRejectedError"));
+      } catch {
+        setError(t("adminClearRejectedError"));
+      }
+      return;
+    }
+
+    const data = (await response.json()) as { deleted?: number };
+    setInfoNotice(t("adminClearRejectedSuccess", { count: data.deleted ?? 0 }));
     await loadSubmissions();
   };
 
@@ -344,6 +400,7 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
       return;
     }
 
+    setRows((prev) => prev.filter((r) => matchesAdminSubmissionsView(r.status, r.archivedAt, view)));
     await loadSubmissions();
   };
 
@@ -365,7 +422,6 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
 
   const handleDownloadAbstract = async (row: AdminRow) => {
     if (!row.filePath) {
-      setError(t("adminFileNotAvailable"));
       return;
     }
     setError(null);
@@ -522,6 +578,21 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
           <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{infoNotice}</div>
         )}
 
+        {view === "rejected" && viewFiltered.length > 0 && (
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="border-rose-400/50 bg-rose-500/15 text-rose-100 hover:bg-rose-500/25"
+              disabled={isClearingRejected}
+              onClick={() => void handleClearAllRejected()}
+            >
+              {isClearingRejected ? t("adminClearingRejected") : t("adminClearAllRejected")}
+            </Button>
+          </div>
+        )}
+
         {rows.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t("adminFilterSectionLabel")}</p>
@@ -584,6 +655,7 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
                   const isCertDownloading = certificateDownloadingId === row.id;
                   const isCertSending = certificateSendingId === row.id;
                   const isArchiving = archiveId === row.id;
+                  const isDeleting = deletingId === row.id;
                   const canDownload = Boolean(row.filePath);
                   const isArchived = Boolean(row.archivedAt);
                   const canCertificate = row.status === "accepted" && !isArchived;
@@ -604,7 +676,7 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
                             aria-label={t("adminStatus")}
                             disabled={isArchived}
                           >
-                            {STATUS_OPTIONS.map((option) => (
+                            {ADMIN_STATUS_OPTIONS.map((option) => (
                               <option key={option} value={option} className="bg-slate-900 text-white">
                                 {formatStatusLabel(option)}
                               </option>
@@ -696,7 +768,7 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
                               type="button"
                               variant="secondary"
                               size="sm"
-                              disabled={isArchiving}
+                              disabled={isArchiving || isDeleting}
                               onClick={() => void handleArchiveToggle(row, true)}
                             >
                               {t("adminArchive")}
@@ -706,12 +778,28 @@ export function AdminSubmissionsPanel({ view, titleKey }: AdminSubmissionsPanelP
                               type="button"
                               variant="secondary"
                               size="sm"
-                              disabled={isArchiving}
+                              disabled={isArchiving || isDeleting}
                               onClick={() => void handleArchiveToggle(row, false)}
                             >
                               {t("adminRestore")}
                             </Button>
                           )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-9 w-9 shrink-0 border-rose-500/60 bg-rose-600/25 p-0 text-rose-100 hover:bg-rose-600/45"
+                            disabled={isDeleting || isSaving}
+                            title={t("adminDeletePermanent")}
+                            aria-label={t("adminDeletePermanent")}
+                            onClick={() => void handleDeletePermanent(row)}
+                          >
+                            {isDeleting ? (
+                              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                            ) : (
+                              <Trash2 className="h-4 w-4" aria-hidden />
+                            )}
+                          </Button>
                         </div>
                       </td>
                     </tr>
