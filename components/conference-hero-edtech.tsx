@@ -5,10 +5,10 @@ import { Calendar, MapPin, Video } from "lucide-react";
 import { Inter } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import ParticlesBackground from "@/components/particles-background";
 import { Button } from "@/components/ui/button";
 import { useConferenceSettings } from "@/components/conference-settings-provider";
 import { formatConferenceIsoDate } from "@/lib/conference-dates";
@@ -19,6 +19,10 @@ const interHero = Inter({
   subsets: ["latin", "cyrillic"],
   display: "swap",
   weight: ["400", "600", "700", "800"]
+});
+
+const ParticlesBackground = dynamic(() => import("@/components/particles-background"), {
+  ssr: false
 });
 
 /** Accepts https URLs, protocol-relative `//…`, and `data:image/…` for tests. */
